@@ -1,6 +1,6 @@
 # Proyecto E-commerce
 
-Este proyecto es una plataforma de comercio electrónico que incluye un backend desarrollado con **Express**, **Prisma** y **Nodemon**, y un frontend construido con **React** y **TailwindCSS**.
+Esta carpeta contiene el codigo del proyecto tanto el backend como el frontend, sigue los pasos y descarga las aplicaciones dichas aqui para evitar errores al momento de ejecutar el proyecto.
 
 ## 🛠️ Requisitos Previos
 
