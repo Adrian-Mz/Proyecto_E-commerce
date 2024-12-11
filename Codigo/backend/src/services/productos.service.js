@@ -1,0 +1,80 @@
+import { ProductosData } from '../data/productos.data.js';
+
+export const ProductosService = {
+  // Obtener todos los productos
+  async getAllProductos() {
+    try {
+      const productos = await ProductosData.getAllProductos();
+      return productos; // Devuelve los productos al controlador (rutas)
+    } catch (error) {
+      throw new Error(`Error al obtener los productos: ${error.message}`);
+    }
+  },
+
+  // Obtener un producto por ID
+  async getProductoById(id) {
+    try {
+      if (typeof id !== 'number' || isNaN(id)) {
+        throw new Error('El ID debe ser un número válido');
+      }
+      const producto = await ProductosData.getProductoById(id);
+      if (!producto) {
+        throw new Error('Producto no encontrado');
+      }
+      return producto; // Devuelve el producto encontrado
+    } catch (error) {
+      throw new Error(`Error al obtener el producto: ${error.message}`);
+    }
+  },
+
+  // Crear un nuevo producto
+  async createProducto(data) {
+    try {
+      if (
+        !data ||
+        !data.nombre ||
+        !data.descripcion ||
+        typeof data.precio !== 'number' ||
+        typeof data.stock !== 'number' ||
+        !data.categoriaId
+      ) {
+        throw new Error(
+          'Datos incompletos o inválidos para crear el producto'
+        );
+      }
+      const producto = await ProductosData.createProducto(data);
+      return producto; // Devuelve el producto creado
+    } catch (error) {
+      throw new Error(`Error al crear el producto: ${error.message}`);
+    }
+  },
+
+  // Actualizar un producto por ID
+  async updateProducto(id, data) {
+    try {
+      if (typeof id !== 'number' || isNaN(id)) {
+        throw new Error('El ID debe ser un número válido');
+      }
+      if (!data || Object.keys(data).length === 0) {
+        throw new Error('Los datos para actualizar el producto no pueden estar vacíos');
+      }
+      const producto = await ProductosData.updateProducto(id, data);
+      return producto; // Devuelve el producto actualizado
+    } catch (error) {
+      throw new Error(`Error al actualizar el producto: ${error.message}`);
+    }
+  },
+
+  // Eliminar un producto por ID
+  async deleteProducto(id) {
+    try {
+      if (typeof id !== 'number' || isNaN(id)) {
+        throw new Error('El ID debe ser un número válido');
+      }
+      await ProductosData.deleteProducto(id);
+      return { message: 'Producto eliminado exitosamente' }; // Mensaje de confirmación
+    } catch (error) {
+      throw new Error(`Error al eliminar el producto: ${error.message}`);
+    }
+  },
+};

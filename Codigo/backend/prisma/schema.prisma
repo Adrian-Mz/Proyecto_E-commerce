@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model productos {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String
+  precio      Decimal  @default(0.0)
+  stock       Int
+  imagen      String
+  categoriaId Int
+  promocionId Int?
+
+  categoria   categorias @relation(fields: [categoriaId], references: [id])
+  promocion   promociones? @relation(fields: [promocionId], references: [id])
+
+  carritoProductos carrito_productos[]
+}
+
+model categorias {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String
+
+  productos   productos[]
+}
+
+model promociones {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String
+  descuento   Decimal  @default(0.0)
+  fechaInicio DateTime?
+  fechaFin    DateTime?
+
+  productos   productos[]
+}
+
+model usuarios {
+  id              Int      @id @default(autoincrement())
+  nombre          String
+  apellido        String
+  correo          String   @unique
+  password        String
+  direccion       String
+  telefono        String
+  pais            String
+  fechaNacimiento DateTime?
+  fechaRegistro   DateTime @default(now())
+
+  pedidos         pedidos[]
+  carrito         carrito[]
+}
+
+model pedidos {
+  id                 Int      @id @default(autoincrement())
+  usuarioId          Int
+  direccionEnvio     String
+  metodoPagoId       Int
+  metodoEnvioId      Int
+  estadoId           Int
+  total              Decimal  @default(0.0)
+  fechaPedido        DateTime @default(now())
+  fechaActualizacion DateTime?
+
+  usuario            usuarios @relation(fields: [usuarioId], references: [id])
+  metodoPago         metodo_pago @relation(fields: [metodoPagoId], references: [id])
+  metodoEnvio        metodo_envio @relation(fields: [metodoEnvioId], references: [id])
+  estado             estado @relation(fields: [estadoId], references: [id])
+  devoluciones       devoluciones[]
+}
+
+model devoluciones {
+  id              Int      @id @default(autoincrement())
+  pedidoId        Int
+  motivo          String
+  estadoId        Int
+  fechaDevolucion DateTime @default(now())
+  fechaResolucion DateTime?
+
+  pedido          pedidos @relation(fields: [pedidoId], references: [id])
+  estado          estado @relation(fields: [estadoId], references: [id])
+}
+
+model estado {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String
+
+  pedidos     pedidos[]
+  devoluciones devoluciones[]
+}
+
+model carrito {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int
+
+  usuarios   usuarios @relation(fields: [usuarioId], references: [id])
+  productos   carrito_productos[]
+}
+
+model carrito_productos {
+  id              Int      @id @default(autoincrement())
+  carritoId       Int
+  productoId      Int
+  cantidad        Int
+  precio_unitario Decimal  @default(0.0)
+
+  carrito         carrito @relation(fields: [carritoId], references: [id])
+  producto        productos @relation(fields: [productoId], references: [id])
+}
+
+model metodo_pago {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String
+
+  pedidos     pedidos[]
+}
+
+model metodo_envio {
+  id              Int      @id @default(autoincrement())
+  nombre          String
+  descripcion     String
+  costo           Decimal  @default(0.0)
+  tiempoEstimado  String
+
+  pedidos         pedidos[]
+}
