@@ -24,7 +24,7 @@ export const CategoriaData = {
   // Crear una nueva categoría
   async createCategoria(data) {
     if (!data || !data.nombre || !data.descripcion) {
-      throw new Error('Datos incompletos para crear la categoría');
+      throw new Error('Datos incompletos para crear las categorías');
     }
     return await prisma.categorias.create({ data });
   },
