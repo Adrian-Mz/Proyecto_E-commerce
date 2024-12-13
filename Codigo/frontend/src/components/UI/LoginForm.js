@@ -16,7 +16,7 @@ const LoginForm = () => {
         console.log("Datos enviados",{email, password});
     };
 
-    return () => (
+    return(
         <form onSubmit={handleSubmit} className="space-y-6">
             <InputField
                 id="email"
@@ -38,7 +38,7 @@ const LoginForm = () => {
             />
             <Button type="submit">Iniciar sesión</Button>
         </form>
-    )
+    );
 };
 
 export default LoginForm;
