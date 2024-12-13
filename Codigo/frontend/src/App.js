@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router,Routes, Route } from 'react-router-dom';
 import UsuariosPage from './pages/UsuarioPage';
 import ProductosPage from './pages/ProductsPage';
+import LoginPage from './pages/LoginPage';
 import Header from './components/UI/Header';
 import './App.css';
 
@@ -15,6 +16,7 @@ function App() {
           {/* Rutas dinámicas */}
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/productos" element={<ProductosPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route
             path="/"
             element={
