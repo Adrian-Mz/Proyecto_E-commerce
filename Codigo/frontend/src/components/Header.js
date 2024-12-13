@@ -9,7 +9,7 @@ const Header = () => {
                     <a href="/" className="text-gray-700 hover:text-blue-500">
                         Inicio
                     </a>
-                    <a href="/products" className="text-gray-700 hover:text-blue-500">
+                    <a href="/productos" className="text-gray-700 hover:text-blue-500">
                         Productos
                     </a>
                     <a href="/login" className="text-gray-700 hover:text-blue-500">
