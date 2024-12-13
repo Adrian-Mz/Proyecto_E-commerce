@@ -1,10 +1,10 @@
-import React from "react";
+import React, {useState} from "react";
 import InputField from "./InputField";
 import Button from "./Button";
 
 const LoginForm = () => {
-    const [email, setemail] = usestate("");
-    const [password, setPassword] = usestate("");
+    const [email, setemail] = useState("");
+    const [password, setPassword] = useState("");
 
     const handleSubmit = (e) => {
         e.preventDefault();
