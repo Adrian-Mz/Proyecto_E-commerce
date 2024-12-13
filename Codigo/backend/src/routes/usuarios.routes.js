@@ -1,8 +1,20 @@
 import express from 'express';
 import { UsuariosService } from '../services/usuarios.service.js';
+import { validarUsuario } from '../validations/usuarios.validation.js'
+import { validationResult } from 'express-validator';
 
 const router = express.Router();
 
+// Middleware para manejar los errores de validación
+const handleValidation = (req, res, next) => {
+  const errores = validationResult(req);
+  if (!errores.isEmpty()) {
+    return res.status(400).json({ errores: errores.array() });
+  }
+  next();
+};
+
+//Trare a todos los usuarios
 router.get('/', async (req, res) => {
   try {
     const usuarios = await UsuariosService.getAllUsuarios();
@@ -12,6 +24,8 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+//Trare a los usuarios por ID
 router.get('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -22,7 +36,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+
+
+//Crea un usuario
+router.post('/', validarUsuario, handleValidation, async (req, res) => {
   try {
     const usuario = await UsuariosService.createUsuario(req.body);
     res.status(201).json(usuario);
@@ -31,7 +48,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+
+
+// Aplicar validaciones al actualizar un usuario
+router.put('/:id', validarUsuario, handleValidation, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const usuario = await UsuariosService.updateUsuario(id, req.body);
@@ -40,6 +60,7 @@ router.put('/:id', async (req, res) => {
     res.status(404).json({ error: error.message });
   }
 });
+
 
 router.delete('/:id', async (req, res) => {
   try {
