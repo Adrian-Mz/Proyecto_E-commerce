@@ -1,7 +1,18 @@
 import express from 'express';
 import { CategoriaService } from '../services/categorias.service.js';
+import { validarCategoria } from '../validations/categorias.validation.js';
+import { validationResult } from 'express-validator';
 
 const router = express.Router();
+
+// Middleware para manejar errores de validación
+const handleValidation = (req, res, next) => {
+  const errores = validationResult(req);
+  if (!errores.isEmpty()) {
+    return res.status(400).json({ errores: errores.array() });
+  }
+  next();
+};
 
 // Obtener todas las categorías
 router.get('/', async (req, res) => {
@@ -25,7 +36,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Crear una nueva categoría
-router.post('/', async (req, res) => {
+router.post('/', validarCategoria, handleValidation, async (req, res) => {
   try {
     const nuevaCategoria = await CategoriaService.createCategoria(req.body);
     res.status(201).json(nuevaCategoria);
@@ -35,7 +46,7 @@ router.post('/', async (req, res) => {
 });
 
 // Actualizar una categoría existente
-router.put('/:id', async (req, res) => {
+router.put('/:id', validarCategoria, handleValidation, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const categoriaActualizada = await CategoriaService.updateCategoria(id, req.body);
