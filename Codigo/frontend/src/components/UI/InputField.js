@@ -3,7 +3,7 @@ import React from "react";
 const InputField = ({ id, label, type = "text", value, onChange, required = false, placeholder = "" }) => {
     return (
         <div>
-            <label htmlFor={id} className="block text-sm/6 font-medium text-gray-900">
+            <label htmlFor={id} className="block text-sm/6 font-medium text-gray-100">
                 {label}
             </label>
             <div className="mt-2">

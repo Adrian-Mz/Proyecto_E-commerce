@@ -10,13 +10,16 @@ const LoginPage = () =>{
                 src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
                 alt="Ejemplo-Company"
             />
-            <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
+            <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-100">
                 Inicia sesion en tu cuenta
             </h2>
             <div className="mt-10">
                 <LoginForm />
                 <p className="mt-10 text-center text-sm/6 text-gray-500">
-                Sin cuenta?{" "}
+                Sin cuenta?{' '}
+                <a href="/register" className="text-blue-600 transition">
+                Registrate aqui!
+                </a>
                 </p>
             </div>
         </AuthLayout>
