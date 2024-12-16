@@ -1,34 +1,26 @@
-import React from 'react';
-import { BrowserRouter as Router,Routes, Route } from 'react-router-dom';
-import UsuariosPage from './pages/UsuarioPage';
-import ProductosPage from './pages/ProductsPage';
-import LoginPage from './pages/LoginPage';
-import Header from './components/UI/Header';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Header from "./components/UI/Header";
+import HomePage from "./pages/HomePage";
+import ProductsPage from "./pages/ProductsPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
     <Router>
-    <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow container mx-auto py-8">
+      <main className="min-h-screen bg-gray-900 text-gray-100">
         <Routes>
-          {/* Rutas dinámicas */}
-          <Route path="/usuarios" element={<UsuariosPage />} />
-          <Route path="/productos" element={<ProductosPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/productos" element={<ProductsPage />} />
+          <Route path="/acerca-de" element={<AboutPage />} />
+          <Route path="/contacto" element={<ContactPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <div className="text-center">
-                <h1 className="text-3xl font-bold">Bienvenido al E-Commerce</h1>
-              </div>
-            }
-          />
         </Routes>
       </main>
-    </div>
-  </Router>
+    </Router>
   );
 }
 
