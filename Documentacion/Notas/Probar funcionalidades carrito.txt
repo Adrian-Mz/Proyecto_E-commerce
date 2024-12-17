@@ -1,0 +1,37 @@
+Paso 3: Pruebas del CRUD Completo
+Método	Ruta	Funcionalidad
+GET	/api/carrito/:usuarioId	Obtener carrito del usuario
+POST	/api/carrito/:usuarioId	Añadir producto al carrito
+PUT	/api/carrito/:usuarioId	Actualizar cantidad de producto
+DELETE	/api/carrito/:usuarioId/:productoId	Eliminar un producto del carrito
+DELETE	/api/carrito/:usuarioId	Vaciar el carrito
+
+Añadir producto al carrito:
+
+POST /api/carrito/2
+Body:
+json
+Copiar código
+{
+  "productoId": 2,
+  "cantidad": 3
+}
+Obtener el carrito:
+
+GET /api/carrito/2
+Actualizar cantidad del producto:
+
+PUT /api/carrito/2
+Body:
+json
+Copiar código
+{
+  "productoId": 2,
+  "cantidad": 5
+}
+Eliminar un producto del carrito:
+
+DELETE /api/carrito/2/2
+Vaciar el carrito:
+
+DELETE /api/carrito/2

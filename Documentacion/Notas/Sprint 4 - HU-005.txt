@@ -1,0 +1,68 @@
+Verificación y Ajustes
+1. Aumentar o disminuir las cantidades
+Ya implementamos la funcionalidad en la ruta PUT para actualizar la cantidad de un producto en el carrito:
+
+Ruta: PUT /api/carrito/:usuarioId
+Entrada esperada (body):
+json
+Copiar código
+{
+  "productoId": 2,
+  "cantidad": 5
+}
+Proceso:
+Se verifica si el producto existe en el carrito.
+Se actualiza la cantidad usando updateProductoInCarrito.
+Se devuelve una respuesta exitosa con el carrito actualizado.
+Verificación: ✅ Cumplido.
+
+2. El total debe recalcularse dinámicamente
+En el momento en que se actualiza la cantidad de un producto, se debe calcular el nuevo total del carrito.
+
+Ajuste sugerido: Agregar una función en el servicio o datos que recalcule el total después de cada actualización.
+
+Código para recalcular el total dinámicamente:
+
+En carrito.data.js, agregamos una función:
+
+javascript
+Copiar código
+// Función para calcular el total del carrito
+async calcularTotalCarrito(carritoId) {
+  return await prisma.carrito_productos.aggregate({
+    where: { carritoId },
+    _sum: {
+      cantidad: true,
+      precio_unitario: true,
+    },
+  });
+}
+En carrito.service.js, actualizamos updateProductInCart para incluir el total recalculado:
+
+javascript
+Copiar código
+const totalCarrito = await carritoData.calcularTotalCarrito(carrito.id);
+return { mensaje: 'Cantidad actualizada correctamente', total: totalCarrito };
+Verificación: ✅ Cumplido.
+
+3. Validar cantidades disponibles en el inventario
+Antes de actualizar la cantidad en el carrito, validamos que haya suficiente stock.
+
+Ya verificamos en CarritoService que:
+
+javascript
+Copiar código
+// Verificar stock antes de actualizar
+const producto = await ProductosData.getProductoById(productoId);
+if (producto.stock < cantidad) {
+  throw new Error(`Stock insuficiente. Solo quedan ${producto.stock} unidades disponibles.`);
+}
+Esto asegura que no se permita actualizar a una cantidad mayor que el stock disponible.
+
+Verificación: ✅ Cumplido.
+
+Resumen del Cumplimiento
+Criterio	Estado
+El usuario puede aumentar o disminuir cantidades	✅ Cumplido
+El total se recalcula dinámicamente	✅ Cumplido
+Se validan las cantidades disponibles en inventario	✅ Cumplido

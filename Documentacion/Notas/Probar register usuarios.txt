@@ -1,0 +1,48 @@
+Prueba
+Prueba con los siguientes casos:
+
+1. Caso válido:
+json
+Copiar código
+{
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "correo": "juan.perez@example.com",
+  "password": "clave123",
+  "direccion": "Calle Falsa 123",
+  "telefono": "123456789",
+  "pais": "País Ejemplo",
+  "fechaNacimiento": "2000-05-15"
+}
+Resultado esperado: Usuario creado correctamente.
+
+2. Caso fecha futura:
+json
+Copiar código
+{
+  "nombre": "Ana",
+  "apellido": "López",
+  "correo": "ana.lopez@example.com",
+  "password": "clave123",
+  "direccion": "Calle Ejemplo 123",
+  "telefono": "123456789",
+  "pais": "País Ejemplo",
+  "fechaNacimiento": "2050-01-01"
+}
+Resultado esperado: Error: "La fecha de nacimiento no puede ser el día actual ni una fecha futura".
+
+3. Caso menor de edad:
+json
+Copiar código
+{
+  "nombre": "Carlos",
+  "apellido": "Gómez",
+  "correo": "carlos.gomez@example.com",
+  "password": "clave123",
+  "direccion": "Calle Ejemplo 123",
+  "telefono": "123456789",
+  "pais": "País Ejemplo",
+  "fechaNacimiento": "2010-06-15"
+}
+Resultado esperado: Error: "El usuario debe ser mayor de edad (al menos 18 años)".
+
