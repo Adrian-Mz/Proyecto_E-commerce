@@ -1,44 +1,75 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import InputField from "./InputField";
 import Button from "./Button";
+import { UsuariosAPI } from "../../api/api.usuarios";
+import { useNavigate } from "react-router-dom";
 
 const LoginForm = () => {
-    const [email, setemail] = useState("");
-    const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate(); // Hook de navegación
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        //validacion basica de email y password
-        if (email === "" || password === "") {
-            alert("Por favor, completa todos los campos");
-            return;
-        }
-        console.log("Datos enviados",{email, password});
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setIsSubmitting(true);
 
-    return(
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <InputField
-                id="email"
-                label="Email"
-                type="email"
-                placeholder="email@ejemplo.com"
-                value={email}
-                onChange={(e) => setemail(e.target.value)}
-                required={true}
-            />
-            <InputField
-                id="password"
-                label="Contraseña"
-                type="password"
-                placeholder="******"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required={true}
-            />
-            <Button type="submit">Iniciar sesión</Button>
-        </form>
-    );
+    if (!email.trim() || !password.trim()) {
+      setMessage("Por favor, completa todos los campos.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await UsuariosAPI.loginUsuario({ correo: email, password });
+      localStorage.setItem("usuario", JSON.stringify(response)); // Guarda el usuario en localStorage
+      setMessage("Inicio de sesión exitoso.");
+      setTimeout(() => {
+        navigate("/"); // Redirige a la página principal
+      }, 1000);
+    } catch (error) {
+      setMessage("Credenciales incorrectas. Verifica tus datos.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {message && (
+        <div
+          className={`p-2 rounded-md ${
+            message.includes("exitoso") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
+        >
+          {message}
+        </div>
+      )}
+      <InputField
+        id="email"
+        label="Correo electrónico"
+        type="email"
+        placeholder="correo@ejemplo.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <InputField
+        id="password"
+        label="Contraseña"
+        type="password"
+        placeholder="******"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
+      </Button>
+    </form>
+  );
 };
 
 export default LoginForm;

@@ -26,9 +26,12 @@ export const UsuariosAPI = {
     return response.data;
   },
 
-  getUsuarioByEmail: async (email) => {
-    const response = await api.get(`/usuarios/email/${email}`);
+  getUsuarioByEmail: async (correo) => {
+    const response = await api.get(`/usuarios/email/${correo}`);
     return response.data; // { exists: true/false }
   },
-
+  loginUsuario: async (data) => {
+    const response = await api.post('/usuarios/login', data);
+    return response.data; // { success: true, usuario: {...} }
+  },
 };
