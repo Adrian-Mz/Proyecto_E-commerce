@@ -38,16 +38,20 @@ router.get('/:id', async (req, res) => {
 
 
 
-//Crea un usuario
-router.post('/', validarUsuario, handleValidation, async (req, res) => {
+// Crear un nuevo usuario
+router.post('/', validarUsuario, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const usuario = await UsuariosService.createUsuario(req.body);
-    res.status(201).json(usuario);
+    const nuevoUsuario = await UsuariosService.createUsuario(req.body);
+    res.status(201).json(nuevoUsuario);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
-
 
 
 // Aplicar validaciones al actualizar un usuario

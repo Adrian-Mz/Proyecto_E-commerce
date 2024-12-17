@@ -1,10 +1,24 @@
 import { body } from 'express-validator';
 
-export const validarPedido = [
+export const validarCrearPedido = [
   body('direccionEnvio')
-    .notEmpty()
-    .withMessage('La dirección de envío es obligatoria.'),
-  body('metodoPago')
-    .isIn(['tarjeta', 'paypal', 'transferencia'])
-    .withMessage('El método de pago no es válido.'),
+    .notEmpty().withMessage('La dirección de envío es obligatoria.')
+    .isString().withMessage('La dirección de envío debe ser texto.'),
+  body('metodoPagoId')
+    .notEmpty().withMessage('El método de pago es obligatorio.')
+    .isInt().withMessage('El método de pago debe ser un ID válido.'),
+  body('metodoEnvioId')
+    .notEmpty().withMessage('El método de envío es obligatorio.')
+    .isInt().withMessage('El método de envío debe ser un ID válido.'),
+  body('productos')
+    .optional()
+    .isArray({ min: 1 }).withMessage('Debe incluir al menos un producto.')
+    .custom((productos) => {
+      productos.forEach((p) => {
+        if (!p.productoId || !p.cantidad || !p.precio_unitario) {
+          throw new Error('Cada producto debe tener productoId, cantidad y precio_unitario.');
+        }
+      });
+      return true;
+    }),
 ];

@@ -14,19 +14,20 @@ datasource db {
 }
 
 model productos {
-  id          Int      @id @default(autoincrement())
-  nombre      String
-  descripcion String
-  precio      Decimal  @default(0.0)
-  stock       Int
-  imagen      String
-  categoriaId Int
-  promocionId Int?
+  id                 Int                @id @default(autoincrement())
+  nombre             String
+  descripcion        String
+  precio             Decimal            @default(0.0)
+  stock              Int
+  imagen             String
+  categoriaId        Int
+  promocionId        Int?
 
-  categoria   categorias @relation(fields: [categoriaId], references: [id])
-  promocion   promociones? @relation(fields: [promocionId], references: [id])
+  categoria          categorias         @relation(fields: [categoriaId], references: [id])
+  promocion          promociones?       @relation(fields: [promocionId], references: [id])
 
-  carritoProductos carrito_productos[]
+  carritoProductos   carrito_productos[]
+  pedidoProductos    pedido_productos[] // Relación inversa añadida
 }
 
 model categorias {
@@ -64,6 +65,17 @@ model usuarios {
   carrito         carrito[]
 }
 
+model pedido_productos {
+  id              Int                @id @default(autoincrement())
+  pedidoId        Int
+  productoId      Int
+  cantidad        Int
+  precio_unitario Decimal            @default(0.0)
+
+  pedido          pedidos            @relation(fields: [pedidoId], references: [id])
+  producto        productos          @relation(fields: [productoId], references: [id])
+}
+
 model pedidos {
   id                 Int      @id @default(autoincrement())
   usuarioId          Int
@@ -80,6 +92,7 @@ model pedidos {
   metodoEnvio        metodo_envio @relation(fields: [metodoEnvioId], references: [id])
   estado             estado @relation(fields: [estadoId], references: [id])
   devoluciones       devoluciones[]
+  productos          pedido_productos[] // Relación con productos a través de pedido_productos
 }
 
 model devoluciones {

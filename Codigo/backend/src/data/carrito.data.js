@@ -35,10 +35,10 @@ export const carritoData = {
   },
 
   // Actualizar cantidad de un producto en el carrito
-  async updateProductoInCarrito(carritoProductoId, cantidad) {
+  async updateProductoInCarrito(carritoProductoId, cantidad, precio_unitario) {
     return await prisma.carrito_productos.update({
       where: { id: carritoProductoId },
-      data: { cantidad },
+      data: { cantidad, precio_unitario },
     });
   },
 
@@ -56,15 +56,21 @@ export const carritoData = {
     });
   },
 
+
   // Función para calcular el total del carrito
   async calcularTotalCarrito(carritoId) {
-    return await prisma.carrito_productos.aggregate({
+    const total = await prisma.carrito_productos.aggregate({
       where: { carritoId },
       _sum: {
         cantidad: true,
         precio_unitario: true,
       },
     });
+
+    return {
+      cantidad: total._sum.cantidad || 0,
+      precio_total: total._sum.cantidad * total._sum.precio_unitario || 0,
+    };
   }
 
 };

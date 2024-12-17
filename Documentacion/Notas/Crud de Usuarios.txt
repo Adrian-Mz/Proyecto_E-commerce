@@ -1,0 +1,66 @@
+1. Crear un usuario (POST /api/usuarios)
+Método: POST
+Endpoint: /api/usuarios
+
+Body (JSON):
+
+json
+Copiar código
+{
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "correo": "juan.perez@example.com",
+  "password": "clave1234",
+  "direccion": "Calle Ejemplo 123",
+  "telefono": "0987654321",
+  "pais": "Ecuador",
+  "fechaNacimiento": "15/06/2000"
+}
+2. Obtener todos los usuarios (GET /api/usuarios)
+Método: GET
+Endpoint: /api/usuarios
+
+No requiere cuerpo (Body).
+
+3. Obtener un usuario por ID (GET /api/usuarios/:id)
+Método: GET
+Endpoint: /api/usuarios/1
+
+No requiere cuerpo (Body).
+
+4. Actualizar un usuario (PUT /api/usuarios/:id)
+Método: PUT
+Endpoint: /api/usuarios/1
+
+Body (JSON):
+
+json
+Copiar código
+{
+  "nombre": "Juan Actualizado",
+  "apellido": "Pérez Actualizado",
+  "correo": "juan.actualizado@example.com",
+  "password": "nuevaClave1234",
+  "direccion": "Nueva Calle 456",
+  "telefono": "0998765432",
+  "pais": "Colombia",
+  "fechaNacimiento": "20/07/1999"
+}
+5. Eliminar un usuario (DELETE /api/usuarios/:id)
+Método: DELETE
+Endpoint: /api/usuarios/1
+
+No requiere cuerpo (Body).
+
+6. Login de usuario (POST /api/usuarios/login)
+Método: POST
+Endpoint: /api/usuarios/login
+
+Body (JSON):
+
+json
+Copiar código
+{
+  "correo": "juan.perez@example.com",
+  "password": "clave1234"
+}

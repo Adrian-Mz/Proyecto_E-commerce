@@ -20,17 +20,18 @@ export const UsuariosService = {
     return usuario;
   },
 
-
-
-
-
-
   async createUsuario(data) {
     console.log("Fecha recibida en el backend (sin procesar):", data.fechaNacimiento);
   
     // Validaciones básicas para los datos de usuario
     if (!data || !data.nombre || !data.correo || !data.password) {
       throw new Error('Datos incompletos para crear el usuario');
+    }
+
+    // Validar si el correo ya está registrado
+    const usuarioExistente = await UsuariosData.getUsuarioByCorreo(data.correo);
+    if (usuarioExistente) {
+      throw new Error('El correo ya está registrado. Utilice otro correo.');
     }
   
     // Encriptar la contraseña
@@ -51,13 +52,7 @@ export const UsuariosService = {
     return await UsuariosData.createUsuario(data);
   },
   
-  
-  
-
-
-
-
-  
+    
   // Actualiza los datos de un usuario existente en la base de datos, validando que el usuario exista.
   async updateUsuario(id, data) {
     if (typeof id !== 'number') {

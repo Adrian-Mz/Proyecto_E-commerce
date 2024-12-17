@@ -2,41 +2,9 @@ Pruebas del flujo
 Prueba	Método	URL	Body	Resultado esperado
 Confirmar pedido exitosamente	POST	
 /api/pedidos/2	
-{
-  "direccionEnvio": "Calle 123",
-  "metodoPago": "tarjeta"
-}	
-
-Pedido creado con éxito.
-
-Carrito vacío	
-
-POST	/api/pedidos/2	
 
 {
-  "direccionEnvio": "Calle 123", 
-  "metodoPago": "tarjeta"
-}	
-
-El carrito está vacío.
-
-Método de pago inválido	POST	
-/api/pedidos/2	
-
-{
- "direccionEnvio": "Calle 123", 
- "metodoPago": "efectivo"
-}	
-
-Método de pago inválido.
-
-Stock insuficiente	
-
-POST	/api/pedidos/2	
-
-{
-  "direccionEnvio": "Calle 123", 
-  "metodoPago": "tarjeta"
-}	
-
-Stock insuficiente para el producto.
+  "direccionEnvio": "Calle 123, Ciudad de México",
+  "metodoPagoId": 1,
+  "metodoEnvioId": 2
+}
