@@ -25,4 +25,10 @@ export const UsuariosAPI = {
     const response = await api.delete(`/usuarios/${id}`);
     return response.data;
   },
+
+  getUsuarioByEmail: async (email) => {
+    const response = await api.get(`/usuarios/email/${email}`);
+    return response.data; // { exists: true/false }
+  },
+
 };

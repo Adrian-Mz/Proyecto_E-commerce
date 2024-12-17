@@ -24,7 +24,7 @@ const Header = () => {
             Inicio
           </a>
           <a href="/productos" className="hover:text-blue-400 transition">
-            Acerca de
+            Productos
           </a>
           <a href="/contacto" className="hover:text-blue-400 transition">
             Contacto

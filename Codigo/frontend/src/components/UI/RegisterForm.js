@@ -25,17 +25,55 @@ const RegisterForm = () => {
     setFormData((prevData) => ({ ...prevData, [id]: value }));
   };
 
+  const validarFormulario = () => {
+    const { nombre, apellido, correo, password, direccion, telefono, pais, fechaNacimiento } = formData;
 
-  // Envío de datos al BackEnd
-  // handleSubmit sin transformación
+    // Validar campos vacíos
+    if (!nombre || !apellido || !correo || !password || !direccion || !telefono || !pais || !fechaNacimiento) {
+      setMessage({ type: "error", text: "Todos los campos son obligatorios." });
+      return false;
+    }
+
+    // Validar longitud de la contraseña
+    if (password.length < 8) {
+      setMessage({ type: "error", text: "La contraseña debe tener al menos 8 caracteres." });
+      return false;
+    }
+
+    // Validar que el usuario tenga más de 18 años
+    const fechaNacimientoDate = new Date(fechaNacimiento);
+    const hoy = new Date();
+    const edad = hoy.getFullYear() - fechaNacimientoDate.getFullYear();
+    const diferenciaMes = hoy.getMonth() - fechaNacimientoDate.getMonth();
+    const diferenciaDia = hoy.getDate() - fechaNacimientoDate.getDate();
+
+    if (edad < 18 || (edad === 18 && (diferenciaMes < 0 || (diferenciaMes === 0 && diferenciaDia < 0)))) {
+      setMessage({ type: "error", text: "Debes tener al menos 18 años para registrarte." });
+      return false;
+    }
+
+    return true;
+  };
+
 // Envío de datos al BackEnd
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  console.log("Fecha enviada al backend:", formData.fechaNacimiento);
+  // Validar el formulario antes de enviarlo
+  if (!validarFormulario()) return;
+
+  //Verificar si el correo electrónico ya existe
+  const correoExiste = await UsuariosService.verificarCorreo(formData.email);
+
+  if (correoExiste) {
+    setMessage({ type: "error", text: "El correo ya está registrado. Usa otro correo electrónico." });
+    setIsSubmitting(false);
+    return;
+  }
 
   setIsSubmitting(true);
   try {
+
     const response = await UsuariosService.createUsuario(formData);
     if (response.success) {
       setMessage({ type: "success", text: response.message });

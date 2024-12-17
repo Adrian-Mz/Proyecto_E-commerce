@@ -8,6 +8,8 @@ export const UsuariosService = {
       nombreCompleto: `${usuario.nombre} ${usuario.apellido}`,
     }));
   },
+
+
   //Funcion crear usuario
   async createUsuario(usuarioData) {
     // Convertir fechaNacimiento a formato ISO 8601
@@ -31,5 +33,15 @@ export const UsuariosService = {
       };
     }
   },
+
+  //Funcion para verificar si el usuario existe
+  async verificarCorreo(email){
+    try{
+      const response = await UsuariosAPI.getUsuarioByEmail(email);
+      return response.exists;
+    }catch(error){
+      return false;
+    }
+  }
 };
 
