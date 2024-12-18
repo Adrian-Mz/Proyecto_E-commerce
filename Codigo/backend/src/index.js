@@ -5,6 +5,8 @@ import productosRoutes from "./routes/productos.routes.js";
 import carritoRoutes from "./routes/carrito.routes.js"
 import categoriaRoutes from './routes/categorias.routes.js';
 import pedidosRoutes from "./routes/pedidos.routes.js"
+import metodopagoRoutes from "./routes/metodo_pago.routes.js"
+import metodoenvioRoutes from "./routes/metodo_envio.routes.js"
 
 
 
@@ -18,6 +20,8 @@ app.use("/api/productos",productosRoutes);
 app.use('/api/categorias',categoriaRoutes);
 app.use("/api/carrito",carritoRoutes);
 app.use("/api/pedidos",pedidosRoutes);
+app.use("/api/metodo_pago",metodopagoRoutes);
+app.use("/api/metodo_envio",metodoenvioRoutes);
 
 
 app.listen(3200, () => {
