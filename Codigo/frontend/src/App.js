@@ -12,7 +12,7 @@ function App() {
       <Header />
       <main className="min-h-screen bg-gray-900 text-gray-100">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/productos" element={<ProductsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

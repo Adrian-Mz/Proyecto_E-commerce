@@ -114,93 +114,104 @@ const handleSubmit = async (e) => {
         </div>
       )}
 
-      <InputField
-        id="nombre"
-        label="Nombre"
-        type="text"
-        placeholder="Tu nombre"
-        value={formData.nombre}
-        onChange={handleChange}
-        required
-      />
-      <InputField
-        id="apellido"
-        label="Apellido"
-        type="text"
-        placeholder="Tu apellido"
-        value={formData.apellido}
-        onChange={handleChange}
-        required
-      />
-      <InputField
-        id="correo"
-        label="Correo electrónico"
-        type="email"
-        placeholder="email@ejemplo.com"
-        value={formData.correo} // Corregido aquí
-        onChange={handleChange}
-        required
-      />
-      <InputField
-        id="password"
-        label="Contraseña"
-        type="password"
-        placeholder="******"
-        value={formData.password}
-        onChange={handleChange}
-        required
-      />
-      <InputField
-        id="direccion"
-        label="Dirección"
-        type="text"
-        placeholder="Tu dirección"
-        value={formData.direccion}
-        onChange={handleChange}
-        required
-      />
-      <InputField
-        id="telefono"
-        label="Teléfono"
-        type="text"
-        placeholder="0123456789"
-        value={formData.telefono}
-        onChange={handleChange}
-        required
-      />
-      <div>
-        <label
-          htmlFor="pais"
-          className="block text-sm font-medium text-gray-700"
-        >
-          País
-        </label>
-        <select
-          id="pais"
-          value={formData.pais}
+      {/* Grid de 2 columnas */}
+      <div className="grid grid-cols-2 xl:grid-cols-2 gap-6">
+        <InputField
+          id="nombre"
+          label="Nombre"
+          type="text"
+          placeholder="Tu nombre"
+          value={formData.nombre}
           onChange={handleChange}
-          className="w-full mt-2 px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
-        >
-          <option value="">Selecciona tu país</option>
-          {countries.map((country, index) => (
-            <option key={index} value={country}>
-              {country}
-            </option>
-          ))}
-        </select>
+        />
+        <InputField
+          id="apellido"
+          label="Apellido"
+          type="text"
+          placeholder="Tu apellido"
+          value={formData.apellido}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          id="correo"
+          label="Correo electrónico"
+          type="email"
+          placeholder="email@ejemplo.com"
+          value={formData.correo}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          id="password"
+          label="Contraseña"
+          type="password"
+          placeholder="******"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          id="direccion"
+          label="Dirección"
+          type="text"
+          placeholder="Tu dirección"
+          value={formData.direccion}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          id="telefono"
+          label="Teléfono"
+          type="text"
+          placeholder="0123456789"
+          value={formData.telefono}
+          onChange={handleChange}
+          required
+        />
+
+        {/* País */}
+        <div>
+          <label
+            htmlFor="pais"
+            className="block text-sm font-medium text-gray-100"
+          >
+            País
+          </label>
+          <select
+            id="pais"
+            value={formData.pais}
+            onChange={handleChange}
+            className="w-full mt-2 px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Selecciona tu país</option>
+            {countries.map((country, index) => (
+              <option key={index} value={country}>
+                {country}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Fecha de nacimiento */}
+        <InputField
+          id="fechaNacimiento"
+          label="Fecha de nacimiento"
+          type="date"
+          value={formData.fechaNacimiento}
+          onChange={handleChange}
+          required
+        />
       </div>
-      <InputField
-        id="fechaNacimiento"
-        label="Fecha de nacimiento"
-        type="date"
-        value={formData.fechaNacimiento}
-        onChange={handleChange}
-        required
-      />
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Registrando..." : "Registrarse"}
-      </Button>
+
+      {/* Botón de envío */}
+      <div className="flex justify-center">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Registrando..." : "Registrarse"}
+        </Button>
+      </div>
     </form>
   );
 };

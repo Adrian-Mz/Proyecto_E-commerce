@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaShoppingCart, FaSearch } from "react-icons/fa";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,9 +28,10 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full bg-gray-900 text-gray-100 shadow-sm body-font">
-      <div className="container flex flex-col md:flex-row items-center justify-between p-6 mx-auto">
-        <a href="/" className="flex items-center mb-4 md:mb-0">
+    <header className="w-full bg-gray-900 text-gray-100 shadow-sm">
+      <div className="container mx-auto flex items-center justify-between px-6 py-4">
+        {/* Logo */}
+        <a href="/home" className="flex items-center mb-4 md:mb-0">
           <svg
             className="w-auto h-5 text-gray-100 fill-current"
             viewBox="0 0 202 69"
@@ -43,19 +44,37 @@ const Header = () => {
           </svg>
         </a>
 
-        <nav className="flex items-center space-x-6">
-          <a href="/" className="hover:text-blue-400 transition">
-            Inicio
-          </a>
-          <a href="/productos" className="hover:text-blue-400 transition">
-            Productos
-          </a>
-          <a href="/contacto" className="hover:text-blue-400 transition">
-            Contacto
-          </a>
-        </nav>
+        {/* Navegación */}
+        <div className="flex-1 flex items-center justify-center space-x-8">
+          <nav className="flex space-x-6">
+            <a href="/home" className="hover:text-blue-400 transition">
+              Inicio
+            </a>
+            <a href="/productos" className="hover:text-blue-400 transition">
+              Productos
+            </a>
+            <a href="/contacto" className="hover:text-blue-400 transition">
+              Contacto
+            </a>
+            <a href="/contacto" className="hover:text-blue-400 transition">
+              Nosotros
+            </a>
+          </nav>
+        </div>
 
-        <div className="relative flex items-center space-x-4">
+        {/* Botones de login/registro y carrito */}
+        <div className="flex items-center space-x-6">
+          {/* Barra de búsqueda */}
+          <div className="relative hidden md:block">
+            <input
+              type="text"
+              placeholder="¿Qué estás buscando?"
+              className="w-72 p-2 rounded-md border text-gray-900 focus:ring-2 focus:ring-blue-500"
+            />
+            <FaSearch className="absolute right-3 top-3 text-gray-500" />
+          </div>
+          
+          {/* Botones de login/registro */}
           {usuario ? (
             <div className="relative">
               <button onClick={toggleMenu} className="focus:outline-none">
@@ -68,7 +87,7 @@ const Header = () => {
                   </span>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
                     Log out
                   </button>
@@ -80,6 +99,10 @@ const Header = () => {
               Login
             </a>
           )}
+
+          <a href="/cart" className="hover:text-blue-300">
+            <FaShoppingCart size={24} />
+          </a>
         </div>
       </div>
     </header>
