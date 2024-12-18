@@ -34,27 +34,27 @@ Copiar código
   "cantidad": 3
 }
 
-HU-006	Realizar pedido	Como cliente, quiero confirmar mi pedido con dirección de envío y método de pago para completar la compra.	
-6 horas	Alta	HU-005	
-	- El pedido debe registrarse con toda la información requerida (productos, envío, pago).
 
-Confirmar pedido exitosamente	POST	
-/api/pedidos/2	
 
-{
-  "direccionEnvio": "Calle 123, Ciudad de México",
-  "metodoPagoId": 1,
-  "metodoEnvioId": 2
-}
+Realiza una petición GET a:
+bash
+Copiar código
 
-	- Validar que los métodos de envío y pago sean seleccionados correctamente.
+GET http://localhost:3200/api/metodo_envio
 
-Confirmar pedido exitosamente	POST	
-/api/pedidos/2	
+Verifica que recibes una lista de métodos de envío válidos.
 
-{
-  "direccionEnvio": "Calle 123, Ciudad de México",
-  "metodoPagoId": 1,
-  "metodoEnvioId": 2
-}
+
+Prueba del endpoint:
+
+Realiza una petición GET a:
+bash
+Copiar código
+
+GET http://localhost:3200/api/metodo_pago
+
+Verifica que recibes una lista de métodos de pago válidos.
+
+
+
 
