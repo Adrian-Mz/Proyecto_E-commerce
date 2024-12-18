@@ -1,0 +1,23 @@
+HT-007: Implementar funciones CRUD para productos
+Crear Producto (POST /api/productos)
+json
+Copiar código
+{
+  "nombre": "Producto A",
+  "descripcion": "Este es un producto de prueba",
+  "precio": 199.99,
+  "stock": 20,
+  "imagen": "https://via.placeholder.com/150",
+  "categoriaId": 1
+}
+Actualizar Producto (PUT /api/productos/:id)
+json
+Copiar código
+{
+  "nombre": "Producto A Updated",
+  "descripcion": "Descripción actualizada",
+  "precio": 179.99,
+  "stock": 25
+}
+Eliminar Producto (DELETE /api/productos/:id)
+No se necesita body para esta solicitud.

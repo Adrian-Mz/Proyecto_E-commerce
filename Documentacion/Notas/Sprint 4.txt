@@ -1,0 +1,60 @@
+HU-005	Gestionar el carrito	
+Como cliente, quiero modificar la cantidad de productos en el carrito para ajustar mi pedido.	
+4 horas	Alta	HU-004	- 
+	- El usuario debe poder aumentar o disminuir las cantidades.
+
+POST /api/carrito/2
+Body:
+json
+Copiar código
+{
+  "productoId": 2,
+  "cantidad": 3
+}
+
+	- El total debe recalcularse dinámicamente.
+
+POST /api/carrito/2
+Body:
+json
+Copiar código
+{
+  "productoId": 2,
+  "cantidad": 3
+}
+
+	- Validar cantidades disponibles en el inventario.
+
+POST /api/carrito/2
+Body:
+json
+Copiar código
+{
+  "productoId": 2,
+  "cantidad": 3
+}
+
+HU-006	Realizar pedido	Como cliente, quiero confirmar mi pedido con dirección de envío y método de pago para completar la compra.	
+6 horas	Alta	HU-005	
+	- El pedido debe registrarse con toda la información requerida (productos, envío, pago).
+
+Confirmar pedido exitosamente	POST	
+/api/pedidos/2	
+
+{
+  "direccionEnvio": "Calle 123, Ciudad de México",
+  "metodoPagoId": 1,
+  "metodoEnvioId": 2
+}
+
+	- Validar que los métodos de envío y pago sean seleccionados correctamente.
+
+Confirmar pedido exitosamente	POST	
+/api/pedidos/2	
+
+{
+  "direccionEnvio": "Calle 123, Ciudad de México",
+  "metodoPagoId": 1,
+  "metodoEnvioId": 2
+}
+

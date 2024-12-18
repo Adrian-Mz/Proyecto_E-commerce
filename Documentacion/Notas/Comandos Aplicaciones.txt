@@ -1,0 +1,111 @@
+HT-006: Implementar funciones CRUD para usuarios
+Crear Usuario (POST /api/usuarios)
+json
+Copiar código
+{
+  "nombre": "John",
+  "apellido": "Doe",
+  "correo": "johndoe@example.com",
+  "password": "password123",
+  "direccion": "123 Main St",
+  "telefono": "1234567890",
+  "pais": "USA",
+  "fechaNacimiento": "1990-05-15"
+}
+Actualizar Usuario (PUT /api/usuarios/:id)
+json
+Copiar código
+{
+  "nombre": "John",
+  "apellido": "Doe Updated",
+  "direccion": "456 Updated St",
+  "telefono": "9876543210"
+}
+Eliminar Usuario (DELETE /api/usuarios/:id)
+No se necesita body para esta solicitud.
+
+HT-007: Implementar funciones CRUD para productos
+Crear Producto (POST /api/productos)
+json
+Copiar código
+{
+  "nombre": "Producto A",
+  "descripcion": "Este es un producto de prueba",
+  "precio": 199.99,
+  "stock": 20,
+  "imagen": "https://via.placeholder.com/150",
+  "categoriaId": 1
+}
+Actualizar Producto (PUT /api/productos/:id)
+json
+Copiar código
+{
+  "nombre": "Producto A Updated",
+  "descripcion": "Descripción actualizada",
+  "precio": 179.99,
+  "stock": 25
+}
+Eliminar Producto (DELETE /api/productos/:id)
+No se necesita body para esta solicitud.
+
+
+
+HT-008: Implementar funciones CRUD para categorías
+Crear Categoría (POST /api/categorias)
+json
+Copiar código
+{
+  "nombre": "Categoría Electrónica",
+  "descripcion": "Productos relacionados con electrónica"
+}
+Actualizar Categoría (PUT /api/categorias/:id)
+json
+Copiar código
+{
+  "nombre": "Categoría Actualizada",
+  "descripcion": "Descripción actualizada para electrónica"
+}
+Eliminar Categoría (DELETE /api/categorias/:id)
+No se necesita body para esta solicitud.
+
+HU-001: Registro de usuario
+Registro de Usuario (POST /api/usuarios)
+json
+Copiar código
+{
+  "nombre": "Alice",
+  "apellido": "Smith",
+  "correo": "alicesmith@example.com",
+  "password": "securepassword",
+  "direccion": "789 New St",
+  "telefono": "5551234567",
+  "pais": "Canada",
+  "fechaNacimiento": "1985-10-25"
+}
+HU-002: Inicio de sesión
+Iniciar Sesión (POST /api/usuarios/login)
+json
+Copiar código
+{
+  "correo": "johndoe@example.com",
+  "password": "password123"
+}
+HU-003: Visualización de productos
+Obtener Todos los Productos (GET /api/productos)
+No se necesita body para esta solicitud.
+
+HT-011: Implementar validación de stock
+Validar Stock antes de Agregar al Carrito
+Al realizar la solicitud para agregar un producto al carrito, verifica que el stock sea mayor o igual a la cantidad solicitada.
+
+HU-004: Agregar producto al carrito
+Agregar Producto al Carrito (POST /api/carrito/:usuarioId/productos)
+json
+Copiar código
+{
+  "productoId": 1,
+  "cantidad": 3
+}
+HT-010: Configurar relación entre carrito y productos
+Obtener Carrito con Productos (GET /api/carrito/:usuarioId)
+No se necesita body para esta solicitud.
