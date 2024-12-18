@@ -123,4 +123,66 @@ export const UsuariosService = {
     const { password: _, ...usuarioSinPassword } = usuario;
     return usuarioSinPassword;
   },
+
+  // Nueva función para recuperar contraseña
+  async recuperarPassword(correo) {
+    // Verificar si el correo existe
+    const usuario = await UsuariosData.getUsuarioByCorreo(correo);
+    if (!usuario) {
+      throw new Error('No existe un usuario registrado con ese correo.');
+    }
+
+    // Generar una nueva contraseña temporal
+    const nuevaPassword = this.generarPasswordTemporal();
+
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
+
+    // Actualizar la contraseña en la base de datos
+    await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
+
+    // Retornar la nueva contraseña temporal al usuario
+    return `Tu nueva contraseña temporal es: ${nuevaPassword}`;
+  },
+
+  // Función auxiliar para generar una contraseña temporal
+  generarPasswordTemporal() {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    return password;
+  },
+
+  async cambiarPassword(correo, passwordTemporal, nuevaPassword) {
+    if (!correo || !passwordTemporal || !nuevaPassword) {
+      throw new Error("Todos los campos son obligatorios.");
+    }
+  
+    // Buscar el usuario por correo
+    const usuario = await UsuariosData.getUsuarioByCorreo(correo);
+    if (!usuario) {
+      throw new Error("No existe un usuario registrado con ese correo.");
+    }
+  
+    // Verificar la contraseña temporal
+    const esPasswordValida = await bcrypt.compare(passwordTemporal, usuario.password);
+    if (!esPasswordValida) {
+      throw new Error("La contraseña temporal es incorrecta.");
+    }
+  
+    // Validar la nueva contraseña (por ejemplo, longitud mínima)
+    if (nuevaPassword.length < 8) {
+      throw new Error("La nueva contraseña debe tener al menos 8 caracteres.");
+    }
+  
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
+  
+    // Actualizar la contraseña en la base de datos
+    await UsuariosData.updateUsuario(usuario.id, { password: hashedPassword });
+  
+    return "Contraseña actualizada correctamente.";
+  }
 };

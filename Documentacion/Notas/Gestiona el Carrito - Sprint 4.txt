@@ -17,7 +17,7 @@ Se devuelve una respuesta exitosa con el carrito actualizado.
 Verificación: ✅ Cumplido.
 
 2. El total debe recalcularse dinámicamente
-En el momento en que se actualiza la cantidad de un producto, se debe calcular el nuevo total del carrito.
+En el momento en que se actualiza la cantidad de un producto, se debe calcular el nuevo total del producto del carrito.
 
 Ajuste sugerido: Agregar una función en el servicio o datos que recalcule el total después de cada actualización.
 

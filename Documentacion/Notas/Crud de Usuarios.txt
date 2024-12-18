@@ -1,3 +1,4 @@
+oicPypGu
 1. Crear un usuario (POST /api/usuarios)
 Método: POST
 Endpoint: /api/usuarios
@@ -64,3 +65,46 @@ Copiar código
   "correo": "juan.perez@example.com",
   "password": "clave1234"
 }
+
+recuperar contraseña:
+
+
+Resultado Esperado
+Solicitud de prueba:
+
+Método: POST
+URL: http://localhost:3200/api/usuarios/recuperar
+Body:
+json
+Copiar código
+{ "correo": "correo@ejemplo.com" }
+Respuesta exitosa:
+
+json
+Copiar código
+{
+  "message": "Tu nueva contraseña temporal es: AbCd1234"
+}
+
+
+cambiar contraseña
+
+Prueba del Endpoint
+Método: POST
+URL: /api/usuarios/cambiar-password
+Body:
+json
+Copiar código
+{
+  "correo": "correo@ejemplo.com",
+  "passwordTemporal": "AbCd1234",
+  "nuevaPassword": "MiPasswordSegura123"
+}
+Respuesta exitosa:
+
+json
+Copiar código
+{
+  "message": "Contraseña actualizada correctamente."
+}
+

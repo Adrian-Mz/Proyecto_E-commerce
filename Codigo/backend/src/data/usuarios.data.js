@@ -64,4 +64,12 @@ export const UsuariosData = {
   },
 
 
+  // Función para actualizar la contraseña por correo
+  async updatePasswordByCorreo(correo, nuevaPassword) {
+    return await prisma.usuarios.update({
+      where: { correo },
+      data: { password: nuevaPassword },
+    });
+  },
+
 };

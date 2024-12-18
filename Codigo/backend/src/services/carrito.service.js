@@ -5,11 +5,18 @@ export const CarritoService = {
 
     // Obtener el carrito de un usuario
     async obtenerCarrito(usuarioId) {
-        const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
-        if (!carrito) {
-            throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
-        }
-        return carrito;
+      const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
+      if (!carrito) {
+        throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
+      }
+    
+      // Calcular el total de todos los productos en el carrito
+      const total = carrito.productos.reduce((sum, item) => {
+        return sum + item.cantidad * parseFloat(item.precio_unitario);
+      }, 0);
+    
+      // Devolver el carrito junto con el total
+      return { ...carrito, total };
     },
 
     // Añadir producto al carrito
@@ -78,6 +85,7 @@ export const CarritoService = {
       // Calcular el total actualizado
       const totalCarrito = await carritoData.calcularTotalCarrito(carrito.id);
       return { mensaje: 'Cantidad actualizada correctamente', total: totalCarrito };
+
     },
       
       
