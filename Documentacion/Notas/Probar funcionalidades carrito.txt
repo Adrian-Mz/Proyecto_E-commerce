@@ -32,6 +32,7 @@ Copiar código
 Eliminar un producto del carrito:
 
 DELETE /api/carrito/2/2
+
 Vaciar el carrito:
 
 DELETE /api/carrito/2
