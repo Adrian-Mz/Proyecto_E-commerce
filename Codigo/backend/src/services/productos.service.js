@@ -30,18 +30,24 @@ export const ProductosService = {
   // Crear un nuevo producto
   async createProducto(data) {
     try {
+      // Validar todos los campos obligatorios
       if (
         !data ||
         !data.nombre ||
         !data.descripcion ||
         typeof data.precio !== 'number' ||
         typeof data.stock !== 'number' ||
-        !data.categoriaId
+        !data.categoriaId ||
+        !data.promocionId ||
+        !data.especificaciones ||
+        !data.marca ||
+        !data.garantia
       ) {
         throw new Error(
           'Datos incompletos o inválidos para crear el producto'
         );
       }
+
       const producto = await ProductosData.createProducto(data);
       return producto; // Devuelve el producto creado
     } catch (error) {
@@ -58,6 +64,17 @@ export const ProductosService = {
       if (!data || Object.keys(data).length === 0) {
         throw new Error('Los datos para actualizar el producto no pueden estar vacíos');
       }
+
+      // Validar todos los campos obligatorios
+      if (
+        !data.promocionId ||
+        !data.especificaciones ||
+        !data.marca ||
+        !data.garantia
+      ) {
+        throw new Error('Datos incompletos o inválidos para actualizar el producto');
+      }
+
       const producto = await ProductosData.updateProducto(id, data);
       return producto; // Devuelve el producto actualizado
     } catch (error) {

@@ -17,17 +17,21 @@ model productos {
   id                 Int                @id @default(autoincrement())
   nombre             String
   descripcion        String
+  marca              String?            // Nueva columna para la marca
+  especificaciones   String?            // Nueva columna para especificaciones
   precio             Decimal            @default(0.0)
   stock              Int
+  garantia           String?
   imagen             String
   categoriaId        Int
   promocionId        Int?
+
 
   categoria          categorias         @relation(fields: [categoriaId], references: [id])
   promocion          promociones?       @relation(fields: [promocionId], references: [id])
 
   carritoProductos   carrito_productos[]
-  pedidoProductos    pedido_productos[] // Relación inversa añadida
+  pedidoProductos    pedido_productos[]
 }
 
 model categorias {

@@ -3,48 +3,49 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const pedidosData = {
-  // Crear un nuevo pedido
   async createPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, productos) {
-    return await prisma.pedidos.create({
+    return prisma.pedidos.create({
       data: {
-        usuario: {
-          connect: { id: usuarioId }, // Conectar usuario existente
-        },
-        metodoPago: {
-          connect: { id: metodoPagoId }, // Conectar método de pago existente
-        },
-        metodoEnvio: {
-          connect: { id: metodoEnvioId }, // Conectar método de envío existente
-        },
+        usuario: { connect: { id: usuarioId } },
+        metodoPago: { connect: { id: metodoPagoId } },
+        metodoEnvio: { connect: { id: metodoEnvioId } },
         direccionEnvio,
-        estado: {
-          connect: { id: 1 }, // Estado inicial por defecto (ejemplo)
-        },
-        total: productos.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0), // Calcular el total
-        fechaActualizacion: new Date(), // Asigna la fecha de actualización actual
-        productos: { // Crear relación con productos usando pedido_productos
-          create: productos.map((p) => ({
-            producto: {
-              connect: { id: p.productoId }, // Conectar el producto existente
-            },
-            cantidad: p.cantidad,
-            precio_unitario: p.precio_unitario,
+        estado: { connect: { id: 1 } },
+        total: productos.reduce((sum, { cantidad, precio_unitario }) => sum + cantidad * precio_unitario, 0),
+        fechaActualizacion: new Date(),
+        productos: {
+          create: productos.map(({ productoId, cantidad, precio_unitario }) => ({
+            producto: { connect: { id: productoId } },
+            cantidad,
+            precio_unitario,
           })),
         },
       },
       include: {
-        productos: true, // Incluir productos en la respuesta para validar
+        productos: true,
       },
     });
   },
 
-  // Obtener métodos de pago válidos
-  async getMetodosPago() {
-    return await prisma.metodo_pago.findMany();
+  async getPedidoById(pedidoId, usuarioId) {
+    return prisma.pedidos.findFirst({
+      where: { id: pedidoId, usuarioId },
+      include: {
+        productos: {
+          include: { producto: true },
+        },
+        metodoPago: true,
+        metodoEnvio: true,
+        estado: true,
+      },
+    });
   },
 
-  // Obtener métodos de envío válidos
+  async getMetodosPago() {
+    return prisma.metodo_pago.findMany();
+  },
+
   async getMetodosEnvio() {
-    return await prisma.metodo_envio.findMany();
+    return prisma.metodo_envio.findMany();
   },
 };

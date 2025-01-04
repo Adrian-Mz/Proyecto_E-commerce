@@ -3,41 +3,33 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const UsuariosData = {
-  // Función para obtener todos los usuarios
+  // Obtiene todos los usuarios desde la base de datos
   async getAllUsuarios() {
     return await prisma.usuarios.findMany();
   },
 
-  // Función para obtener un usuario por su ID
+  // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
-    if (typeof id !== 'number') {
-      throw new Error('El ID debe ser un número');
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID debe ser un número válido.');
     }
     return await prisma.usuarios.findUnique({
       where: { id },
     });
   },
 
-  // Función para crear un usuario
+  // Crea un nuevo usuario en la base de datos
   async createUsuario(data) {
-    if (
-      !data ||
-      !data.nombre ||
-      !data.apellido ||
-      !data.correo ||
-      !data.password
-    ) {
-      throw new Error('Faltan datos obligatorios para crear el usuario');
+    if (!data || !data.nombre || !data.correo || !data.password) {
+      throw new Error('Faltan datos obligatorios para crear el usuario.');
     }
-    return await prisma.usuarios.create({
-      data,
-    });
+    return await prisma.usuarios.create({ data });
   },
 
-  // Función para actualizar un usuario
+  // Actualiza un usuario existente en la base de datos
   async updateUsuario(id, data) {
-    if (typeof id !== 'number') {
-      throw new Error('El ID debe ser un número');
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID debe ser un número válido.');
     }
     return await prisma.usuarios.update({
       where: { id },
@@ -45,31 +37,28 @@ export const UsuariosData = {
     });
   },
 
-  // Función para eliminar un usuario
+  // Elimina un usuario específico de la base de datos
   async deleteUsuario(id) {
-    if (typeof id !== 'number') {
-      throw new Error('El ID debe ser un número');
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID debe ser un número válido.');
     }
     return await prisma.usuarios.delete({
       where: { id },
     });
   },
 
-
-  // Función para obtener usuario por correo
+  // Obtiene un usuario específico por su correo
   async getUsuarioByCorreo(correo) {
     return await prisma.usuarios.findUnique({
       where: { correo },
     });
   },
 
-
-  // Función para actualizar la contraseña por correo
+  // Actualiza la contraseña de un usuario por su correo
   async updatePasswordByCorreo(correo, nuevaPassword) {
     return await prisma.usuarios.update({
       where: { correo },
       data: { password: nuevaPassword },
     });
   },
-
 };

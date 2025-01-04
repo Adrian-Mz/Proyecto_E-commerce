@@ -2,187 +2,155 @@ import { UsuariosData } from '../data/usuarios.data.js';
 import bcrypt from 'bcrypt';
 
 export const UsuariosService = {
-  // Recupera todos los usuarios desde la base de datos.
+  // Recupera todos los usuarios desde la base de datos
   async getAllUsuarios() {
     return await UsuariosData.getAllUsuarios();
   },
 
-  // Obtiene un usuario específico mediante su ID, validando su existencia.
+  // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
-    if (typeof id !== 'number') {
-      throw new Error('ID debe ser un número');
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID debe ser un número válido.');
     }
 
     const usuario = await UsuariosData.getUsuarioById(id);
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new Error('Usuario no encontrado.');
     }
     return usuario;
   },
 
+  // Crea un nuevo usuario con validaciones y encriptación de contraseña
   async createUsuario(data) {
-    console.log("Fecha recibida en el backend (sin procesar):", data.fechaNacimiento);
-  
-    // Validaciones básicas para los datos de usuario
-    if (!data || !data.nombre || !data.correo || !data.password) {
-      throw new Error('Datos incompletos para crear el usuario');
+    const { nombre, correo, password, fechaNacimiento } = data;
+
+    if (!nombre || !correo || !password) {
+      throw new Error('Todos los campos obligatorios deben ser proporcionados.');
     }
 
-    // Validar si el correo ya está registrado
-    const usuarioExistente = await UsuariosData.getUsuarioByCorreo(data.correo);
+    const usuarioExistente = await UsuariosData.getUsuarioByCorreo(correo);
     if (usuarioExistente) {
-      throw new Error('El correo ya está registrado. Utilice otro correo.');
+      throw new Error('El correo ya está registrado.');
     }
-  
-    // Encriptar la contraseña
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
     data.password = hashedPassword;
-  
-    // Convertir fechaNacimiento a un objeto Date si viene como "YYYY-MM-DD"
-    if (data.fechaNacimiento) {
-      const fechaValida = new Date(data.fechaNacimiento); // JavaScript convierte YYYY-MM-DD a un objeto Date
-      if (isNaN(fechaValida.getTime())) {
-        throw new Error('La fecha proporcionada no es válida');
+
+    // Validación nativa para fecha de nacimiento
+    if (fechaNacimiento) {
+      const fecha = new Date(fechaNacimiento);
+      if (isNaN(fecha.getTime())) {
+        throw new Error('La fecha de nacimiento no es válida.');
       }
-      console.log("Fecha convertida a Date:", fechaValida);
-      data.fechaNacimiento = fechaValida; // Prisma acepta objetos Date
+      data.fechaNacimiento = fecha;
     }
-  
-    // Guardar el usuario en la base de datos
+
     return await UsuariosData.createUsuario(data);
   },
-  
-    
-  // Actualiza los datos de un usuario existente en la base de datos, validando que el usuario exista.
+
+  // Actualiza los datos de un usuario existente
   async updateUsuario(id, data) {
-    if (typeof id !== 'number') {
-      throw new Error('ID debe ser un número');
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID debe ser un número válido.');
     }
 
     const usuario = await UsuariosData.getUsuarioById(id);
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new Error('Usuario no encontrado.');
     }
 
-    // Validar y convertir fechaNacimiento si está presente
+    // Validación nativa para fecha de nacimiento
     if (data.fechaNacimiento) {
-      const isValidDate = /^\d{2}\/\d{2}\/\d{4}$/.test(data.fechaNacimiento);
-      if (!isValidDate) {
-        throw new Error('El formato de fecha debe ser DD/MM/YYYY');
+      const fecha = new Date(data.fechaNacimiento);
+      if (isNaN(fecha.getTime())) {
+        throw new Error('La fecha de nacimiento no es válida.');
       }
-
-      const [dia, mes, anio] = data.fechaNacimiento.split('/');
-      const fechaISO = `${anio}-${mes}-${dia}T00:00:00.000Z`;
-
-      const fechaValida = new Date(fechaISO);
-      if (isNaN(fechaValida.getTime())) {
-        throw new Error('La fecha proporcionada no es válida');
-      }
-
-      data.fechaNacimiento = fechaISO; // Guardar en formato ISO-8601
+      data.fechaNacimiento = fecha;
     }
 
     return await UsuariosData.updateUsuario(id, data);
   },
 
-  // Elimina un usuario existente de la base de datos después de validar que el usuario existe.
+  // Elimina un usuario existente de la base de datos
   async deleteUsuario(id) {
-    if (typeof id !== 'number') {
-      throw new Error('ID debe ser un número');
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID debe ser un número válido.');
     }
 
     const usuario = await UsuariosData.getUsuarioById(id);
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new Error('Usuario no encontrado.');
     }
 
     return await UsuariosData.deleteUsuario(id);
   },
 
-  // Realiza el inicio de sesión verificando las credenciales del usuario y devolviendo sus datos si son correctos.
-  async loginUsuario(data) {
-    const { correo, password } = data;
-
+  // Realiza el inicio de sesión validando credenciales
+  async loginUsuario({ correo, password }) {
     if (!correo || !password) {
-      throw new Error('Correo y contraseña son obligatorios');
+      throw new Error('El correo y la contraseña son obligatorios.');
     }
 
-    // Buscar el usuario por correo
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new Error('Usuario no encontrado.');
     }
 
-    // Verificar la contraseña
     const isPasswordValid = await bcrypt.compare(password, usuario.password);
     if (!isPasswordValid) {
-      throw new Error('Credenciales incorrectas');
+      throw new Error('Credenciales incorrectas.');
     }
 
-    // Devolver los datos del usuario (sin la contraseña)
     const { password: _, ...usuarioSinPassword } = usuario;
     return usuarioSinPassword;
   },
 
-  // Nueva función para recuperar contraseña
+  // Genera una nueva contraseña temporal y la actualiza
   async recuperarPassword(correo) {
-    // Verificar si el correo existe
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
       throw new Error('No existe un usuario registrado con ese correo.');
     }
 
-    // Generar una nueva contraseña temporal
     const nuevaPassword = this.generarPasswordTemporal();
-
-    // Encriptar la nueva contraseña
     const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
 
-    // Actualizar la contraseña en la base de datos
     await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
 
-    // Retornar la nueva contraseña temporal al usuario
     return `Tu nueva contraseña temporal es: ${nuevaPassword}`;
   },
 
-  // Función auxiliar para generar una contraseña temporal
+  // Genera una contraseña aleatoria temporal
   generarPasswordTemporal() {
     const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let password = '';
-    for (let i = 0; i < 8; i++) {
-      password += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-    }
-    return password;
+    return Array.from({ length: 8 }, () =>
+      caracteres.charAt(Math.floor(Math.random() * caracteres.length))
+    ).join('');
   },
 
+  // Cambia la contraseña del usuario tras verificar la temporal
   async cambiarPassword(correo, passwordTemporal, nuevaPassword) {
     if (!correo || !passwordTemporal || !nuevaPassword) {
-      throw new Error("Todos los campos son obligatorios.");
+      throw new Error('Todos los campos son obligatorios.');
     }
-  
-    // Buscar el usuario por correo
+
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
-      throw new Error("No existe un usuario registrado con ese correo.");
+      throw new Error('Usuario no encontrado.');
     }
-  
-    // Verificar la contraseña temporal
-    const esPasswordValida = await bcrypt.compare(passwordTemporal, usuario.password);
-    if (!esPasswordValida) {
-      throw new Error("La contraseña temporal es incorrecta.");
+
+    const isPasswordValid = await bcrypt.compare(passwordTemporal, usuario.password);
+    if (!isPasswordValid) {
+      throw new Error('Contraseña temporal incorrecta.');
     }
-  
-    // Validar la nueva contraseña (por ejemplo, longitud mínima)
+
     if (nuevaPassword.length < 8) {
-      throw new Error("La nueva contraseña debe tener al menos 8 caracteres.");
+      throw new Error('La nueva contraseña debe tener al menos 8 caracteres.');
     }
-  
-    // Encriptar la nueva contraseña
+
     const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
-  
-    // Actualizar la contraseña en la base de datos
-    await UsuariosData.updateUsuario(usuario.id, { password: hashedPassword });
-  
-    return "Contraseña actualizada correctamente.";
-  }
+    await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
+
+    return 'Contraseña actualizada correctamente.';
+  },
 };

@@ -22,3 +22,10 @@ export const validarCrearPedido = [
       return true;
     }),
 ];
+
+export const validarActualizarEstado = [
+  body('nuevoEstadoId')
+    .notEmpty().withMessage('El nuevo estado es obligatorio.')
+    .isInt().withMessage('El ID del estado debe ser un número.'),
+];
+
