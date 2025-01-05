@@ -85,6 +85,14 @@ const Header = () => {
                   <span className="block px-4 py-2 text-gray-700">
                     Hola, <strong>{usuario.nombre}</strong>
                   </span>
+
+                  <a
+                    href="/dashboard"
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Configuración
+                  </a>
+
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
