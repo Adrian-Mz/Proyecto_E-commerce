@@ -1,28 +1,80 @@
-import api from './api.config';
+import api from '../api/api.config';
 
-export const ProductosAPI = {
-  getAllProductos: async () => {
-    const response = await api.get('/productos');
-    return response.data;
+export const ProductosService = {
+  // Obtener todos los productos
+  async getProductos() {
+    try {
+      const response = await api.get('/productos');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener productos:', error);
+      throw error;
+    }
   },
 
-  getProductoById: async (id) => {
-    const response = await api.get(`/productos/${id}`);
-    return response.data;
+  // Obtener un producto por ID
+  async getProductoById(id) {
+    try {
+      const response = await api.get(`/productos/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al obtener el producto con ID ${id}:`, error);
+      throw error;
+    }
   },
 
-  createProducto: async (productoData) => {
-    const response = await api.post('/productos', productoData);
-    return response.data;
+  // Crear un nuevo producto
+  async createProducto(productoData) {
+    try {
+      const response = await api.post('/productos', productoData);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+      throw error;
+    }
   },
 
-  updateProducto: async (id, productoData) => {
-    const response = await api.put(`/productos/${id}`, productoData);
-    return response.data;
+  // Actualizar un producto existente
+  async updateProducto(id, productoData) {
+    try {
+      const response = await api.put(`/productos/${id}`, productoData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al actualizar el producto con ID ${id}:`, error);
+      throw error;
+    }
   },
 
-  deleteProducto: async (id) => {
-    const response = await api.delete(`/productos/${id}`);
-    return response.data;
+  // Eliminar un producto
+  async deleteProducto(id) {
+    try {
+      await api.delete(`/productos/${id}`);
+      return { success: true };
+    } catch (error) {
+      console.error(`Error al eliminar el producto con ID ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  // Obtener productos por categoría
+  async getProductosPorCategoria(categoriaId) {
+    try {
+      const response = await api.get(`/productos?categoriaId=${categoriaId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener productos por categoría:', error);
+      throw error;
+    }
+  },
+
+  // Obtener productos por rango de precios
+  async getProductosFiltradosPorPrecio(min, max) {
+    try {
+      const response = await api.get(`/productos?precioMin=${min}&precioMax=${max}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al filtrar productos por precio:', error);
+      throw error;
+    }
   },
 };
