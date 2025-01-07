@@ -13,7 +13,7 @@ export const ProductosService = {
       });
   
       if (productos.total === 0) {
-        return { productos: [], message: "No se encontraron productos." };
+        return { productos: [], message: "No se encontraron productos con esa categoría." };
       }
   
       return productos;
