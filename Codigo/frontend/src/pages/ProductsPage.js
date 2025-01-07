@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ProductosService } from '../api/api.productos';
 import { CategoriasService } from '../api/api.categorias';
+import { toast } from "react-toastify"; // Para mostrar notificaciones
+import { useCart } from "../context/CartContext"; // Contexto del carrito
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);
@@ -9,6 +11,8 @@ const ProductosPage = () => {
   const [precioMin, setPrecioMin] = useState('');
   const [precioMax, setPrecioMax] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const { addToCart } = useCart();
 
   // Cargar productos y categorías
   useEffect(() => {
@@ -22,6 +26,7 @@ const ProductosPage = () => {
         setCategorias(categoriasData || []);
       } catch (error) {
         console.error('Error al cargar datos:', error);
+        toast.error("Error al cargar productos o categorías.");
       } finally {
         setLoading(false);
       }
@@ -42,6 +47,7 @@ const ProductosPage = () => {
       setProductos(productosFiltrados.productos || []);
     } catch (error) {
       console.error('Error al filtrar por categoría:', error);
+      toast.error("Error al filtrar productos por categoría.");
     } finally {
       setLoading(false);
     }
@@ -55,8 +61,20 @@ const ProductosPage = () => {
       setProductos(productosFiltrados.productos || []);
     } catch (error) {
       console.error('Error al filtrar por precio:', error);
+      toast.error("Error al filtrar productos por precio.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Agregar producto al carrito
+  const agregarAlCarrito = (producto) => {
+    try {
+      addToCart(producto);
+      toast.success(`${producto.nombre} agregado al carrito.`);
+    } catch (error) {
+      console.error("Error al agregar producto al carrito:", error);
+      toast.error("Error al agregar producto al carrito.");
     }
   };
 
@@ -121,24 +139,23 @@ const ProductosPage = () => {
             {productos.map((producto) => (
               <div
                 key={producto.id}
-                className="flex flex-col p-4 bg-gray-800 rounded-lg shadow hover:shadow-lg transition"
+                className="p-4 bg-gray-800 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
               >
                 <img
                   src={producto.imagen || 'https://via.placeholder.com/150'}
                   alt={producto.nombre}
-                  className="w-full h-40 rounded-md object-cover mb-4"
+                  className="w-full h-48 rounded-md object-cover mb-4"
                 />
                 <h2 className="font-bold text-lg text-center">
                   <a href={`/productos/${producto.id}`} className="hover:text-blue-400">
                     {producto.nombre}
                   </a>
                 </h2>
-                <p className="text-gray-400 text-center">{producto.descripcion}</p>
-                <p className="font-bold text-blue-400 text-center">{`$${producto.precio}`}</p>
-                {/* Botón Agregar al Carrito */}
+                <p className="text-gray-400 text-center mb-2">{producto.descripcion}</p>
+                <p className="font-bold text-blue-400 mb-4">{`$${producto.precio}`}</p>
                 <button
-                  className="flex items-center justify-center bg-blue-500 text-white py-2 mt-4 rounded hover:bg-blue-600"
-                  onClick={() => alert('Producto agregado al carrito!')}
+                  onClick={() => agregarAlCarrito(producto)}
+                  className="mt-auto bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 flex items-center justify-center"
                 >
                   <span className="mr-2">Agregar al Carrito</span>
                   <svg

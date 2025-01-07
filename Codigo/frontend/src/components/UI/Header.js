@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { FaUserCircle, FaShoppingCart, FaSearch } from "react-icons/fa";
+import CartSidebar from "./CartSidebar";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
@@ -19,6 +21,10 @@ const Header = () => {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const toggleCart = () => {
+    setIsCartOpen((prev) => !prev);
   };
 
   const handleLogout = () => {
@@ -56,7 +62,7 @@ const Header = () => {
             <a href="/contacto" className="hover:text-blue-400 transition">
               Contacto
             </a>
-            <a href="/contacto" className="hover:text-blue-400 transition">
+            <a href="/nosotros" className="hover:text-blue-400 transition">
               Nosotros
             </a>
           </nav>
@@ -73,7 +79,7 @@ const Header = () => {
             />
             <FaSearch className="absolute right-3 top-3 text-gray-500" />
           </div>
-          
+
           {/* Botones de login/registro */}
           {usuario ? (
             <div className="relative">
@@ -108,11 +114,14 @@ const Header = () => {
             </a>
           )}
 
-          <a href="/cart" className="hover:text-blue-300">
+          <button onClick={toggleCart} className="hover:text-blue-300">
             <FaShoppingCart size={24} />
-          </a>
+          </button>
         </div>
       </div>
+
+      {/* Cart Sidebar */}
+      <CartSidebar isOpen={isCartOpen} onClose={toggleCart} />
     </header>
   );
 };
