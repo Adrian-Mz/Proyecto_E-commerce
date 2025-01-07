@@ -63,8 +63,15 @@ export const pedidosService = {
     await this.reducirStock(carritoProductos);
 
     // Vaciar el carrito
-    const carritoLimpio = await carritoData.clearCarrito(usuarioId);
-    if (!carritoLimpio) {
+    // En pedidosService
+    const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
+    if (!carrito) {
+      throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
+    }
+
+    // Vaciar el carrito usando el carrito ID
+    const carritoLimpio = await carritoData.clearCarrito(carrito.id);
+    if (!carritoLimpio || carritoLimpio.count === 0) {
       throw new Error('Hubo un problema al vaciar el carrito. Intenta nuevamente.');
     }
 

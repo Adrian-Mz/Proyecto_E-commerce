@@ -9,17 +9,20 @@ export const CarritoService = {
       throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
     }
 
+    // Validar que el carrito tenga productos inicializados
+    const productos = carrito.productos || [];
+
     // Calcular el total de todos los productos en el carrito
-    const total = carrito.productos.reduce((sum, item) => {
+    const total = productos.reduce((sum, item) => {
       return sum + item.cantidad * parseFloat(item.precio_unitario);
     }, 0);
 
     // Devolver el carrito junto con el total
-    return { ...carrito, total };
+    return { ...carrito, productos, total };
   },
 
-  // Agregar productos al carrito de un usuario
-  async addProductsToCart(usuarioId, productos) {
+   // Agregar productos al carrito de un usuario
+   async addProductsToCart(usuarioId, productos) {
     if (!Array.isArray(productos) || productos.length === 0) {
       throw new Error('Debes enviar un array de productos.');
     }
@@ -27,6 +30,7 @@ export const CarritoService = {
     let carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito) {
       carrito = await carritoData.createCarrito(usuarioId);
+      carrito.productos = []; // Inicializar productos como un array vacío
     }
 
     for (const { productoId, cantidad } of productos) {
@@ -41,7 +45,10 @@ export const CarritoService = {
         );
       }
 
-      const productoEnCarrito = carrito.productos.find((p) => p.productoId === productoId);
+      // Validar que productos esté inicializado como un array
+      const productosEnCarrito = carrito.productos || [];
+      const productoEnCarrito = productosEnCarrito.find((p) => p.productoId === productoId);
+
       if (productoEnCarrito) {
         const nuevaCantidad = productoEnCarrito.cantidad + cantidad;
 
