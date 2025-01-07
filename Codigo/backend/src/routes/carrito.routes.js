@@ -26,11 +26,12 @@ router.get('/:usuarioId', validarCarrito.obtenerCarrito, handleValidation, async
 });
 
 // Añadir producto al carrito
-router.post('/:usuarioId', validarCarrito.agregarProducto, handleValidation, async (req, res) => {
+router.post('/:usuarioId', async (req, res) => {
+  const usuarioId = parseInt(req.params.usuarioId, 10);
+  const productos = req.body;
+
   try {
-    const usuarioId = parseInt(req.params.usuarioId, 10);
-    const { productoId, cantidad } = req.body;
-    const carrito = await CarritoService.addProductToCart(usuarioId, productoId, cantidad);
+    const carrito = await CarritoService.addProductsToCart(usuarioId, productos);
     res.status(201).json(carrito);
   } catch (error) {
     res.status(400).json({ error: error.message });
