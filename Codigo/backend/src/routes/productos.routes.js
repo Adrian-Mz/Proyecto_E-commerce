@@ -21,14 +21,21 @@ const handleValidation = (req, res, next) => {
 // Ruta para obtener todos los productos
 router.get('/', async (req, res) => {
   try {
-    // Llama al servicio para obtener la lista de todos los productos.
-    const productos = await ProductosService.getAllProductos();
-    res.status(200).json(productos); 
+    const { search, categoriaId, page, pageSize } = req.query;
+
+    const productos = await ProductosService.getAllProductos({
+      search,
+      categoriaId: categoriaId ? parseInt(categoriaId, 10) : null,
+      page: page ? parseInt(page, 10) : 1,
+      pageSize: pageSize ? parseInt(pageSize, 10) : 10,
+    });
+
+    res.status(200).json(productos);
   } catch (error) {
-    // Maneja errores devolviendo un código 500 (error interno del servidor).
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Ruta para obtener un producto específico por su ID
 router.get('/:id', async (req, res) => {

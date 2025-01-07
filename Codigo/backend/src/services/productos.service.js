@@ -2,14 +2,26 @@ import { ProductosData } from '../data/productos.data.js';
 
 export const ProductosService = {
   // Obtener todos los productos
-  async getAllProductos() {
+  async getAllProductos(params) {
     try {
-      const productos = await ProductosData.getAllProductos();
-      return productos; // Devuelve los productos al controlador (rutas)
+      const { search, categoriaId, page, pageSize } = params;
+      const productos = await ProductosData.getAllProductos({
+        search,
+        categoriaId,
+        page: parseInt(page, 10) || 1,
+        pageSize: parseInt(pageSize, 10) || 10,
+      });
+  
+      if (productos.total === 0) {
+        return { productos: [], message: "No se encontraron productos." };
+      }
+  
+      return productos;
     } catch (error) {
       throw new Error(`Error al obtener los productos: ${error.message}`);
     }
   },
+  
 
   // Obtener un producto por ID
   async getProductoById(id) {
