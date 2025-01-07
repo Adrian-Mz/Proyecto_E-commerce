@@ -41,7 +41,7 @@ export const pedidosService = {
 
     // Calcular el costo total del pedido
     const totalProductos = this.calcularTotal(carritoProductos);
-    const costoEnvio = parseFloat(metodoEnvio.costo);
+    const costoEnvio = metodoEnvio?.costo ? parseFloat(metodoEnvio.costo) : 0;
     const total = totalProductos + costoEnvio;
 
     // Crear el pedido
@@ -59,11 +59,16 @@ export const pedidosService = {
       monto: total,
     });
 
-    // Reducir el stock y limpiar el carrito
+    // Reducir el stock
     await this.reducirStock(carritoProductos);
-    await carritoData.clearCarrito(usuarioId);
 
-    return { mensaje: 'Pedido y pago registrados con éxito', pedido, total };
+    // Vaciar el carrito
+    const carritoLimpio = await carritoData.clearCarrito(usuarioId);
+    if (!carritoLimpio) {
+      throw new Error('Hubo un problema al vaciar el carrito. Intenta nuevamente.');
+    }
+
+    return { mensaje: 'Pedido y pago registrados con éxito. Carrito vaciado.', pedido, total };
   },
 
   // Obtener un pedido específico por usuario
@@ -79,7 +84,6 @@ export const pedidosService = {
 
     return pedido;
   },
-  
 
   // Obtener productos desde el carrito
   async obtenerProductosDesdeCarrito(usuarioId) {
