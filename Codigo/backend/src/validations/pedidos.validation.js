@@ -10,17 +10,21 @@ export const validarCrearPedido = [
   body('metodoEnvioId')
     .notEmpty().withMessage('El método de envío es obligatorio.')
     .isInt().withMessage('El método de envío debe ser un ID válido.'),
-  body('productos')
-    .optional()
-    .isArray({ min: 1 }).withMessage('Debe incluir al menos un producto.')
-    .custom((productos) => {
-      productos.forEach((p) => {
-        if (!p.productoId || !p.cantidad || !p.precio_unitario) {
-          throw new Error('Cada producto debe tener productoId, cantidad y precio_unitario.');
-        }
-      });
-      return true;
-    }),
+  body('detallesPago.numeroTarjeta')
+    .notEmpty().withMessage('El número de tarjeta es obligatorio.')
+    .isLength({ min: 16, max: 16 }).withMessage('El número de tarjeta debe tener 16 dígitos.'),
+  body('detallesPago.nombreTitular')
+    .notEmpty().withMessage('El nombre del titular es obligatorio.')
+    .isString().withMessage('El nombre del titular debe ser texto.'),
+  body('detallesPago.fechaExpiracion')
+    .notEmpty().withMessage('La fecha de expiración es obligatoria.')
+    .matches(/^(0[1-9]|1[0-2])\/\d{2}$/).withMessage('La fecha de expiración debe estar en el formato MM/AA.'),
+  body('detallesPago.correoContacto')
+    .notEmpty().withMessage('El correo de contacto es obligatorio.')
+    .isEmail().withMessage('Debe proporcionar un correo válido.'),
+  body('detallesPago.telefonoContacto')
+    .notEmpty().withMessage('El teléfono de contacto es obligatorio.')
+    .isString().withMessage('El teléfono debe ser texto.'),
 ];
 
 export const validarActualizarEstado = [
@@ -28,4 +32,3 @@ export const validarActualizarEstado = [
     .notEmpty().withMessage('El nuevo estado es obligatorio.')
     .isInt().withMessage('El ID del estado debe ser un número.'),
 ];
-

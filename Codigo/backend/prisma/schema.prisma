@@ -34,6 +34,32 @@ model productos {
   pedidoProductos    pedido_productos[]
 }
 
+model metodo_pago {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String
+
+  pedidos     pedidos[]
+  pagos       pagos[] // Relación con el modelo pagos
+}
+
+model pagos {
+  id              Int       @id @default(autoincrement())
+  pedidoId        Int
+  metodoPagoId    Int
+  numeroTarjeta   String?   // Almacenar solo los últimos 4 dígitos
+  nombreTitular   String
+  fechaExpiracion String
+  correoContacto  String
+  telefonoContacto String
+  monto           Decimal   @default(0.0)
+  fechaPago       DateTime  @default(now())
+
+  pedido          pedidos   @relation(fields: [pedidoId], references: [id])
+  metodoPago      metodo_pago @relation(fields: [metodoPagoId], references: [id])
+}
+
+
 model categorias {
   id          Int      @id @default(autoincrement())
   nombre      String
@@ -96,8 +122,10 @@ model pedidos {
   metodoEnvio        metodo_envio @relation(fields: [metodoEnvioId], references: [id])
   estado             estado @relation(fields: [estadoId], references: [id])
   devoluciones       devoluciones[]
-  productos          pedido_productos[] // Relación con productos a través de pedido_productos
+  productos          pedido_productos[]
+  pagos              pagos[]
 }
+
 
 model devoluciones {
   id              Int      @id @default(autoincrement())
@@ -137,14 +165,6 @@ model carrito_productos {
 
   carrito         carrito @relation(fields: [carritoId], references: [id])
   producto        productos @relation(fields: [productoId], references: [id])
-}
-
-model metodo_pago {
-  id          Int      @id @default(autoincrement())
-  nombre      String
-  descripcion String
-
-  pedidos     pedidos[]
 }
 
 model metodo_envio {

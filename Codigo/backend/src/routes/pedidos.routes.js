@@ -17,7 +17,7 @@ const handleValidationErrors = (req, res, next) => {
 // Crear un nuevo pedido
 router.post('/:usuarioId', validarCrearPedido, handleValidationErrors, async (req, res) => {
   const usuarioId = parseInt(req.params.usuarioId, 10);
-  const { direccionEnvio, metodoPagoId, metodoEnvioId, productos } = req.body;
+  const { direccionEnvio, metodoPagoId, metodoEnvioId, detallesPago } = req.body;
 
   try {
     const resultado = await pedidosService.crearPedido(
@@ -25,7 +25,7 @@ router.post('/:usuarioId', validarCrearPedido, handleValidationErrors, async (re
       direccionEnvio,
       metodoPagoId,
       metodoEnvioId,
-      productos
+      detallesPago
     );
     res.status(201).json(resultado);
   } catch (error) {

@@ -21,27 +21,46 @@ export const CarritoService = {
 
     // Añadir producto al carrito
     async addProductToCart(usuarioId, productoId, cantidad) {
-        // Verificar que el producto existe
-        const producto = await ProductosData.getProductoById(productoId);
-        if (!producto) {
-            throw new Error(`El producto con ID ${productoId} no existe`);
+      const producto = await ProductosData.getProductoById(productoId);
+      if (!producto) {
+        throw new Error(`El producto con ID ${productoId} no existe.`);
+      }
+    
+      if (producto.stock < cantidad) {
+        throw new Error(`Stock insuficiente. Solo quedan ${producto.stock} unidades disponibles.`);
+      }
+    
+      let carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
+      if (!carrito) {
+        carrito = await carritoData.createCarrito(usuarioId);
+      }
+    
+      if (!carrito.productos) {
+        carrito.productos = []; // Asegurarse de que carrito.productos esté inicializado como un array
+      }
+    
+      const productoEnCarrito = carrito.productos.find((p) => p.productoId === productoId);
+      if (productoEnCarrito) {
+        const nuevaCantidad = productoEnCarrito.cantidad + cantidad;
+    
+        if (producto.stock < nuevaCantidad) {
+          throw new Error(
+            `Stock insuficiente. Solo quedan ${producto.stock} unidades disponibles.`
+          );
         }
-
-        // Validar stock
-        if (producto.stock < cantidad) {
-            throw new Error(`Stock insuficiente. Solo quedan ${producto.stock} unidades disponibles.`);
-        }
-
-        // Verificar si el usuario ya tiene un carrito
-        let carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
-        if (!carrito) {
-            carrito = await carritoData.createCarrito(usuarioId);
-        }
-
-        // Agregar el producto al carrito
+    
+        return await carritoData.updateProductoInCarrito(
+          productoEnCarrito.id,
+          nuevaCantidad,
+          parseFloat(producto.precio)
+        );
+      } else {
         const precio_unitario = parseFloat(producto.precio);
         return await carritoData.addProductoCarrito(carrito.id, productoId, cantidad, precio_unitario);
+      }
     },
+    
+
 
     // Actualizar cantidad de un producto en el carrito
     async updateProductInCart(usuarioId, productoId, cantidad) {
@@ -49,7 +68,6 @@ export const CarritoService = {
       productoId = parseInt(productoId, 10);
       cantidad = parseInt(cantidad, 10);
     
-      // Verificar si los parámetros son válidos
       if (isNaN(usuarioId) || isNaN(productoId) || isNaN(cantidad)) {
         throw new Error('Todos los parámetros deben ser números válidos.');
       }
@@ -57,19 +75,16 @@ export const CarritoService = {
         throw new Error('La cantidad debe ser mayor a 0.');
       }
     
-      // Obtener el carrito del usuario
       const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
-      if (!carrito) {
-        throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
+      if (!carrito || !carrito.productos) {
+        throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}.`);
       }
     
-      // Verificar si el producto existe en el carrito
       const productoEnCarrito = carrito.productos.find((p) => p.productoId === productoId);
       if (!productoEnCarrito) {
         throw new Error(`El producto con ID ${productoId} no está en el carrito.`);
       }
     
-      // Verificar stock actual del producto
       const producto = await ProductosData.getProductoById(productoId);
       if (!producto) {
         throw new Error(`El producto con ID ${productoId} no existe.`);
@@ -78,31 +93,30 @@ export const CarritoService = {
         throw new Error(`Stock insuficiente. Solo quedan ${producto.stock} unidades disponibles.`);
       }
     
-      // Actualizar la cantidad y el precio actual del producto
       const precio_unitario = parseFloat(producto.precio);
       await carritoData.updateProductoInCarrito(productoEnCarrito.id, cantidad, precio_unitario);
     
-      // Calcular el total actualizado
       const totalCarrito = await carritoData.calcularTotalCarrito(carrito.id);
       return { mensaje: 'Cantidad actualizada correctamente', total: totalCarrito };
-
     },
+    
       
       
     // Eliminar producto del carrito
     async removeProductFromCart(userId, productId) {
-        const cart = await carritoData.getCarritoByUsuarioId(userId);
-        if (!cart) {
-        throw new Error(`No se encontró un carrito para el usuario con ID ${userId}`);
-        }
-
-        const productInCart = cart.productos.find((p) => p.productoId === productId);
-        if (!productInCart) {
+      const carrito = await carritoData.getCarritoByUsuarioId(userId);
+      if (!carrito || !carrito.productos) {
+        throw new Error(`No se encontró un carrito para el usuario con ID ${userId}.`);
+      }
+    
+      const productInCart = carrito.productos.find((p) => p.productoId === productId);
+      if (!productInCart) {
         throw new Error(`El producto con ID ${productId} no está en el carrito.`);
-        }
-
-        return await carritoData.removeProductoFromCarrito(productInCart.id);
+      }
+    
+      return await carritoData.removeProductoFromCarrito(productInCart.id);
     },
+    
 
     // Vaciar el carrito
     async clearCart(userId) {
