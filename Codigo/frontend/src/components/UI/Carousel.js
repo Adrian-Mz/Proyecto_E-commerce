@@ -15,7 +15,7 @@ import MotherBoard from "../../assets/HomePage/MotherBoard.jpg";
 export const CarouselWithCaptionsExample = () => {
   return (
     <div className="relative w-full bg-gray-900">
-      <CCarousel controls indicators className="h-[500px]">
+      <CCarousel controls indicators transition="crossfade" className="h-[500px]">
         <CCarouselItem className="h-full">
           <CImage
             className="d-block w-full h-full object-cover"

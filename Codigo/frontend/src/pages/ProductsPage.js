@@ -147,7 +147,7 @@ const ProductosPage = () => {
                   className="w-full h-48 rounded-md object-cover mb-4"
                 />
                 <h2 className="font-bold text-lg text-center">
-                  <a href={`/productos/${producto.id}`} className="hover:text-blue-400">
+                  <a href={`/productos/${producto.id}`} className="hover:text-blue-400 no-underline">
                     {producto.nombre}
                   </a>
                 </h2>

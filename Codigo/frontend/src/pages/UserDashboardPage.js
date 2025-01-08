@@ -16,7 +16,7 @@ const UserDashboardPage = () => {
           <NavLink
             to="/dashboard/profile"
             className={({ isActive }) =>
-              `block py-3 px-6 text-gray-200 hover:bg-gray-700 transition ${
+              `block py-3 px-6 text-gray-200 hover:bg-gray-700 transition no-underline ${
                 isActive ? "bg-gray-700 font-bold" : ""
               }`
             }
@@ -26,7 +26,7 @@ const UserDashboardPage = () => {
           <NavLink
             to="/dashboard/settings"
             className={({ isActive }) =>
-              `block py-3 px-6 text-gray-200 hover:bg-gray-700 transition ${
+              `block py-3 px-6 text-gray-200 hover:bg-gray-700 transition no-underline ${
                 isActive ? "bg-gray-700 font-bold" : ""
               }`
             }

@@ -34,7 +34,7 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full bg-gray-900 text-gray-100 shadow-sm">
+    <header className="w-full bg-gray-900 text-gray-100 shadow-sm z-50 relative">
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo */}
         <a href="/home" className="flex items-center mb-4 md:mb-0">
@@ -53,16 +53,28 @@ const Header = () => {
         {/* Navegación */}
         <div className="flex-1 flex items-center justify-center space-x-8">
           <nav className="flex space-x-6">
-            <a href="/home" className="hover:text-blue-400 transition">
+            <a
+              href="/home"
+              className="text-gray-100 hover:text-blue-400 transition no-underline"
+            >
               Inicio
             </a>
-            <a href="/productos" className="hover:text-blue-400 transition">
+            <a
+              href="/productos"
+              className="text-gray-100 hover:text-blue-400 transition no-underline"
+            >
               Productos
             </a>
-            <a href="/contacto" className="hover:text-blue-400 transition">
+            <a
+              href="/contacto"
+              className="text-gray-100 hover:text-blue-400 transition no-underline"
+            >
               Contacto
             </a>
-            <a href="/nosotros" className="hover:text-blue-400 transition">
+            <a
+              href="/nosotros"
+              className="text-gray-100 hover:text-blue-400 transition no-underline"
+            >
               Nosotros
             </a>
           </nav>
@@ -84,17 +96,20 @@ const Header = () => {
           {usuario ? (
             <div className="relative">
               <button onClick={toggleMenu} className="focus:outline-none">
-                <FaUserCircle size={24} className="text-gray-200 hover:text-blue-400" />
+                <FaUserCircle
+                  size={24}
+                  className="text-gray-200 hover:text-blue-400"
+                />
               </button>
               {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                   <span className="block px-4 py-2 text-gray-700">
                     Hola, <strong>{usuario.nombre}</strong>
                   </span>
 
                   <a
                     href="/dashboard"
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 no-underline"
                   >
                     Configuración
                   </a>
@@ -109,7 +124,10 @@ const Header = () => {
               )}
             </div>
           ) : (
-            <a href="/login" className="hover:text-blue-400 transition">
+            <a
+              href="/login"
+              className="text-gray-100 hover:text-blue-400 transition"
+            >
               Login
             </a>
           )}
