@@ -105,6 +105,35 @@ export const pedidosService = {
     }));
   },
 
+  // Eliminar un pedido
+  async eliminarPedido(pedidoId) {
+    // Verificar si el pedido existe
+    const pedido = await prisma.pedidos.findUnique({
+      where: { id: pedidoId },
+    });
+
+    if (!pedido) {
+      throw new Error(`El pedido con ID ${pedidoId} no existe.`);
+    }
+
+    // Eliminar registros relacionados en la tabla Pedidos_Productos
+    await prisma.pedido_productos.deleteMany({
+      where: { pedidoId },
+    });
+
+    // Eliminar registros relacionados en la tabla Pagos
+    await prisma.pagos.deleteMany({
+      where: { pedidoId },
+    });
+
+    // Eliminar el pedido
+    await prisma.pedidos.delete({
+      where: { id: pedidoId },
+    });
+
+    return { mensaje: `El pedido con ID ${pedidoId} ha sido eliminado exitosamente.` };
+  },
+
   // Validar stock
   async validarStock(carritoProductos) {
     for (const item of carritoProductos) {
@@ -191,4 +220,52 @@ export const pedidosService = {
       data: { estadoId: nuevoEstadoId },
     });
   },
+
+  // Obtener estado del pedido por ID
+  async obtenerEstadoPedido(pedidoId) {
+    const pedido = await prisma.pedidos.findUnique({
+      where: { id: pedidoId },
+      include: {
+        estado: true,
+        metodoEnvio: true, // Incluye detalles del método de envío
+      },
+    });
+
+    if (!pedido) {
+      throw new Error(`No se encontró un pedido con el ID ${pedidoId}.`);
+    }
+
+    // Calcula la fecha estimada de entrega
+    const fechaEstimadaEntrega = pedido.metodoEnvio
+      ? calcularFechaEntrega(pedido.fechaPedido, pedido.metodoEnvio.tiempoEstimado)
+      : null;
+
+    return {
+      id: pedido.id,
+      estado: pedido.estado.nombre,
+      descripcionEstado: pedido.estado.descripcion,
+      fechaPedido: pedido.fechaPedido,
+      fechaEstimadaEntrega,
+      total: pedido.total,
+    };
+  },
 };
+
+  // Función para calcular la fecha estimada de entrega
+  function calcularFechaEntrega(fechaPedido, tiempoEstimado) {
+    const rangoDias = tiempoEstimado.match(/\d+/g); // Extrae los números del rango
+    if (!rangoDias || rangoDias.length === 0) {
+      return null;
+    }
+
+    const diasMinimos = parseInt(rangoDias[0], 10);
+    const diasMaximos = rangoDias.length > 1 ? parseInt(rangoDias[1], 10) : diasMinimos;
+
+    // Por simplicidad, usamos el rango máximo para la estimación
+    const fecha = new Date(fechaPedido);
+    fecha.setDate(fecha.getDate() + diasMaximos);
+
+    return fecha;
+  }
+
+

@@ -55,7 +55,7 @@ model pagos {
   monto           Decimal   @default(0.0)
   fechaPago       DateTime  @default(now())
 
-  pedido          pedidos   @relation(fields: [pedidoId], references: [id])
+  pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   metodoPago      metodo_pago @relation(fields: [metodoPagoId], references: [id])
 }
 
@@ -96,14 +96,14 @@ model usuarios {
 }
 
 model pedido_productos {
-  id              Int                @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   pedidoId        Int
   productoId      Int
   cantidad        Int
-  precio_unitario Decimal            @default(0.0)
+  precio_unitario Decimal  @default(0.0)
 
-  pedido          pedidos            @relation(fields: [pedidoId], references: [id])
-  producto        productos          @relation(fields: [productoId], references: [id])
+  pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto        productos @relation(fields: [productoId], references: [id])
 }
 
 model pedidos {
@@ -135,8 +135,8 @@ model devoluciones {
   fechaDevolucion DateTime @default(now())
   fechaResolucion DateTime?
 
-  pedido          pedidos @relation(fields: [pedidoId], references: [id])
-  estado          estado @relation(fields: [estadoId], references: [id])
+  pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  estado          estado    @relation(fields: [estadoId], references: [id])
 }
 
 model estado {

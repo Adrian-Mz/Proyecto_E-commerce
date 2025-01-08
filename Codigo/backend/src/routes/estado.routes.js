@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // Actualizar el estado de un pedido
-router.put('/:pedidoId/estado', async (req, res) => {
+router.put('/pedidos/:pedidoId/estado', async (req, res) => {
   const { pedidoId } = req.params;
   const { nuevoEstadoId } = req.body;
 
@@ -23,10 +23,12 @@ router.put('/:pedidoId/estado', async (req, res) => {
       parseInt(pedidoId, 10),
       parseInt(nuevoEstadoId, 10)
     );
-    res.status(200).json(pedidoActualizado);
+    res.status(200).json({ mensaje: "Estado actualizado correctamente.", pedido: pedidoActualizado });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
+
+
 
 export default router;
