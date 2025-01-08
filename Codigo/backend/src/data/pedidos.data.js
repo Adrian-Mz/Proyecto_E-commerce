@@ -10,7 +10,7 @@ export const pedidosData = {
         metodoPago: { connect: { id: metodoPagoId } },
         metodoEnvio: { connect: { id: metodoEnvioId } },
         direccionEnvio,
-        estado: { connect: { id: 1 } },
+        estado: { connect: { id: 1 } }, // Estado inicial: "Pendiente"
         total: productos.reduce((sum, { cantidad, precio_unitario }) => sum + cantidad * precio_unitario, 0),
         fechaActualizacion: new Date(),
         productos: {
@@ -47,5 +47,27 @@ export const pedidosData = {
 
   async getMetodosEnvio() {
     return prisma.metodo_envio.findMany();
+  },
+
+  // **Nuevo método: Actualizar estado del pedido**
+  async actualizarEstadoPedido(pedidoId, nuevoEstadoId) {
+    return prisma.pedidos.update({
+      where: { id: pedidoId },
+      data: { estadoId: nuevoEstadoId, fechaActualizacion: new Date() },
+    });
+  },
+
+  // **Nuevo método: Verificar si un pedido está en estado "Entregado"**
+  async verificarEstadoEntregado(pedidoId) {
+    const pedido = await prisma.pedidos.findUnique({
+      where: { id: pedidoId },
+      select: { estadoId: true },
+    });
+
+    if (!pedido) {
+      throw new Error(`No se encontró un pedido con ID ${pedidoId}.`);
+    }
+
+    return pedido.estadoId === 4; // Estado "Entregado"
   },
 };
