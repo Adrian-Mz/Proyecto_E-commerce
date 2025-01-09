@@ -8,6 +8,20 @@ export const UsuariosData = {
     return await prisma.usuarios.findMany();
   },
 
+  // Obtener un rol por su nombre
+  async getRolPorNombre(nombreRol) {
+    return await prisma.roles.findUnique({
+      where: { nombre: nombreRol },
+    });
+  },
+
+  // Obtener un rol por su ID
+  async getRolPorId(id) {
+    return await prisma.roles.findUnique({
+      where: { id },
+    });
+  },
+
   // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
     if (!Number.isInteger(id)) {

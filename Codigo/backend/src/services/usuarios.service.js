@@ -22,7 +22,7 @@ export const UsuariosService = {
 
   // Crea un nuevo usuario con validaciones y encriptación de contraseña
   async createUsuario(data) {
-    const { nombre, correo, password, fechaNacimiento } = data;
+    const { nombre, correo, apellido, password, direccion, telefono, pais, fechaNacimiento } = data;
 
     if (!nombre || !correo || !password) {
       throw new Error('Todos los campos obligatorios deben ser proporcionados.');
@@ -33,19 +33,30 @@ export const UsuariosService = {
       throw new Error('El correo ya está registrado.');
     }
 
+    // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-    data.password = hashedPassword;
 
-    // Validación nativa para fecha de nacimiento
-    if (fechaNacimiento) {
-      const fecha = new Date(fechaNacimiento);
-      if (isNaN(fecha.getTime())) {
-        throw new Error('La fecha de nacimiento no es válida.');
-      }
-      data.fechaNacimiento = fecha;
+    // Obtener el rol por defecto (usuario)
+    const rolUsuario = await UsuariosData.getRolPorId(2); // Nuevo método en UsuariosData
+    if (!rolUsuario) {
+      throw new Error('El rol por defecto no está configurado en la base de datos.');
     }
 
-    return await UsuariosData.createUsuario(data);
+    // Preparar los datos del usuario
+    const nuevoUsuarioData = {
+      nombre,
+      apellido,
+      correo,
+      password: hashedPassword,
+      direccion,
+      telefono,
+      pais,
+      fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+      rolId: rolUsuario.id, // Asignar el rol automáticamente
+    };
+
+    // Crear el usuario
+    return await UsuariosData.createUsuario(nuevoUsuarioData);
   },
 
   // Actualiza los datos de un usuario existente
