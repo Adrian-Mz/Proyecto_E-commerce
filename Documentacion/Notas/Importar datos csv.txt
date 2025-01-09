@@ -1,0 +1,7 @@
+\encoding UTF8
+\COPY productos FROM 'C:/Users/Saeteros/Desktop/Proyecto_E-commerce/Documentacion/Notas/Complete_Dataset_With_Promotion.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY categorias FROM 'C:/Users/Saeteros/Downloads/categorias.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY metodo_envio FROM 'C:/Users/Saeteros/Downloads/metodo_envio.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY metodo_pago FROM 'C:/Users/Saeteros/Downloads/metodo_pago.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY promociones FROM 'C:/Users/Saeteros/Downloads/promociones.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY productos FROM 'C:/Users/Saeteros/Downloads/productos.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';

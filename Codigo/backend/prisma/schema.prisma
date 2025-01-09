@@ -59,7 +59,6 @@ model pagos {
   metodoPago      metodo_pago @relation(fields: [metodoPagoId], references: [id])
 }
 
-
 model categorias {
   id          Int      @id @default(autoincrement())
   nombre      String
@@ -79,20 +78,45 @@ model promociones {
   productos   productos[]
 }
 
+model roles {
+  id       Int       @id @default(autoincrement())
+  nombre   String    @unique
+  usuarios usuarios[]
+
+  @@map("roles")
+}
+
 model usuarios {
-  id              Int      @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   nombre          String
   apellido        String
-  correo          String   @unique
+  correo          String    @unique
   password        String
   direccion       String
   telefono        String
   pais            String
   fechaNacimiento DateTime?
-  fechaRegistro   DateTime @default(now())
+  fechaRegistro   DateTime  @default(now())
+  rolId           Int       // Relación con roles
 
+  rol             roles     @relation(fields: [rolId], references: [id])
   pedidos         pedidos[]
   carrito         carrito[]
+  auditoria       auditoria[] //Relación Inversa con auditoría
+
+  @@map("usuarios")
+}
+
+model auditoria {
+  id             Int      @id @default(autoincrement())
+  usuarioId      Int?
+  tabla_afectada String
+  accion         String
+  registro       String
+  descripcion_cambio String?
+  fecha_hora     DateTime @default(now())
+
+  usuario        usuarios? @relation(fields: [usuarioId], references: [id])
 }
 
 model pedido_productos {
