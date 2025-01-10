@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import InputField from "./InputField";
 import Button from "./Button";
-import { UsuariosService } from "../../services/usuarios.services";
 import countries from "../../utils/countries";
+import { UsuariosAPI } from "../../api/api.usuarios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -16,104 +19,78 @@ const RegisterForm = () => {
     fechaNacimiento: "",
   });
 
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [validationErrors, setValidationErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate(); // Para redirigir al login
 
   // Manejar cambios en los campos
   const handleChange = (e) => {
     const { id, value } = e.target;
+
+    // Eliminar errores específicos al escribir en el campo
+    setValidationErrors((prevErrors) => ({
+      ...prevErrors,
+      [id]: undefined,
+    }));
+
     setFormData((prevData) => ({ ...prevData, [id]: value }));
   };
 
-  const validarFormulario = () => {
-    const { nombre, apellido, correo, password, direccion, telefono, pais, fechaNacimiento } = formData;
-
-    // Validar campos vacíos
-    if (!nombre || !apellido || !correo || !password || !direccion || !telefono || !pais || !fechaNacimiento) {
-      setMessage({ type: "error", text: "Todos los campos son obligatorios." });
-      return false;
-    }
-
-    // Validar longitud de la contraseña
-    if (password.length < 8) {
-      setMessage({ type: "error", text: "La contraseña debe tener al menos 8 caracteres." });
-      return false;
-    }
-
-    // Validar que el usuario tenga más de 18 años
-    const fechaNacimientoDate = new Date(fechaNacimiento);
-    const hoy = new Date();
-    const edad = hoy.getFullYear() - fechaNacimientoDate.getFullYear();
-    const diferenciaMes = hoy.getMonth() - fechaNacimientoDate.getMonth();
-    const diferenciaDia = hoy.getDate() - fechaNacimientoDate.getDate();
-
-    if (edad < 18 || (edad === 18 && (diferenciaMes < 0 || (diferenciaMes === 0 && diferenciaDia < 0)))) {
-      setMessage({ type: "error", text: "Debes tener al menos 18 años para registrarte." });
-      return false;
-    }
-
-    return true;
+  const handlePasswordToggle = () => {
+    setShowPassword(!showPassword);
   };
 
-// Envío de datos al BackEnd
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  // Validar el formulario antes de enviarlo
-  if (!validarFormulario()) return;
-
-  //Verificar si el correo electrónico ya existe
-  const correoExiste = await UsuariosService.verificarCorreo(formData.email);
-
-  if (correoExiste) {
-    setMessage({ type: "error", text: "El correo ya está registrado. Usa otro correo electrónico." });
-    setIsSubmitting(false);
-    return;
-  }
-
-  setIsSubmitting(true);
-  try {
-
-    const response = await UsuariosService.createUsuario(formData);
-    if (response.success) {
-      setMessage({ type: "success", text: response.message });
-      setFormData({
-        nombre: "",
-        apellido: "",
-        correo: "",
-        password: "",
-        direccion: "",
-        telefono: "",
-        pais: "",
-        fechaNacimiento: "",
-      });
-    } else {
-      setMessage({ type: "error", text: response.message });
+  // Enviar datos al backend
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setValidationErrors({});
+    setIsSubmitting(true);
+  
+    try {
+      // Convertir fecha de nacimiento al formato correcto
+      const formattedData = {
+        ...formData,
+        fechaNacimiento: formData.fechaNacimiento.split("T")[0],
+      };
+  
+      // Llamar a la API para registrar al usuario
+      await UsuariosAPI.createUsuario(formattedData);
+  
+      // Si el registro es exitoso
+      toast.success("Usuario registrado correctamente. Redirigiendo al login...");
+      setTimeout(() => {
+        navigate("/login"); // Redirigir al login después de 2 segundos
+      }, 2000);
+    } catch (error) {
+      const backendErrors = error.response?.data?.errors || [];
+      const fieldErrors = backendErrors.reduce((acc, curr) => {
+        acc[curr.path] = curr.msg;
+        return acc;
+      }, {});
+  
+      setValidationErrors(fieldErrors);
+  
+      // Mostrar errores específicos del backend como notificaciones
+      if (backendErrors.length > 0) {
+        backendErrors.forEach((err) => {
+          toast.error(err.msg);
+        });
+      } else {
+        // Mostrar mensaje general si no hay errores específicos
+        toast.error(
+          error.response?.data?.error || "Ocurrió un error al registrar el usuario."
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error) {
-    const backendMessage =
-      error.response?.data?.error || "Ocurrió un error inesperado.";
-    setMessage({ type: "error", text: backendMessage });
-  }
-  setIsSubmitting(false);
-};
-
+  };
   
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {message.type && (
-        <div
-          className={`p-2 rounded-md ${
-            message.type === "success"
-              ? "bg-green-100 text-green-600"
-              : "bg-red-100 text-red-600"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
       {/* Grid de 2 columnas */}
       <div className="grid grid-cols-2 xl:grid-cols-2 gap-6">
         <InputField
@@ -125,6 +102,10 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
           required
         />
+        {validationErrors.nombre && (
+          <p className="text-red-500 text-sm">{validationErrors.nombre}</p>
+        )}
+
         <InputField
           id="apellido"
           label="Apellido"
@@ -134,6 +115,10 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
           required
         />
+        {validationErrors.apellido && (
+          <p className="text-red-500 text-sm">{validationErrors.apellido}</p>
+        )}
+
         <InputField
           id="correo"
           label="Correo electrónico"
@@ -143,15 +128,39 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
           required
         />
-        <InputField
-          id="password"
-          label="Contraseña"
-          type="password"
-          placeholder="******"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+        {validationErrors.correo && (
+          <p className="text-red-500 text-sm">{validationErrors.correo}</p>
+        )}
+
+        {/* Contraseña */}
+        <div>
+          <InputField
+            id="password"
+            label="Contraseña"
+            type={showPassword ? "text" : "password"}
+            placeholder="******"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={handlePasswordToggle}
+            className="text-blue-500 text-sm underline mt-1"
+          >
+            {showPassword ? "Ocultar" : "Mostrar"} contraseña
+          </button>
+          <ul className="text-sm text-gray-400 mt-2">
+            <li>• Al menos 8 caracteres</li>
+            <li>• Una letra mayúscula</li>
+            <li>• Un número</li>
+            <li>• Un carácter especial (@, $, !, %, *, ?, &)</li>
+          </ul>
+          {validationErrors.password && (
+            <p className="text-red-500 text-sm">{validationErrors.password}</p>
+          )}
+        </div>
+
         <InputField
           id="direccion"
           label="Dirección"
@@ -161,6 +170,10 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
           required
         />
+        {validationErrors.direccion && (
+          <p className="text-red-500 text-sm">{validationErrors.direccion}</p>
+        )}
+
         <InputField
           id="telefono"
           label="Teléfono"
@@ -170,8 +183,10 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
           required
         />
+        {validationErrors.telefono && (
+          <p className="text-red-500 text-sm">{validationErrors.telefono}</p>
+        )}
 
-        {/* País */}
         <div>
           <label
             htmlFor="pais"
@@ -193,9 +208,11 @@ const handleSubmit = async (e) => {
               </option>
             ))}
           </select>
+          {validationErrors.pais && (
+            <p className="text-red-500 text-sm">{validationErrors.pais}</p>
+          )}
         </div>
 
-        {/* Fecha de nacimiento */}
         <InputField
           id="fechaNacimiento"
           label="Fecha de nacimiento"
@@ -204,11 +221,20 @@ const handleSubmit = async (e) => {
           onChange={handleChange}
           required
         />
+        {validationErrors.fechaNacimiento && (
+          <p className="text-red-500 text-sm">
+            {validationErrors.fechaNacimiento}
+          </p>
+        )}
       </div>
 
       {/* Botón de envío */}
       <div className="flex justify-center">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none"
+        >
           {isSubmitting ? "Registrando..." : "Registrarse"}
         </Button>
       </div>
