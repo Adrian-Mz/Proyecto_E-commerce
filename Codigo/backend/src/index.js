@@ -29,7 +29,15 @@ app.use("/api/estado",estadoPedidos);
 app.use("/api/devoluciones", devolucionesPedidos);
 app.use("/api/promociones",promocionesRoutes);
 
+// Manejo global de errores (debe ir al final)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
 
+  const statusCode = err.status || 500;
+  res.status(statusCode).json({
+    error: err.message || 'Ocurrió un error inesperado.',
+  });
+});
 
 app.listen(3200, () => {
   console.log('Server is running on port', 3200);

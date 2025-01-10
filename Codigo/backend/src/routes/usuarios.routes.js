@@ -5,6 +5,7 @@ import { validationResult } from 'express-validator';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
+import { handleValidation } from '../middlewares/handleValidation.js';
 
 const router = express.Router();
 
