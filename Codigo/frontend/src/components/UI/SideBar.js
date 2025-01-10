@@ -6,7 +6,7 @@ import {
   CNavTitle,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilList, cilUser, cilCart, cilTags, cilSettings } from '@coreui/icons';
+import { cilList, cilUser, cilCart, cilTags, cilSettings, cilHome } from '@coreui/icons';
 
 const Sidebar = () => {
   // Estado para controlar el valor de `narrow`
@@ -21,6 +21,9 @@ const Sidebar = () => {
       <CSidebar size="md" className="h-screen" narrow={isNarrow}>
         <CSidebarNav>
           <CNavTitle>Administración</CNavTitle>
+          <CNavItem href="/admin">
+            <CIcon customClassName="nav-icon" icon={cilHome} /> Inicio
+          </CNavItem>
           <CNavItem href="/admin/productos">
             <CIcon customClassName="nav-icon" icon={cilList} /> Gestión de Productos
           </CNavItem>
