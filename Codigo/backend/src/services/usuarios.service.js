@@ -1,5 +1,6 @@
 import { UsuariosData } from '../data/usuarios.data.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 export const UsuariosService = {
   // Recupera todos los usuarios desde la base de datos
@@ -102,18 +103,31 @@ export const UsuariosService = {
       throw new Error('El correo y la contraseña son obligatorios.');
     }
 
+    // Obtener usuario junto con el rol
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
       throw new Error('Usuario no encontrado.');
     }
 
+    // Validar la contraseña
     const isPasswordValid = await bcrypt.compare(password, usuario.password);
     if (!isPasswordValid) {
       throw new Error('Credenciales incorrectas.');
     }
 
+    // Generar el token JWT
+    const token = jwt.sign(
+      {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        rol: usuario.rol.nombre, // Asegúrate de incluir el rol en la consulta de `getUsuarioByCorreo`
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' } // Token válido por 1 hora
+    );
+
     const { password: _, ...usuarioSinPassword } = usuario;
-    return usuarioSinPassword;
+    return {...usuarioSinPassword, token};
   },
 
   // Genera una nueva contraseña temporal y la actualiza

@@ -65,6 +65,7 @@ export const UsuariosData = {
   async getUsuarioByCorreo(correo) {
     return await prisma.usuarios.findUnique({
       where: { correo },
+      include: {rol:true},  //Incluye los datos del rol
     });
   },
 

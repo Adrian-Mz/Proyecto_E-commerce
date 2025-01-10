@@ -1,21 +1,22 @@
-import { auditoriaService } from "../services/auditoria.service.js";
+import { auditoriaService } from '../services/auditoria.service.js';
 
-export const logAction = (tabla_afectada, accion) => {
+export const registrarAccion = (tablaAfectada, accion) => {
   return async (req, res, next) => {
-    const { user } = req; // Suponiendo que `user` contiene datos del usuario autenticado
-    const registro = JSON.stringify(req.body); // Registro con los datos enviados en la solicitud
     try {
+      const { user } = req; // Datos del usuario autenticado (si existe)
+      const registro = JSON.stringify(req.body); // Datos del cuerpo de la solicitud
+
       await auditoriaService.registrarAccion({
-        usuarioId: user?.id || null, // Si no hay usuario, será null (acciones del sistema)
-        tabla_afectada,
-        accion,
+        usuarioId: user?.id || null, // Si no hay usuario autenticado, será null
+        tabla_afectada: tablaAfectada,
+        accion: accion,
         registro,
-        descripcion_cambio: req.body.descripcion || null,
+        descripcion_cambio: req.body.descripcion || null, // Agrega una descripción si está presente
       });
       next();
     } catch (error) {
-      console.error("Error registrando en auditoría:", error.message);
-      next(); // No bloqueamos el flujo si la auditoría falla
+      console.error('Error registrando auditoría:', error.message);
+      next(); // No bloquea la operación si falla el registro de auditoría
     }
   };
 };
