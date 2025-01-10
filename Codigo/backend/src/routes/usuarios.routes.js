@@ -9,15 +9,6 @@ import { handleValidation } from '../middlewares/handleValidation.js';
 
 const router = express.Router();
 
-// Middleware para manejar los errores de validación y devolverlos al cliente
-const handleValidation = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};
-
 // Ruta para obtener todos los usuarios (protegida, solo Administradores)
 router.get(
   '/',
