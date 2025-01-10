@@ -3,13 +3,14 @@ import InputField from "./InputField";
 import Button from "./Button";
 import { UsuariosAPI } from "../../api/api.usuarios";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode} from "jwt-decode";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate(); // Hook de navegación
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,10 +25,22 @@ const LoginForm = () => {
 
     try {
       const response = await UsuariosAPI.loginUsuario({ correo: email, password });
-      localStorage.setItem("usuario", JSON.stringify(response)); // Guarda el usuario en localStorage
+
+      // Guarda el token y el usuario en localStorage
+      localStorage.setItem("usuario", JSON.stringify(response));
+
+      // Decodifica el token para obtener el rol
+      const decodedToken = jwtDecode(response.token);
+
       setMessage("Inicio de sesión exitoso.");
+
+      // Redirige en función del rol
       setTimeout(() => {
-        navigate("/home"); // Redirige a la página principal
+        if (decodedToken.rol === "Administrador") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }, 1000);
     } catch (error) {
       setMessage("Credenciales incorrectas. Verifica tus datos.");
@@ -41,7 +54,9 @@ const LoginForm = () => {
       {message && (
         <div
           className={`p-2 rounded-md ${
-            message.includes("exitoso") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            message.includes("exitoso")
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {message}

@@ -1,9 +1,16 @@
-import React from 'react'
-import { CTable, CTableBody, CTableHead, CTableRow, CTableHeaderCell, CTableDataCell } from '@coreui/react'
+import React from "react";
+import {
+  CTable,
+  CTableBody,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableDataCell,
+} from "@coreui/react";
 
 const TableComponent = ({ columns, data }) => {
   return (
-    <CTable>
+    <CTable bordered responsive>
       <CTableHead>
         <CTableRow>
           {columns.map((col) => (
@@ -21,7 +28,7 @@ const TableComponent = ({ columns, data }) => {
         ))}
       </CTableBody>
     </CTable>
-  )
-}
+  );
+};
 
-export default TableComponent
+export default TableComponent;

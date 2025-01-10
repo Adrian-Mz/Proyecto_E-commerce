@@ -1,31 +1,26 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from 'jwt-decode';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const navigate = useNavigate();
+const ProtectedRoute = ({ role, Component }) => {
+  const storedUser = localStorage.getItem("usuario");
+  if (!storedUser) {
+    return <Navigate to="/login" />;
+  }
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login"); // Redirige si no hay token
-      return;
-    }
+  const usuario = JSON.parse(storedUser);
+  const decodedToken = jwtDecode(usuario.token);
 
-    try {
-      const decoded = jwtDecode(token);
-      if (requiredRole && decoded.rol !== requiredRole) {
-        // Redirige según el rol
-        navigate(decoded.rol === "Administrador" ? "/admin" : "/home");
-      }
-    } catch (error) {
-      console.error("Token inválido:", error);
-      localStorage.removeItem("token");
-      navigate("/login");
-    }
-  }, [navigate, requiredRole]);
+  if (decodedToken.exp * 1000 < Date.now()) {
+    localStorage.removeItem("usuario");
+    return <Navigate to="/login" />;
+  }
 
-  return children; // Renderiza el contenido protegido
+  if (role && decodedToken.rol !== role) {
+    return <Navigate to="/home" />;
+  }
+
+  return <Component />;
 };
 
 export default ProtectedRoute;
