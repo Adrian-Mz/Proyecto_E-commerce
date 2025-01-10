@@ -9,6 +9,8 @@ import RegisterPage from "./pages/RegisterPage";
 import UserDashboardPage from "./pages/UserDashboardPage";
 import ProductoDetailPage from "./pages/ProductoDetailPage";
 import CartPage from "./pages/CartPage";
+import AdminPage from "./pages/AdminPage";
+import ProtectedRoute from "./components/UI/ProtectedRoute";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -20,13 +22,40 @@ function App() {
         <main className="min-h-screen bg-gray-900 text-gray-100">
           <ToastContainer />
           <Routes>
+            {/* Rutas Públicas */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/productos" element={<ProductsPage />} />
+            <Route path="/productos/:id" element={<ProductoDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/dashboard/*" element={<UserDashboardPage />} />
-            <Route path="/productos/:id" element={<ProductoDetailPage />} />
-            <Route path="/carrito" element={<CartPage />} />
+
+            {/* Rutas del Usuario Logueado */}
+            <Route
+              path="/dashboard/*"
+              element={
+                <ProtectedRoute>
+                  <UserDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/carrito"
+              element={
+                <ProtectedRoute>
+                  <CartPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Rutas del Administrador */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="Administrador">
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
       </Router>

@@ -27,7 +27,7 @@ const LoginForm = () => {
       localStorage.setItem("usuario", JSON.stringify(response)); // Guarda el usuario en localStorage
       setMessage("Inicio de sesión exitoso.");
       setTimeout(() => {
-        navigate("/"); // Redirige a la página principal
+        navigate("/home"); // Redirige a la página principal
       }, 1000);
     } catch (error) {
       setMessage("Credenciales incorrectas. Verifica tus datos.");
