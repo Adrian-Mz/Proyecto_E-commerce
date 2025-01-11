@@ -5,32 +5,31 @@ const prisma = new PrismaClient();
 export const ProductosData = {
   // Obtener todos los productos
   async getAllProductos({ search = "", categoriaId = null, page = 1, pageSize = 0 }) {
-    const skip = pageSize > 0 ? (page - 1) * pageSize : undefined; // Salta registros solo si pageSize > 0
-    const take = pageSize > 0 ? pageSize : undefined; // Limita registros solo si pageSize > 0
+    const skip = pageSize > 0 ? (page - 1) * pageSize : undefined;
+    const take = pageSize > 0 ? pageSize : undefined;
   
     const where = {
       AND: [
-        search ? { nombre: { contains: search, mode: "insensitive" } } : {}, // Filtro por nombre
-        categoriaId ? { categoriaId: categoriaId } : {}, // Filtro por categoría
+        search ? { nombre: { contains: search, mode: "insensitive" } } : {},
+        categoriaId ? { categoriaId: categoriaId } : {},
       ],
     };
   
-    // Consulta para obtener los productos
     const productos = await prisma.productos.findMany({
       where,
       skip,
       take,
+      orderBy: { id: "asc" }, // Ordena los resultados por ID de forma ascendente
       include: {
         categoria: true,
         promocion: true,
       },
     });
   
-    // Total de productos que cumplen los criterios
     const total = await prisma.productos.count({ where });
   
     return { productos, total, page, pageSize };
-  },
+  }, 
 
   // Obtener un producto por ID
   async getProductoById(id) {

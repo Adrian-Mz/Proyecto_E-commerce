@@ -25,13 +25,15 @@ const handleValidation = (req, res, next) => {
 // Ruta para obtener todos los productos
 router.get('/', async (req, res) => {
   try {
-    const { search, categoriaId, page, pageSize } = req.query;
+    const { search, categoriaId, page, pageSize, orderBy, orderDirection } = req.query;
 
     const productos = await ProductosService.getAllProductos({
-      search: search || "", // Filtro opcional por nombre
-      categoriaId: categoriaId ? parseInt(categoriaId, 10) : null, // Filtro opcional por categoría
-      page: page ? parseInt(page, 10) : 1, // Página por defecto 1
-      pageSize: pageSize ? parseInt(pageSize, 10) : 0, // Trae todos los productos si pageSize no se especifica
+      search: search || "",
+      categoriaId: categoriaId ? parseInt(categoriaId, 10) : null,
+      page: page ? parseInt(page, 10) : 1,
+      pageSize: pageSize ? parseInt(pageSize, 10) : 0,
+      orderBy: orderBy || "nombre", // Ordena por nombre por defecto
+      orderDirection: orderDirection || "asc", // Dirección ascendente por defecto
     });
 
     res.status(200).json(productos);
