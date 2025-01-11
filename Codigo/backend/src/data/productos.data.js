@@ -77,24 +77,14 @@ export const ProductosData = {
     if (!data || Object.keys(data).length === 0) {
       throw new Error('Los datos para actualizar no pueden estar vacíos');
     }
-
-    // Validar que todos los campos requeridos estén presentes
-    if (
-      !data.promocionId ||
-      !data.especificaciones ||
-      !data.marca ||
-      !data.garantia
-    ) {
-      throw new Error(
-        'Datos incompletos o inválidos para actualizar el producto'
-      );
-    }
-
+  
+    // Realiza la actualización sin validar campos obligatorios
     return await prisma.productos.update({
       where: { id },
       data,
     });
   },
+  
 
   // Eliminar un producto
   async deleteProducto(id) {

@@ -1,18 +1,14 @@
 import express from 'express';
 import { CategoriaService } from '../services/categorias.service.js';
-import { validarCategoria } from '../validations/categorias.validation.js';
+import { validarCategoriaParaCrear, validarCategoriaParaActualizar } from '../validations/categorias.validation.js';
 import { validationResult } from 'express-validator';
+import { verificarToken } from '../middlewares/auth.middleware.js';
+import { verificarRol } from '../middlewares/roles.middleware.js';
+import { registrarAccion } from '../middlewares/auditoria.middleware.js';
+import { handleValidation } from '../middlewares/handleValidation.js';
+
 
 const router = express.Router();
-
-// Middleware para manejar errores de validación
-const handleValidation = (req, res, next) => {
-  const errores = validationResult(req);
-  if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array() });
-  }
-  next();
-};
 
 // Obtener todas las categorías
 router.get('/', async (req, res) => {
@@ -36,35 +32,63 @@ router.get('/:id', async (req, res) => {
 });
 
 // Crear una nueva categoría
-router.post('/', validarCategoria, handleValidation, async (req, res) => {
-  try {
-    const nuevaCategoria = await CategoriaService.createCategoria(req.body);
-    res.status(201).json(nuevaCategoria);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+router.post(
+  '/',
+  verificarToken, // Verifica autenticación
+  verificarRol(['Administrador']), // Verifica que sea Administrador
+  validarCategoriaParaCrear, // Validaciones para crear
+  handleValidation,
+  registrarAccion('categorias', 'creación'), // Registra la acción en auditoría
+  async (req, res) => {
+    try {
+      const nuevaCategoria = await CategoriaService.createCategoria(req.body);
+      res.status(201).json({
+        message: 'Categoría creada exitosamente.',
+        categoria: nuevaCategoria,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
-});
+);
 
-// Actualizar una categoría existente
-router.put('/:id', validarCategoria, handleValidation, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const categoriaActualizada = await CategoriaService.updateCategoria(id, req.body);
-    res.status(200).json(categoriaActualizada);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+// Actualizar una categoría existente (solo Administradores)
+router.put(
+  '/:id',
+  verificarToken,
+  verificarRol(['Administrador']),
+  validarCategoriaParaActualizar, // Validaciones para actualizar
+  handleValidation,
+  registrarAccion('categorias', 'actualización'),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const categoriaActualizada = await CategoriaService.updateCategoria(id, req.body);
+      res.status(200).json({
+        message: 'Categoría actualizada correctamente.',
+        categoria: categoriaActualizada,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
-});
+);
 
-// Eliminar una categoría
-router.delete('/:id', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    await CategoriaService.deleteCategoria(id);
-    res.status(204).send(); // No devuelve contenido
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+// Eliminar una categoría (solo Administradores)
+router.delete(
+  '/:id',
+  verificarToken,
+  verificarRol(['Administrador']),
+  registrarAccion('categorias', 'eliminación'),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      await CategoriaService.deleteCategoria(id);
+      res.status(200).json({ message: 'Categoría eliminada exitosamente.' });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
-});
+);
 
 export default router;

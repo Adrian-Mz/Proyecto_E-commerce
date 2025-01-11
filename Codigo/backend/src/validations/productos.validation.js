@@ -46,3 +46,26 @@ export const validarProducto = [
     .notEmpty().withMessage('La garantía es obligatoria.')
     .isLength({ max: 100 }).withMessage('La garantía no puede exceder los 100 caracteres.'),
 ];
+
+export const validarProductoActualizar = [
+  body('nombre')
+    .optional() // Hace que este campo sea opcional
+    .isString().withMessage('El nombre debe ser una cadena de texto.')
+    .isLength({ min: 3 }).withMessage('El nombre debe tener al menos 3 caracteres.'),
+  body('descripcion')
+    .optional()
+    .isString().withMessage('La descripción debe ser una cadena de texto.'),
+  body('precio')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('El precio debe ser un número mayor o igual a 0.'),
+  body('stock')
+    .optional()
+    .isInt({ min: 0 }).withMessage('El stock debe ser un número mayor o igual a 0.'),
+  body('categoriaId')
+    .optional()
+    .isInt({ min: 1 }).withMessage('La categoría debe ser un ID válido.'),
+  body('promocionId')
+    .optional()
+    .isInt({ min: 1 }).withMessage('La promoción debe ser un ID válido.'),
+];
+
