@@ -18,7 +18,7 @@ const Sidebar = () => {
       onMouseEnter={() => setIsNarrow(false)} // Expande el sidebar al pasar el mouse
       onMouseLeave={() => setIsNarrow(true)} // Contrae el sidebar al quitar el mouse
     >
-      <CSidebar size="md" className="h-screen" narrow={isNarrow}>
+      <CSidebar size="lg" className="h-screen" narrow={isNarrow}>
         <CSidebarNav>
           <CNavTitle>Administración</CNavTitle>
           <CNavItem href="/admin">
