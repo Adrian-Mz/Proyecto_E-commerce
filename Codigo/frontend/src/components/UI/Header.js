@@ -47,7 +47,7 @@ const Header = () => {
   const handleConfig = () => {
     setIsMenuOpen(false); // Cierra el menú
     if (usuario?.rol === "Administrador") {
-      navigate("/admin/configuracion");
+      navigate("/admin");
     } else {
       navigate("/dashboard/configuracion");
     }

@@ -1,79 +1,72 @@
-import api from '../api/api.config';
+import api from './api.config';
 
 export const ProductosService = {
-  // Obtener todos los productos
-  async getProductos() {
+  getProductos: async () => {
     try {
       const response = await api.get('/productos');
       return response.data;
     } catch (error) {
-      console.error('Error al obtener productos:', error);
+      console.error('Error al obtener productos:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Obtener un producto por ID
-  async getProductoById(id) {
+  getProductoById: async (id) => {
     try {
       const response = await api.get(`/productos/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error al obtener el producto con ID ${id}:`, error);
+      console.error(`Error al obtener el producto con ID ${id}:`, error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Crear un nuevo producto
-  async createProducto(productoData) {
+  createProducto: async (productoData) => {
     try {
       const response = await api.post('/productos', productoData);
       return response.data;
     } catch (error) {
-      console.error('Error al crear producto:', error);
+      console.error('Error al crear producto:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Actualizar un producto existente
-  async updateProducto(id, productoData) {
+  updateProducto: async (id, productoData) => {
     try {
       const response = await api.put(`/productos/${id}`, productoData);
       return response.data;
     } catch (error) {
-      console.error(`Error al actualizar el producto con ID ${id}:`, error);
+      console.error(`Error al actualizar producto con ID ${id}:`, error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Eliminar un producto
-  async deleteProducto(id) {
+  deleteProducto: async (id) => {
     try {
-      await api.delete(`/productos/${id}`);
-      return { success: true };
+      const response = await api.delete(`/productos/${id}`);
+      return response.data;
     } catch (error) {
-      console.error(`Error al eliminar el producto con ID ${id}:`, error);
+      console.error(`Error al eliminar producto con ID ${id}:`, error.response?.data || error.message);
       throw error;
     }
   },
-  
-  // Obtener productos por categoría
-  async getProductosPorCategoria(categoriaId) {
+
+  getProductosPorCategoria: async (categoriaId) => {
     try {
       const response = await api.get(`/productos?categoriaId=${categoriaId}`);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener productos por categoría:', error);
+      console.error('Error al obtener productos por categoría:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Obtener productos por rango de precios
-  async getProductosFiltradosPorPrecio(min, max) {
+  getProductosFiltradosPorPrecio: async (min, max) => {
     try {
       const response = await api.get(`/productos?precioMin=${min}&precioMax=${max}`);
       return response.data;
     } catch (error) {
-      console.error('Error al filtrar productos por precio:', error);
+      console.error('Error al filtrar productos por precio:', error.response?.data || error.message);
       throw error;
     }
   },
