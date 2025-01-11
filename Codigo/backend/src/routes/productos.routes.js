@@ -28,10 +28,10 @@ router.get('/', async (req, res) => {
     const { search, categoriaId, page, pageSize } = req.query;
 
     const productos = await ProductosService.getAllProductos({
-      search,
-      categoriaId: categoriaId ? parseInt(categoriaId, 10) : null,
-      page: page ? parseInt(page, 10) : 1,
-      pageSize: pageSize ? parseInt(pageSize, 10) : 10,
+      search: search || "", // Filtro opcional por nombre
+      categoriaId: categoriaId ? parseInt(categoriaId, 10) : null, // Filtro opcional por categoría
+      page: page ? parseInt(page, 10) : 1, // Página por defecto 1
+      pageSize: pageSize ? parseInt(pageSize, 10) : 0, // Trae todos los productos si pageSize no se especifica
     });
 
     res.status(200).json(productos);
@@ -39,7 +39,6 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 // Ruta para obtener un producto específico por su ID
 router.get('/:id', async (req, res) => {

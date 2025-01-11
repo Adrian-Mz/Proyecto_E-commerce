@@ -5,23 +5,28 @@ export const ProductosService = {
   async getAllProductos(params) {
     try {
       const { search, categoriaId, page, pageSize } = params;
-      const productos = await ProductosData.getAllProductos({
+  
+      // Valida que page y pageSize sean números positivos
+      const validPage = Math.max(parseInt(page, 10) || 1, 1);
+      const validPageSize = parseInt(pageSize, 10) || 0; // Si pageSize es 0 o no está definido, traerá todos los productos
+  
+      const { productos, total } = await ProductosData.getAllProductos({
         search,
         categoriaId,
-        page: parseInt(page, 10) || 1,
-        pageSize: parseInt(pageSize, 10) || 10,
+        page: validPage,
+        pageSize: validPageSize,
       });
   
-      if (!productos || productos.length === 0) {
-        return { productos: [], message: "No se encontraron productos con esa categoría." };
-      }
-  
-      return productos;
+      return {
+        productos,
+        total,
+        currentPage: validPage,
+        totalPages: validPageSize > 0 ? Math.ceil(total / validPageSize) : 1, // Calcula las páginas solo si paginamos
+      };
     } catch (error) {
       throw new Error(`Error al obtener los productos: ${error.message}`);
     }
-  },
-  
+  }, 
 
   // Obtener un producto por ID
   async getProductoById(id) {
