@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../components/UI/SideBar';
 import GestionProductosPage from './GestionProductosPage';
+import GestionUsuariosPage from './GestionUsuariosPage';
 
 const AdminPage = () => {
   const funcionalidades = [
@@ -77,6 +78,7 @@ const AdminPage = () => {
                 }
               />
               <Route path="productos" element={<GestionProductosPage />} />
+              <Route path="usuarios" element={<GestionUsuariosPage />} />
               {/* Agrega más rutas aquí según las funcionalidades */}
             </Routes>
           </main>
