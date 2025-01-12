@@ -6,7 +6,7 @@ import {
   CNavTitle,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilList, cilUser, cilCart, cilTags, cilSettings, cilHome, cibAmazon } from '@coreui/icons';
+import { cilUser, cilCart, cilTags, cilSettings, cilHome, cibAmazon } from '@coreui/icons';
 
 const Sidebar = () => {
   // Estado para controlar el valor de `narrow`
