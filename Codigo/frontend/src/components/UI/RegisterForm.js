@@ -66,7 +66,8 @@ const RegisterForm = () => {
     } catch (error) {
       const backendErrors = error.response?.data?.errors || [];
       const fieldErrors = backendErrors.reduce((acc, curr) => {
-        acc[curr.path] = curr.msg;
+        const key = curr.path || "general"; // Si no hay un `path`, se asigna como error general.
+        acc[key] = curr.msg || curr.message; // Manejar tanto `msg` como `message`.
         return acc;
       }, {});
   
@@ -75,12 +76,12 @@ const RegisterForm = () => {
       // Mostrar errores específicos del backend como notificaciones
       if (backendErrors.length > 0) {
         backendErrors.forEach((err) => {
-          toast.error(err.msg);
+          toast.error(err.msg || err.message, { position: "top-right" });
         });
       } else {
-        // Mostrar mensaje general si no hay errores específicos
         toast.error(
-          error.response?.data?.error || "Ocurrió un error al registrar el usuario."
+          error.response?.data?.error || "Ocurrió un error al registrar el usuario.",
+          { position: "top-right" }
         );
       }
     } finally {
