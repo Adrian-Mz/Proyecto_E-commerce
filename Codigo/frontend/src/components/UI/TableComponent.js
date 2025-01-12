@@ -10,8 +10,8 @@ import {
 
 const TableComponent = ({ columns, data }) => {
   return (
-    <CTable bordered responsive>
-      <CTableHead>
+    <CTable bordered small color="light" striped hover responsive>
+      <CTableHead color="dark">
         <CTableRow>
           {columns.map((col) => (
             <CTableHeaderCell key={col.key}>{col.label}</CTableHeaderCell>

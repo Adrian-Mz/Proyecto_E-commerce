@@ -6,7 +6,7 @@ import {
   CNavTitle,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilList, cilUser, cilCart, cilTags, cilSettings, cilHome } from '@coreui/icons';
+import { cilList, cilUser, cilCart, cilTags, cilSettings, cilHome, cibAmazon } from '@coreui/icons';
 
 const Sidebar = () => {
   // Estado para controlar el valor de `narrow`
@@ -14,30 +14,30 @@ const Sidebar = () => {
 
   return (
     <div
-      className="bg-gray-900 text-gray-100 h-full shadow-lg"
+      className="text-gray-100"
       onMouseEnter={() => setIsNarrow(false)} // Expande el sidebar al pasar el mouse
       onMouseLeave={() => setIsNarrow(true)} // Contrae el sidebar al quitar el mouse
     >
-      <CSidebar size="lg" className="h-screen" narrow={isNarrow}>
+      <CSidebar size="sm" className="h-screen" narrow={isNarrow}>
         <CSidebarNav>
-          <CNavTitle>Administración</CNavTitle>
+          <CNavTitle>Gestión de</CNavTitle>
           <CNavItem href="/admin">
             <CIcon customClassName="nav-icon" icon={cilHome} /> Inicio
           </CNavItem>
           <CNavItem href="/admin/productos">
-            <CIcon customClassName="nav-icon" icon={cilList} /> Gestión de Productos
+            <CIcon customClassName="nav-icon" icon={cibAmazon} /> Productos
           </CNavItem>
           <CNavItem href="/admin/categorias">
-            <CIcon customClassName="nav-icon" icon={cilTags} /> Gestión de Categorías
+            <CIcon customClassName="nav-icon" icon={cilTags} /> Categorías
           </CNavItem>
           <CNavItem href="/admin/usuarios">
-            <CIcon customClassName="nav-icon" icon={cilUser} /> Gestión de Usuarios
+            <CIcon customClassName="nav-icon" icon={cilUser} /> Usuarios
           </CNavItem>
           <CNavItem href="/admin/pedidos">
-            <CIcon customClassName="nav-icon" icon={cilCart} /> Gestión de Pedidos
+            <CIcon customClassName="nav-icon" icon={cilCart} /> Pedidos
           </CNavItem>
           <CNavItem href="/admin/devoluciones">
-            <CIcon customClassName="nav-icon" icon={cilSettings} /> Gestión de Devoluciones
+            <CIcon customClassName="nav-icon" icon={cilSettings} /> Devoluciones
           </CNavItem>
         </CSidebarNav>
       </CSidebar>

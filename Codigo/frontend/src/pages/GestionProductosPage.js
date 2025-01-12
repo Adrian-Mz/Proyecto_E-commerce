@@ -3,11 +3,15 @@ import TableComponent from "../components/UI/TableComponent";
 import ModalComponent from "../components/UI/ModalComponent";
 import { ProductosService } from "../api/api.productos";
 import { CategoriasService } from "../api/api.categorias";
+import { PromocionesService } from "../api/api.promociones";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const GestionProductosPage = () => {
   const [data, setData] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [promociones, setPromociones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -15,13 +19,14 @@ const GestionProductosPage = () => {
   const [newProduct, setNewProduct] = useState({
     nombre: "",
     descripcion: "",
-    marca: "",
     especificaciones: "",
+    imagen: "",
+    marca: "",
     precio: "",
     stock: "",
     garantia: "",
-    imagen: "",
     categoriaId: "",
+    promocionId: "",
   });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -33,13 +38,17 @@ const GestionProductosPage = () => {
       try {
         const productosResponse = await ProductosService.getProductos();
         const categoriasResponse = await CategoriasService.getCategorias();
+        const promocionesResponse = await PromocionesService.getPromociones();
 
         setData(productosResponse.productos || []);
         setCategorias(categoriasResponse || []);
+        setPromociones(promocionesResponse || []);
       } catch (error) {
         console.error("Error al cargar datos:", error);
+        toast.error("Error al cargar los datos");
         setData([]);
         setCategorias([]);
+        setPromociones([]);
       } finally {
         setIsLoading(false);
       }
@@ -47,6 +56,21 @@ const GestionProductosPage = () => {
 
     fetchData();
   }, []);
+
+  const clearNewProduct = () => {
+    setNewProduct({
+      nombre: "",
+      descripcion: "",
+      especificaciones: "",
+      imagen: "",
+      marca: "",
+      precio: "",
+      stock: "",
+      garantia: "",
+      categoriaId: "",
+      promocionId: "",
+    });
+  };
 
   const marcasPopulares = [
     "Intel",
@@ -69,32 +93,47 @@ const GestionProductosPage = () => {
 
   const handleAddProduct = async () => {
     try {
-      const createdProduct = await ProductosService.createProducto(newProduct);
+      const newProductData = {
+        ...newProduct,
+        precio: parseFloat(newProduct.precio),
+        stock: parseInt(newProduct.stock, 10),
+        categoriaId: parseInt(newProduct.categoriaId, 10),
+        promocionId: parseInt(newProduct.promocionId, 10),
+      };
+
+      const createdProduct = await ProductosService.createProducto(newProductData);
+
       setData((prevData) => [...prevData, createdProduct]);
-      setNewProduct({
-        nombre: "",
-        descripcion: "",
-        marca: "",
-        especificaciones: "",
-        precio: "",
-        stock: "",
-        garantia: "",
-        imagen: "",
-        categoriaId: "",
-      });
+      clearNewProduct();
       setIsAddModalOpen(false);
+      toast.success("Producto añadido correctamente");
     } catch (error) {
-      console.error("Error al añadir producto:", error);
+      console.error("Error al añadir producto:", error.response?.data || error.message);
+      toast.error("Error al añadir producto");
     }
   };
 
   const handleEditProduct = async () => {
     try {
       if (selectedProduct) {
+        const updatedData = {
+          descripcion: selectedProduct.descripcion,
+          garantia: selectedProduct.garantia,
+          especificaciones: selectedProduct.especificaciones,
+          imagen: selectedProduct.imagen,
+          marca: selectedProduct.marca,
+          nombre: selectedProduct.nombre,
+          precio: parseFloat(selectedProduct.precio),
+          stock: parseInt(selectedProduct.stock, 10),
+          categoriaId: parseInt(selectedProduct.categoriaId, 10),
+          promocionId: parseInt(selectedProduct.promocionId, 10),
+        };
+
         const updatedProduct = await ProductosService.updateProducto(
           selectedProduct.id,
-          selectedProduct
+          updatedData
         );
+
         setData((prevData) =>
           prevData.map((item) =>
             item.id === updatedProduct.id ? updatedProduct : item
@@ -102,9 +141,11 @@ const GestionProductosPage = () => {
         );
         setSelectedProduct(null);
         setIsEditModalOpen(false);
+        toast.success("Producto editado correctamente");
       }
     } catch (error) {
-      console.error("Error al editar producto:", error);
+      console.error("Error al editar producto:", error.response?.data || error.message);
+      toast.error("Error al editar producto");
     }
   };
 
@@ -112,13 +153,19 @@ const GestionProductosPage = () => {
     try {
       await ProductosService.deleteProducto(id);
       setData((prevData) => prevData.filter((item) => item.id !== id));
+      toast.success("Producto eliminado correctamente");
     } catch (error) {
       console.error("Error al eliminar producto:", error);
+      toast.error("Error al eliminar producto");
     }
   };
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (direction) => {
+    if (direction === "prev" && currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    } else if (direction === "next" && currentPage < Math.ceil(data.length / itemsPerPage)) {
+      setCurrentPage((prev) => prev + 1);
+    }
   };
 
   const paginatedData = data.slice(
@@ -134,55 +181,55 @@ const GestionProductosPage = () => {
 
   return (
     <div className="p-6 bg-gray-100">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">
-        Gestión de Productos
-      </h1>
-      <p className="mb-6 text-gray-700">
-        Bienvenido, administrador. Aquí puedes gestionar los productos:
-        ver, añadir, editar o eliminar productos.
-      </p>
       <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Productos</h1>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            setIsAddModalOpen(true);
+            clearNewProduct();
+          }}
         >
           Añadir
         </button>
-      </div>
-      <div className="relative">
-        <div className="absolute top-[-40px] right-0">
-          <div className="flex space-x-2">
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handlePageChange(index + 1)}
-                className={`px-3 py-1 border rounded ${
-                  currentPage === index + 1
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center space-x-2">
+          <button
+            className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            onClick={() => handlePageChange("prev")}
+            disabled={currentPage === 1}
+          >
+            &lt;
+          </button>
+          <span className="text-gray-700">{`Página ${currentPage} de ${totalPages}`}</span>
+          <button
+            className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            onClick={() => handlePageChange("next")}
+            disabled={currentPage === totalPages}
+          >
+            &gt;
+          </button>
         </div>
       </div>
       <TableComponent
         columns={[
           { key: "id", label: "ID" },
           { key: "nombre", label: "Nombre" },
+          { key: "descripcion", label: "Descripción" },
           { key: "marca", label: "Marca" },
+          { key: "especificaciones", label: "Especificaciones" },
           { key: "precio", label: "Precio" },
           { key: "stock", label: "Stock" },
           { key: "categoria", label: "Categoría" },
+          { key: "promocion", label: "Promoción" },
           { key: "acciones", label: "Acciones" },
         ]}
         data={paginatedData.map((item) => ({
           ...item,
-          categoria: categorias.find(
-            (categoria) => categoria.id === item.categoriaId
-          )?.nombre,
+          precio: parseFloat(item.precio).toFixed(2),
+          categoria: categorias.find((categoria) => categoria.id === item.categoriaId)?.nombre,
+          promocion:
+            promociones.find((promocion) => promocion.id === item.promocionId)?.nombre ||
+            "Sin promoción",
           acciones: (
             <div className="flex space-x-2">
               <button
@@ -190,30 +237,31 @@ const GestionProductosPage = () => {
                   setSelectedProduct(item);
                   setIsEditModalOpen(true);
                 }}
-                className="text-blue-500 hover:text-blue-700 transition-transform transform hover:scale-110"
+                className="text-blue-500 hover:text-blue-700"
               >
-                <FaEdit size={20} />
+                <FaEdit size={16} />
               </button>
               <button
                 onClick={() => handleDelete(item.id)}
-                className="text-red-500 hover:text-red-700 transition-transform transform hover:scale-110"
+                className="text-red-500 hover:text-red-700"
               >
-                <FaTrash size={20} />
+                <FaTrash size={16} />
               </button>
             </div>
           ),
         }))}
       />
-      {/* Modal para añadir productos */}
       <ModalComponent
         title="Añadir Producto"
         visible={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          clearNewProduct();
+        }}
         onSave={handleAddProduct}
       >
-        {renderProductInputs(newProduct, setNewProduct, categorias, marcasPopulares, garantiaOptions)}
+        {renderProductInputs(newProduct, setNewProduct, categorias, promociones, marcasPopulares, garantiaOptions)}
       </ModalComponent>
-      {/* Modal para editar productos */}
       <ModalComponent
         title={`Editar Producto ${selectedProduct?.id}`}
         visible={isEditModalOpen}
@@ -224,6 +272,7 @@ const GestionProductosPage = () => {
           selectedProduct,
           setSelectedProduct,
           categorias,
+          promociones,
           marcasPopulares,
           garantiaOptions
         )}
@@ -232,102 +281,120 @@ const GestionProductosPage = () => {
   );
 };
 
-const renderProductInputs = (product, setProduct, categorias, marcasPopulares, garantiaOptions) => (
-  <div>
-    <label className="block mb-2">Nombre:</label>
-    <input
-      type="text"
-      className="w-full p-2 border rounded"
-      value={product?.nombre || ""}
-      onChange={(e) =>
-        setProduct((prev) => ({
-          ...prev,
-          nombre: e.target.value,
-        }))
-      }
-    />
-    <label className="block mb-2 mt-4">Marca:</label>
-    <select
-      className="w-full p-2 border rounded"
-      value={product?.marca || ""}
-      onChange={(e) =>
-        setProduct((prev) => ({
-          ...prev,
-          marca: e.target.value,
-        }))
-      }
-    >
-      <option value="">Seleccione una marca</option>
-      {marcasPopulares.map((marca, index) => (
-        <option key={index} value={marca}>
-          {marca}
-        </option>
-      ))}
-    </select>
-    <label className="block mb-2 mt-4">Precio:</label>
-    <input
-      type="number"
-      min={1}
-      max={10000}
-      className="w-full p-2 border rounded"
-      value={product?.precio || ""}
-      onChange={(e) =>
-        setProduct((prev) => ({
-          ...prev,
-          precio: e.target.value,
-        }))
-      }
-    />
-    <label className="block mb-2 mt-4">Stock:</label>
-    <input
-      type="number"
-      min={1}
-      max={1000}
-      className="w-full p-2 border rounded"
-      value={product?.stock || ""}
-      onChange={(e) =>
-        setProduct((prev) => ({
-          ...prev,
-          stock: e.target.value,
-        }))
-      }
-    />
-    <label className="block mb-2 mt-4">Garantía:</label>
-    <select
-      className="w-full p-2 border rounded"
-      value={product?.garantia || ""}
-      onChange={(e) =>
-        setProduct((prev) => ({
-          ...prev,
-          garantia: e.target.value,
-        }))
-      }
-    >
-      <option value="">Seleccione una garantía</option>
-      {garantiaOptions.map((opcion, index) => (
-        <option key={index} value={opcion}>
-          {opcion}
-        </option>
-      ))}
-    </select>
-    <label className="block mb-2 mt-4">Categoría:</label>
-    <select
-      className="w-full p-2 border rounded"
-      value={product?.categoriaId || ""}
-      onChange={(e) =>
-        setProduct((prev) => ({
-          ...prev,
-          categoriaId: e.target.value,
-        }))
-      }
-    >
-      <option value="">Seleccione una categoría</option>
-      {categorias.map((categoria) => (
-        <option key={categoria.id} value={categoria.id}>
-          {categoria.nombre}
-        </option>
-      ))}
-    </select>
+const renderProductInputs = (product, setProduct, categorias, promociones, marcasPopulares, garantiaOptions) => (
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label>Nombre:</label>
+      <input
+        type="text"
+        value={product?.nombre || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, nombre: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+    <div>
+      <label>Descripción:</label>
+      <textarea
+        value={product?.descripcion || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, descripcion: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+    <div>
+      <label>Marca:</label>
+      <select
+        value={product?.marca || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, marca: e.target.value }))}
+        className="border p-2 rounded w-full"
+      >
+        <option value="">Seleccione una marca</option>
+        {marcasPopulares.map((marca) => (
+          <option key={marca} value={marca}>
+            {marca}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label>Precio:</label>
+      <input
+        type="number"
+        value={product?.precio || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, precio: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+    <div>
+      <label>Stock:</label>
+      <input
+        type="number"
+        value={product?.stock || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, stock: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+    <div>
+      <label>Garantía:</label>
+      <select
+        value={product?.garantia || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, garantia: e.target.value }))}
+        className="border p-2 rounded w-full"
+      >
+        <option value="">Seleccione una garantía</option>
+        {garantiaOptions.map((garantia) => (
+          <option key={garantia} value={garantia}>
+            {garantia}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label>Categoría:</label>
+      <select
+        value={product?.categoriaId || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, categoriaId: e.target.value }))}
+        className="border p-2 rounded w-full"
+      >
+        <option value="">Seleccione una categoría</option>
+        {categorias.map((categoria) => (
+          <option key={categoria.id} value={categoria.id}>
+            {categoria.nombre}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label>Promoción:</label>
+      <select
+        value={product?.promocionId || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, promocionId: e.target.value }))}
+        className="border p-2 rounded w-full"
+      >
+        <option value="">Seleccione una promoción</option>
+        {promociones.map((promocion) => (
+          <option key={promocion.id} value={promocion.id}>
+            {promocion.nombre}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label>Especificaciones:</label>
+      <textarea
+        value={product?.especificaciones || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, especificaciones: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+    <div>
+      <label>Imagen (URL):</label>
+      <input
+        type="text"
+        value={product?.imagen || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, imagen: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
   </div>
 );
 
