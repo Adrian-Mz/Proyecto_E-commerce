@@ -49,7 +49,6 @@ export const ProductosData = {
     return producto;
   },
 
-  // Crear un nuevo producto
   async createProducto(data) {
     if (
       !data ||
@@ -63,12 +62,27 @@ export const ProductosData = {
       !data.marca ||
       !data.garantia
     ) {
-      throw new Error(
-        'Datos incompletos o inválidos para crear el producto'
-      );
+      throw new Error('Datos incompletos o inválidos para crear el producto');
     }
-
-    return await prisma.productos.create({ data });
+  
+    // Depuración: Mostrar los datos enviados a Prisma
+    console.log('Datos enviados a Prisma:', data);
+  
+    // Crear el producto
+    return await prisma.productos.create({
+      data: {
+        nombre: data.nombre,
+        descripcion: data.descripcion,
+        precio: data.precio,
+        stock: data.stock,
+        imagen: data.imagen,
+        categoriaId: data.categoriaId,
+        promocionId: data.promocionId,
+        especificaciones: data.especificaciones,
+        marca: data.marca,
+        garantia: data.garantia,
+      },
+    });
   },
 
   // Actualizar un producto
