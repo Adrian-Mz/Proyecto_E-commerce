@@ -9,7 +9,7 @@ export const promocionesService = {
   // Crear una nueva promoción
   async crearPromocion(datosPromocion) {
     const { nombre, descripcion, descuento, fechaInicio, fechaFin } = datosPromocion;
-
+  
     // Validaciones adicionales (opcional)
     if (!nombre || !descripcion || !descuento) {
       throw new Error('Todos los campos obligatorios deben ser completados.');
@@ -20,15 +20,20 @@ export const promocionesService = {
     if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
       throw new Error('La fecha de inicio no puede ser posterior a la fecha de fin.');
     }
-
+  
+    // Convertir fechas al formato ISO-8601 si están definidas
+    const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
+    const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
+  
     return await promocionesData.createPromocion({
       nombre,
       descripcion,
       descuento,
-      fechaInicio,
-      fechaFin,
+      fechaInicio: fechaInicioISO,
+      fechaFin: fechaFinISO,
     });
   },
+  
 
   // Actualizar una promoción existente
   async actualizarPromocion(promocionId, datosPromocion) {
