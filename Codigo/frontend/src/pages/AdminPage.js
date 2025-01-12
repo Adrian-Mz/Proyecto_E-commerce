@@ -3,6 +3,9 @@ import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../components/UI/SideBar';
 import GestionProductosPage from './GestionProductosPage';
 import GestionUsuariosPage from './GestionUsuariosPage';
+import GestionCategoriasPage from './GestionCategoriasPage';
+import GestionPromocionesPage from './GestionPromocionesPage';
+
 
 const AdminPage = () => {
   const funcionalidades = [
@@ -17,10 +20,11 @@ const AdminPage = () => {
       enlace: "/admin/categorias",
     },
     {
-      titulo: "Gestión de Usuarios",
-      descripcion: "Administra los usuarios registrados en la plataforma.",
-      enlace: "/admin/usuarios",
-    },
+      titulo: "Gestión de Promociones",
+      descripcion: "Organiza las promociones de descuento.",
+      enlace: "/admin/promociones",
+    }
+    ,
     {
       titulo: "Gestión de Pedidos",
       descripcion: "Visualiza y actualiza el estado de los pedidos.",
@@ -31,6 +35,11 @@ const AdminPage = () => {
       descripcion: "Administra las solicitudes de devolución de productos.",
       enlace: "/admin/devoluciones",
     },
+    {
+      titulo: "Gestión de Usuarios",
+      descripcion: "Administra los usuarios registrados en la plataforma.",
+      enlace: "/admin/usuarios",
+    }
   ];
 
   return (
@@ -79,6 +88,8 @@ const AdminPage = () => {
               />
               <Route path="productos" element={<GestionProductosPage />} />
               <Route path="usuarios" element={<GestionUsuariosPage />} />
+              <Route path="categorias" element={<GestionCategoriasPage />} />
+              <Route path="promociones" element={<GestionPromocionesPage />} />
               {/* Agrega más rutas aquí según las funcionalidades */}
             </Routes>
           </main>
