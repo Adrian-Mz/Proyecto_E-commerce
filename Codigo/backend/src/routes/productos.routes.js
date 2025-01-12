@@ -1,26 +1,17 @@
 import express from 'express'; 
 import { ProductosService } from '../services/productos.service.js'; 
 import { validarProducto, validarProductoActualizar } from '../validations/productos.validation.js'
-import { validationResult } from 'express-validator';
+import { handleValidation } from '../middlewares/handleValidation.js';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
+import { upload } from '../middlewares/upload.middleware.js';
+import { subirImagenCloudinary } from '../utils/cloudinary.js';
+import { buscarProductosMercadoLibre } from '../utils/mercadoLibre.js';
+import fs from 'fs';
 
 
 const router = express.Router(); 
-
-
-// Middleware para manejar errores de validación
-const handleValidation = (req, res, next) => {
-  const errores = validationResult(req);
-  if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array() });
-  }
-  next();
-};
-
-
-
 
 // Ruta para obtener todos los productos
 router.get('/', async (req, res) => {
@@ -54,24 +45,34 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Ruta para crear un nuevo producto (solo Administradores)
+
+// Ruta para crear un producto con imagen
 router.post(
   '/',
-  verificarToken, // Verifica autenticación
-  verificarRol(['Administrador']), // Verifica que el usuario tenga el rol de Administrador
+  verificarToken,
+  verificarRol(['Administrador']),
   validarProducto,
   handleValidation,
-  registrarAccion('productos', 'creación'), // Registra la acción en la auditoría
+  upload.single('imagen'),
   async (req, res) => {
     try {
-      const data = req.body;
-      const producto = await ProductosService.createProducto(data);
-      res.status(201).json(producto);
+      const productoData = req.body;
+      const filePath = req.file?.path;
+
+      if (filePath) {
+        const imageUrl = await subirImagenCloudinary(filePath, 'productos');
+        productoData.imagen = imageUrl;
+        fs.unlinkSync(filePath); // Eliminar archivo local
+      }
+
+      const nuevoProducto = await ProductosService.createProducto(productoData);
+      res.status(201).json({ message: 'Producto creado exitosamente.', producto: nuevoProducto });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
   }
 );
+
 
 // Ruta para actualizar un producto existente (solo Administradores)
 router.put(

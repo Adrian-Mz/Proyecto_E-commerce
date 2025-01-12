@@ -1,4 +1,7 @@
 import { ProductosData } from '../data/productos.data.js';
+import { subirImagenCloudinary } from '../utils/cloudinary.js';
+import { buscarProductosMercadoLibre } from '../utils/mercadoLibre.js';
+import fs from 'fs';
 
 export const ProductosService = {
   // Obtener todos los productos
@@ -49,7 +52,6 @@ export const ProductosService = {
     }
   },
 
-  // Crear un nuevo producto
   async createProducto(data) {
     try {
       if (
@@ -63,10 +65,26 @@ export const ProductosService = {
         throw new Error('Datos incompletos o inválidos para crear el producto');
       }
 
-      const producto = await ProductosData.createProducto(data);
-      return producto;
+      let imageUrl;
+
+      if (data.imagenLocalPath) {
+        imageUrl = await subirImagenCloudinary(data.imagenLocalPath, 'productos');
+      } else {
+        const productoML = await buscarProductosMercadoLibre(data.nombre);
+        if (productoML) {
+          imageUrl = productoML.imagen;
+        } else {
+          throw new Error('No se encontró una imagen adecuada para el producto.');
+        }
+      }
+
+      data.imagen = imageUrl;
+
+      // Crear el producto en la base de datos
+      return await ProductosData.createProducto(data);
     } catch (error) {
-      throw new Error(`Error al crear el producto: ${error.message}`);
+      console.error(`Error al crear producto: ${error.message}`);
+      throw error;
     }
   },
 
