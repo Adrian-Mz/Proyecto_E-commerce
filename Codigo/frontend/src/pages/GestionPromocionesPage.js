@@ -52,53 +52,51 @@ const GestionPromocionesPage = () => {
 
   const handleAddPromocion = async () => {
     try {
-      const newPromocionData = {
+      const formattedData = {
         ...newPromocion,
-        descuento: parseFloat(newPromocion.descuento),
-        fechaInicio: newPromocion.fechaInicio || null,
-        fechaFin: newPromocion.fechaFin || null,
+        descuento: parseFloat(newPromocion.descuento), // Asegurarse de que sea un número
+        fechaInicio: newPromocion.fechaInicio ? new Date(newPromocion.fechaInicio).toISOString() : null, // Formato ISO-8601
+        fechaFin: newPromocion.fechaFin ? new Date(newPromocion.fechaFin).toISOString() : null, // Formato ISO-8601
       };
-
-      const createdPromocion = await PromocionesService.createPromocion(newPromocionData);
-
+  
+      const createdPromocion = await PromocionesService.createPromocion(formattedData);
       setData((prevData) => [...prevData, createdPromocion]);
-      clearNewPromocion();
+      toast.success("Promoción añadida correctamente");
       setIsAddModalOpen(false);
-      toast.success("Promoción añadida correctamente.");
+      clearNewPromocion();
     } catch (error) {
-      console.error("Error al añadir promoción:", error);
-      toast.error("Error al añadir promoción.");
+      console.error("Error al añadir promoción:", error.response?.data || error.message);
+      toast.error("Error al añadir promoción");
     }
   };
-
+  
   const handleEditPromocion = async () => {
     try {
       if (selectedPromocion) {
         const updatedPromocionData = {
-          nombre: selectedPromocion.nombre,
-          descripcion: selectedPromocion.descripcion,
-          descuento: parseFloat(selectedPromocion.descuento),
-          fechaInicio: selectedPromocion.fechaInicio || null,
-          fechaFin: selectedPromocion.fechaFin || null,
+          ...selectedPromocion,
+          descuento: parseFloat(selectedPromocion.descuento), // Asegurarse de que sea un número
+          fechaInicio: selectedPromocion.fechaInicio ? new Date(selectedPromocion.fechaInicio).toISOString() : null, // Formato ISO-8601
+          fechaFin: selectedPromocion.fechaFin ? new Date(selectedPromocion.fechaFin).toISOString() : null, // Formato ISO-8601
         };
-
+  
         const updatedPromocion = await PromocionesService.updatePromocion(
           selectedPromocion.id,
           updatedPromocionData
         );
-
+  
         setData((prevData) =>
           prevData.map((item) =>
             item.id === updatedPromocion.id ? updatedPromocion : item
           )
         );
-
+  
         setSelectedPromocion(null);
         setIsEditModalOpen(false);
         toast.success("Promoción editada correctamente.");
       }
     } catch (error) {
-      console.error("Error al editar promoción:", error);
+      console.error("Error al editar promoción:", error.response?.data || error.message);
       toast.error("Error al editar promoción.");
     }
   };
@@ -159,9 +157,9 @@ const GestionPromocionesPage = () => {
         ]}
         data={paginatedData.map((item) => ({
           ...item,
-          descuento: item.descuento ? `${parseFloat(item.descuento).toFixed(2)}%` : "0.00%", // Convertir y manejar valores nulos o vacíos
-          fechaInicio: item.fechaInicio ? new Date(item.fechaInicio).toLocaleDateString() : "-",
-          fechaFin: item.fechaFin ? new Date(item.fechaFin).toLocaleDateString() : "-",
+          descuento: item.descuento ? `${parseFloat(item.descuento).toFixed(2)}%` : "0.00%",
+          fechaInicio: item.fechaInicio? item.fechaInicio.split("T")[0] : "-",
+          fechaFin: item.fechaFin? item.fechaFin.split("T")[0] : "-",
           acciones: (
             <div className="flex space-x-2">
               <button
@@ -223,53 +221,60 @@ const GestionPromocionesPage = () => {
   );
 };
 
-const renderPromocionInputs = (promocion, setPromocion) => (
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <label>Nombre:</label>
-      <input
-        type="text"
-        value={promocion?.nombre || ""}
-        onChange={(e) => setPromocion((prev) => ({ ...prev, nombre: e.target.value }))}
-        className="border p-2 rounded w-full"
-      />
-    </div>
-    <div>
-      <label>Descripción:</label>
-      <textarea
-        value={promocion?.descripcion || ""}
-        onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
-        className="border p-2 rounded w-full"
-      />
-    </div>
-    <div>
-      <label>Descuento (%):</label>
-      <input
-        type="number"
-        value={promocion?.descuento || ""}
-        onChange={(e) => setPromocion((prev) => ({ ...prev, descuento: e.target.value }))}
-        className="border p-2 rounded w-full"
-      />
-    </div>
-    <div>
-      <label>Fecha Inicio:</label>
-      <input
-        type="date"
-        value={promocion?.fechaInicio || ""}
-        onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
-        className="border p-2 rounded w-full"
-      />
-    </div>
-    <div>
-      <label>Fecha Fin:</label>
-      <input
-        type="date"
-        value={promocion?.fechaFin || ""}
-        onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
-        className="border p-2 rounded w-full"
-      />
-    </div>
-  </div>
-);
+const renderPromocionInputs = (promocion, setPromocion) => {
+    if (!promocion) {
+      return <div>Cargando...</div>; // Mensaje mientras el objeto se inicializa
+    }
+  
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label>Nombre:</label>
+          <input
+            type="text"
+            value={promocion.nombre || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, nombre: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Descripción:</label>
+          <textarea
+            value={promocion.descripcion || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Descuento (%):</label>
+          <input
+            type="number"
+            value={promocion.descuento || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, descuento: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Fecha Inicio:</label>
+          <input
+            type="date"
+            value={promocion.fechaInicio || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Fecha Fin:</label>
+          <input
+            type="date"
+            value={promocion.fechaFin || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+      </div>
+    );
+  };
+  
 
 export default GestionPromocionesPage;
