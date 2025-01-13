@@ -100,7 +100,13 @@ router.post('/login', async (req, res, next) => {
 router.post('/recuperar', async (req, res, next) => {
   try {
     const { correo } = req.body;
-    const resultado = await UsuariosService.recuperarPassword(correo);
+
+    // Validar que el correo esté presente y sea una cadena válida
+    if (!correo || typeof correo !== 'string' || !correo.trim()) {
+      return res.status(400).json({ message: 'El campo "correo" es obligatorio y debe ser un correo válido.' });
+    }
+
+    const resultado = await UsuariosService.recuperarPassword(correo.trim());
     res.status(200).json({ message: resultado });
   } catch (error) {
     next(error);

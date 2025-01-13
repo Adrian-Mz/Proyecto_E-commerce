@@ -1,16 +1,25 @@
 import { body } from 'express-validator';
 
-// Validaciones para crear o actualizar usuarios
+// Lista de dominios permitidos
+const dominiosPermitidos = ['gmail.com','hotmail.com', 'yahoo.com']; // En el futuro, puedes agregar más dominios a esta lista.
+
 export const validarUsuario = [
   // Valida que el nombre sea obligatorio y tenga al menos 2 caracteres
   body('nombre')
     .notEmpty().withMessage('El nombre es obligatorio.')
     .isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres.'),
 
-  // Valida que el correo sea obligatorio y esté en un formato válido
+  // Valida que el correo sea obligatorio, esté en un formato válido y tenga un dominio permitido
   body('correo')
     .notEmpty().withMessage('El email es obligatorio.')
-    .isEmail().withMessage('Debe ser un email válido.'),
+    .isEmail().withMessage('Debe ser un email válido.')
+    .custom((value) => {
+      const dominio = value.split('@')[1]; // Obtiene el dominio del correo
+      if (!dominiosPermitidos.includes(dominio)) {
+        throw new Error(`Solo se permiten correos de los siguientes dominios: ${dominiosPermitidos.join(', ')}`);
+      }
+      return true;
+    }),
 
   // Valida que la contraseña sea obligatoria y tenga al menos 8 caracteres
   body('password')

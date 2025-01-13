@@ -1,4 +1,5 @@
 import { UsuariosData } from '../data/usuarios.data.js';
+import { enviarCorreo } from '../utils/emailService.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -132,17 +133,38 @@ export const UsuariosService = {
 
   // Genera una nueva contraseña temporal y la actualiza
   async recuperarPassword(correo) {
+    console.log('Correo recibido para recuperar contraseña:', correo);
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
       throw new Error('No existe un usuario registrado con ese correo.');
     }
 
+    // Generar nueva contraseña temporal
     const nuevaPassword = this.generarPasswordTemporal();
     const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
 
+    // Actualizar la contraseña en la base de datos
     await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
 
-    return `Tu nueva contraseña temporal es: ${nuevaPassword}`;
+    // Crear el mensaje de correo
+    const mensaje = `
+      <h1>Recuperación de Contraseña</h1>
+      <p>Hola ${usuario.nombre},</p>
+      <p>Tu nueva contraseña temporal es:</p>
+      <h2>${nuevaPassword}</h2>
+      <p>Por favor, cámbiala después de iniciar sesión.</p>
+      <p>Saludos,</p>
+      <p>El equipo de Tu App</p>
+    `;
+
+    // Enviar el correo
+    try {
+      await enviarCorreo(correo, 'Recuperación de Contraseña', mensaje);
+    } catch (error) {
+      console.error('Error al enviar el correo:', error);
+      throw new Error('No se pudo enviar el correo. Por favor, inténtalo de nuevo más tarde.');
+    }
+    return 'Se ha enviado una contraseña temporal a tu correo electrónico.';
   },
 
   // Genera una contraseña aleatoria temporal
@@ -178,4 +200,5 @@ export const UsuariosService = {
 
     return 'Contraseña actualizada correctamente.';
   },
+
 };

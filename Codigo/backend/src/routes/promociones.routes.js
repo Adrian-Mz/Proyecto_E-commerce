@@ -1,5 +1,7 @@
 import express from 'express';
 import { promocionesService } from '../services/promociones.service.js';
+import { validarCrearPromocion,validarActualizarPromocion } from '../validations/promociones.validations.js';
+import { handleValidation } from '../middlewares/handleValidation.js';
 
 const router = express.Router();
 
@@ -14,7 +16,10 @@ router.get('/', async (req, res) => {
 });
 
 // Crear una nueva promoción
-router.post('/', async (req, res) => {
+router.post('/', 
+  validarCrearPromocion,
+  handleValidation,
+  async (req, res) => {
   try {
     const nuevaPromocion = await promocionesService.crearPromocion(req.body);
     res.status(201).json({ mensaje: 'Promoción creada exitosamente.', promocion: nuevaPromocion });
@@ -24,7 +29,10 @@ router.post('/', async (req, res) => {
 });
 
 // Actualizar una promoción existente
-router.put('/:promocionId', async (req, res) => {
+router.put('/:promocionId', 
+  validarActualizarPromocion,
+  handleValidation,
+  async (req, res) => {
   const { promocionId } = req.params;
   try {
     const promocionActualizada = await promocionesService.actualizarPromocion(parseInt(promocionId, 10), req.body);
