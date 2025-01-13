@@ -1,8 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import LoginForm from "../components/UI/LoginForm";
 import loginImg from "../assets/login.jpg";
+import PasswordRecoveryModal from "../components/UI/PasswordRecoveryModal";
+
 
 const LoginPage = () => {
+
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+
+
   return (
     <div className="flex min-h-screen bg-gray-900">
       {/* Sección Izquierda - Imagen */}
@@ -46,8 +52,24 @@ const LoginPage = () => {
               Regístrate aquí
             </a>
           </p>
+
+          {/* Botón de recuperación de contraseña */}
+          <p className="mt-4 text-center text-sm text-gray-500">
+            ¿Has olvidado tu contraseña?{" "}
+            <button
+              onClick={() => setIsRecoveryModalOpen(true)}
+              className="text-blue-600 hover:underline"
+            >
+              Haz clic aquí
+            </button>
+          </p>
         </div>
       </div>
+      {/* Modal para recuperación de contraseña */}
+      <PasswordRecoveryModal
+        visible={isRecoveryModalOpen}
+        onClose={() => setIsRecoveryModalOpen(false)}
+      />
     </div>
   );
 };

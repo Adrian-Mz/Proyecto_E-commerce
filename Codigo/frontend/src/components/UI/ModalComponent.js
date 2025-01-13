@@ -14,7 +14,7 @@ const ModalComponent = ({ title, visible, onClose, children, onSave }) => {
         </CButton>
         {onSave && (
           <CButton color="primary" onClick={onSave}>
-            Guardar
+            Enviar
           </CButton>
         )}
       </CModalFooter>

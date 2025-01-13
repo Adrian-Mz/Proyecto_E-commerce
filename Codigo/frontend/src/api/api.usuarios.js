@@ -78,4 +78,14 @@ export const UsuariosAPI = {
     localStorage.removeItem('token');
     console.info('Usuario deslogueado.');
   },
+
+  recoverPassword: async (correo) => {
+    try {
+      const response = await api.post('/usuarios/recuperar', { correo });
+      return response.data;
+    } catch (error) {
+      console.error("Error al recuperar contraseña:", error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
