@@ -10,6 +10,7 @@ import metodoenvioRoutes from "./routes/metodo_envio.routes.js";
 import estadoPedidos from "./routes/estado.routes.js";
 import devolucionesPedidos from "./routes/devoluciones.routes.js";
 import promocionesRoutes from "./routes/promociones.routes.js";
+import rolesRoutes from "./routes/roles.routes.js"
 
 
 
@@ -28,6 +29,7 @@ app.use("/api/metodo_envio",metodoenvioRoutes);
 app.use("/api/estado",estadoPedidos);
 app.use("/api/devoluciones", devolucionesPedidos);
 app.use("/api/promociones",promocionesRoutes);
+app.use("/api/roles",rolesRoutes);
 
 // Manejo global de errores (debe ir al final)
 app.use((err, req, res, next) => {
