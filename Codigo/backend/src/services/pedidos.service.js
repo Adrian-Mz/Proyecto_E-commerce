@@ -12,11 +12,11 @@ export const pedidosService = {
     if (!direccionEnvio?.trim()) {
       throw new Error('La dirección de envío es obligatoria.');
     }
-
+  
     // Validar métodos de pago y envío
     const metodoPago = await this.validarMetodoPago(metodoPagoId);
     const metodoEnvio = await this.validarMetodoEnvio(metodoEnvioId);
-
+  
     // Verificar si ya existe un pedido en estados bloqueantes
     const estadosBloqueantes = [1, 2]; // Pendiente, Procesando
     const pedidoExistente = await prisma.pedidos.findFirst({
@@ -25,82 +25,63 @@ export const pedidosService = {
         estadoId: { in: estadosBloqueantes },
       },
     });
-
-    console.log("Pedido existente detectado:", pedidoExistente);
-
+  
     if (pedidoExistente) {
       throw new Error(
         'Ya tienes un pedido en proceso. Si deseas agregar más productos, realiza un nuevo pedido desde el carrito.'
       );
     }
-
-    // Obtener productos directamente desde el carrito
-    console.log('Iniciando creación de pedido');
-    const carritoProductos = await this.obtenerProductosDesdeCarrito(usuarioId);
-    console.log('Productos del carrito:', carritoProductos);
-
-    if (!carritoProductos || carritoProductos.length === 0) {
+  
+    // Obtener productos desde el carrito
+    const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
+    if (!carrito || !carrito.productos || carrito.productos.length === 0) {
       throw new Error('El carrito está vacío. Agrega productos antes de confirmar el pedido.');
     }
-
-    // Validar stock
-    await this.validarStock(carritoProductos);
-
-    // Aplicar promociones y calcular el costo total del pedido
-    let totalProductos = 0;
-    for (const item of carritoProductos) {
-      const producto = await ProductosData.getProductoById(item.productoId);
-      if (!producto) {
-        throw new Error(`No se encontró el producto con ID ${item.productoId}`);
-      }
-
-      let precioFinal = producto.precio;
-
-      // Verificar si el producto tiene una promoción activa
-      if (
-        producto.promocion &&
-        this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
-      ) {
-        const descuento = parseFloat(producto.promocion.descuento) / 100;
-        precioFinal = precioFinal - precioFinal * descuento;
-      }
-
-      totalProductos += item.cantidad * parseFloat(precioFinal.toFixed(2));
-    }
-
+  
+    // Calcular el total usando los productos del carrito
+    const totalProductos = carrito.productos.reduce(
+      (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
+      0
+    );
+  
     const costoEnvio = metodoEnvio?.costo ? parseFloat(metodoEnvio.costo) : 0;
     const total = totalProductos + costoEnvio;
-
-    // Crear el pedido
+  
+    // Crear el pedido usando el total ya calculado
     const pedido = await pedidosData.createPedido(
       usuarioId,
       direccionEnvio,
       metodoPagoId,
       metodoEnvioId,
-      carritoProductos
+      carrito.productos,
+      total // Pasar el total calculado
     );
-
+  
     // Registrar el pago
     await this.registrarPago(pedido.id, metodoPagoId, {
       ...detallesPago,
       monto: total,
     });
-
+  
     // Reducir el stock
-    await this.reducirStock(carritoProductos);
-
+    await this.reducirStock(carrito.productos);
+  
     // Vaciar el carrito
-    const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
-    if (!carrito) {
-      throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
-    }
-
     const carritoLimpio = await carritoData.clearCarrito(carrito.id);
     if (!carritoLimpio || carritoLimpio.count === 0) {
       throw new Error('Hubo un problema al vaciar el carrito. Intenta nuevamente.');
     }
 
-    return { mensaje: 'Pedido y pago registrados con éxito. Carrito vaciado.', pedido, total };
+    const mensajeCostoEnvio = `El costo del método de envío seleccionado es de $${costoEnvio.toFixed(2)}.`;
+  
+    return {
+      mensaje: 'Pedido y pago registrados con éxito. Carrito vaciado.',
+      mensajeCostoEnvio,
+      pedido: {
+        ...pedido,
+        total: total.toFixed(2),
+      },
+    };
   },
   
   // Función para verificar si una promoción está activa

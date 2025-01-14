@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const pedidosData = {
-  async createPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, productos) {
+  async createPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, productos, total) {
     return prisma.pedidos.create({
       data: {
         usuario: { connect: { id: usuarioId } },
@@ -11,7 +11,7 @@ export const pedidosData = {
         metodoEnvio: { connect: { id: metodoEnvioId } },
         direccionEnvio,
         estado: { connect: { id: 1 } }, // Estado inicial: "Pendiente"
-        total: productos.reduce((sum, { cantidad, precio_unitario }) => sum + cantidad * precio_unitario, 0),
+        total, // Usar el total recibido como parámetro
         fechaActualizacion: new Date(),
         productos: {
           create: productos.map(({ productoId, cantidad, precio_unitario }) => ({
@@ -25,7 +25,7 @@ export const pedidosData = {
         productos: true,
       },
     });
-  },
+  },  
 
   async getPedidoById(pedidoId, usuarioId) {
     return prisma.pedidos.findFirst({
