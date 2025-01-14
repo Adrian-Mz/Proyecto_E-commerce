@@ -3,26 +3,72 @@ import { ProductosData } from '../data/productos.data.js';
 
 export const CarritoService = {
   // Obtener el carrito de un usuario
-  async obtenerCarrito(usuarioId) {
+   // Obtener el carrito de un usuario
+   async obtenerCarrito(usuarioId) {
     const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito) {
       throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
     }
 
-    // Validar que el carrito tenga productos inicializados
     const productos = carrito.productos || [];
+    let promocionesActivas = true;
+    const detallesPromociones = [];
 
-    // Calcular el total de todos los productos en el carrito
-    const total = productos.reduce((sum, item) => {
-      return sum + item.cantidad * parseFloat(item.precio_unitario);
-    }, 0);
+    // Recorre los productos del carrito para generar mensajes detallados
+    const productosConDetalles = productos.map((item) => {
+      const mensajePromocion = item.precio_unitario < parseFloat(item.producto.precio)
+        ? `Descuento aplicado: Precio original ${item.producto.precio}, Precio con descuento ${item.precio_unitario}.`
+        : "Sin descuento aplicado.";
 
-    // Devolver el carrito junto con el total
-    return { ...carrito, productos, total };
+      if (item.precio_unitario === parseFloat(item.producto.precio) && item.producto.promocion) {
+        promocionesActivas = false; // Al menos una promoción no está activa
+        detallesPromociones.push({
+          producto: item.producto.nombre,
+          mensaje: "La promoción de este producto ha terminado.",
+        });
+      } else {
+        detallesPromociones.push({
+          producto: item.producto.nombre,
+          mensaje: mensajePromocion,
+        });
+      }
+
+      return {
+        ...item,
+        mensajePromocion,
+      };
+    });
+
+    // Calcular el total del carrito
+    const total = productosConDetalles.reduce(
+      (sum, item) => sum + item.cantidad * item.precio_unitario,
+      0
+    );
+
+    const mensajePromocionGeneral = promocionesActivas
+      ? "Todas las promociones activas han sido aplicadas."
+      : "Algunas promociones han terminado. Revisa los detalles de los productos.";
+
+    return {
+      ...carrito,
+      productos: productosConDetalles,
+      total: total.toFixed(2),
+      mensajePromocionGeneral,
+      detallesPromociones,
+    };
   },
 
-   // Agregar productos al carrito de un usuario
-   async addProductsToCart(usuarioId, productos) {
+  // Verificar si la promoción está activa
+  esPromocionActiva(fechaInicio, fechaFin) {
+    const ahora = new Date();
+    return (
+      (!fechaInicio || new Date(fechaInicio) <= ahora) &&
+      (!fechaFin || new Date(fechaFin) >= ahora)
+    );
+  },
+
+  // Agregar productos al carrito de un usuario
+  async addProductsToCart(usuarioId, productos) {
     if (!Array.isArray(productos) || productos.length === 0) {
       throw new Error('Debes enviar un array de productos.');
     }
@@ -45,6 +91,16 @@ export const CarritoService = {
         );
       }
 
+      // Calcula el precio con descuento si la promoción está activa
+      let precio_unitario = parseFloat(producto.precio); // Precio original
+      if (
+        producto.promocion &&
+        this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
+      ) {
+        const descuento = parseFloat(producto.promocion.descuento) / 100;
+        precio_unitario = precio_unitario - precio_unitario * descuento; // Aplicar descuento
+      }
+
       // Validar que productos esté inicializado como un array
       const productosEnCarrito = carrito.productos || [];
       const productoEnCarrito = productosEnCarrito.find((p) => p.productoId === productoId);
@@ -61,10 +117,9 @@ export const CarritoService = {
         await carritoData.updateProductoInCarrito(
           productoEnCarrito.id,
           nuevaCantidad,
-          parseFloat(producto.precio)
+          precio_unitario
         );
       } else {
-        const precio_unitario = parseFloat(producto.precio);
         await carritoData.addProductoCarrito(carrito.id, productoId, cantidad, precio_unitario);
       }
     }

@@ -34,6 +34,7 @@ export const carritoData = {
     });
   },
 
+
   // Actualizar cantidad de un producto en el carrito
   async updateProductoInCarrito(carritoProductoId, cantidad, precio_unitario) {
     return await prisma.carrito_productos.update({

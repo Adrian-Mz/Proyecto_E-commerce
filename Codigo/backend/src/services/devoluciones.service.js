@@ -28,8 +28,8 @@ export const devolucionesService = {
             fechaDevolucion: new Date(),
         });
 
-        // Actualizar el estado del pedido a "En proceso de devolución"
-        await pedidosData.actualizarEstadoPedido(pedidoId, 5); // Estado 5: "En proceso de devolución"
+        // Actualizar el estado del pedido a "En proceso de devolución pendiente"
+        await pedidosData.actualizarEstadoPedido(pedidoId, 5); // Estado 5: "En proceso de devolución pendiente"
 
         return {
             mensaje: 'Devolución registrada correctamente.',

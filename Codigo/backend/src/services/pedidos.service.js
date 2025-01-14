@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { pedidosData } from '../data/pedidos.data.js';
 import { carritoData } from '../data/carrito.data.js';
 import { estadoData } from '../data/estado.data.js';
+import { ProductosData} from '../data/productos.data.js'
 
 const prisma = new PrismaClient();
 
@@ -16,13 +17,17 @@ export const pedidosService = {
     const metodoPago = await this.validarMetodoPago(metodoPagoId);
     const metodoEnvio = await this.validarMetodoEnvio(metodoEnvioId);
 
-    // Verificar si ya existe un pedido en proceso
+    // Verificar si ya existe un pedido en estados bloqueantes
+    const estadosBloqueantes = [1, 2]; // Pendiente, Procesando
     const pedidoExistente = await prisma.pedidos.findFirst({
       where: {
         usuarioId,
-        estadoId: 1, // Estado "Procesando"
+        estadoId: { in: estadosBloqueantes },
       },
     });
+
+    console.log("Pedido existente detectado:", pedidoExistente);
+
     if (pedidoExistente) {
       throw new Error(
         'Ya tienes un pedido en proceso. Si deseas agregar más productos, realiza un nuevo pedido desde el carrito.'
@@ -30,7 +35,9 @@ export const pedidosService = {
     }
 
     // Obtener productos directamente desde el carrito
+    console.log('Iniciando creación de pedido');
     const carritoProductos = await this.obtenerProductosDesdeCarrito(usuarioId);
+    console.log('Productos del carrito:', carritoProductos);
 
     if (!carritoProductos || carritoProductos.length === 0) {
       throw new Error('El carrito está vacío. Agrega productos antes de confirmar el pedido.');
@@ -39,8 +46,28 @@ export const pedidosService = {
     // Validar stock
     await this.validarStock(carritoProductos);
 
-    // Calcular el costo total del pedido
-    const totalProductos = this.calcularTotal(carritoProductos);
+    // Aplicar promociones y calcular el costo total del pedido
+    let totalProductos = 0;
+    for (const item of carritoProductos) {
+      const producto = await ProductosData.getProductoById(item.productoId);
+      if (!producto) {
+        throw new Error(`No se encontró el producto con ID ${item.productoId}`);
+      }
+
+      let precioFinal = producto.precio;
+
+      // Verificar si el producto tiene una promoción activa
+      if (
+        producto.promocion &&
+        this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
+      ) {
+        const descuento = parseFloat(producto.promocion.descuento) / 100;
+        precioFinal = precioFinal - precioFinal * descuento;
+      }
+
+      totalProductos += item.cantidad * parseFloat(precioFinal.toFixed(2));
+    }
+
     const costoEnvio = metodoEnvio?.costo ? parseFloat(metodoEnvio.costo) : 0;
     const total = totalProductos + costoEnvio;
 
@@ -63,13 +90,11 @@ export const pedidosService = {
     await this.reducirStock(carritoProductos);
 
     // Vaciar el carrito
-    // En pedidosService
     const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito) {
       throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
     }
 
-    // Vaciar el carrito usando el carrito ID
     const carritoLimpio = await carritoData.clearCarrito(carrito.id);
     if (!carritoLimpio || carritoLimpio.count === 0) {
       throw new Error('Hubo un problema al vaciar el carrito. Intenta nuevamente.');
@@ -77,6 +102,15 @@ export const pedidosService = {
 
     return { mensaje: 'Pedido y pago registrados con éxito. Carrito vaciado.', pedido, total };
   },
+  
+  // Función para verificar si una promoción está activa
+  esPromocionActiva(fechaInicio, fechaFin) {
+    const ahora = new Date();
+    return (
+      (!fechaInicio || new Date(fechaInicio) <= ahora) &&
+      (!fechaFin || new Date(fechaFin) >= ahora)
+    );
+  },  
 
   // Obtener un pedido específico por usuario
   async obtenerPedidoDeUsuario(usuarioId, pedidoId) {
