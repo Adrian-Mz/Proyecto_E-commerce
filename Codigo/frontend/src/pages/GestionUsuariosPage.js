@@ -1,43 +1,82 @@
 import React, { useState, useEffect } from "react";
 import TableComponent from "../components/UI/TableComponent";
+import ModalComponent from "../components/UI/ModalComponent";
 import { UsuariosAPI } from "../api/api.usuarios";
-import { FaTrash } from "react-icons/fa";
+import { RolesAPI } from "../api/api.roles";
+import { FaTrash, FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const GestionUsuariosPage = () => {
   const [data, setData] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedRole, setSelectedRole] = useState("");
+
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const fetchUsuarios = async () => {
+    const fetchUsuariosAndRoles = async () => {
       try {
-        // Llama al método correcto del API para obtener usuarios
         const usuariosResponse = await UsuariosAPI.getAllUsuarios();
+        const rolesResponse = await RolesAPI.getAllRoles();
+
         setData(usuariosResponse || []);
+        setRoles(rolesResponse || []);
       } catch (error) {
-        console.error("Error al cargar usuarios:", error);
-        toast.error("Error al cargar los usuarios.");
-        setData([]);
+        console.error("Error al cargar datos:", error);
+        toast.error("Error al cargar usuarios o roles.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUsuarios();
+    fetchUsuariosAndRoles();
   }, []);
 
   const handleDeleteUsuario = async (id) => {
     try {
-      // Llama al API para eliminar un usuario por su ID
       await UsuariosAPI.deleteUsuario(id);
       setData((prevData) => prevData.filter((usuario) => usuario.id !== id));
       toast.success("Usuario eliminado correctamente.");
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
       toast.error("Error al eliminar el usuario.");
+    }
+  };
+
+  const handleOpenAssignModal = (usuario) => {
+    setSelectedUser(usuario);
+    setSelectedRole(usuario.rol?.id || "");
+    setIsAssignModalOpen(true);
+  };
+
+  const handleAssignRole = async () => {
+    if (!selectedRole) {
+      toast.error("Por favor, selecciona un rol.");
+      return;
+    }
+  
+    try {
+      // Convertir a número antes de enviarlo
+      await RolesAPI.assignRoleToUser(selectedUser.id, parseInt(selectedRole, 10)); 
+      setData((prevData) =>
+        prevData.map((usuario) =>
+          usuario.id === selectedUser.id
+            ? { ...usuario, rol: roles.find((rol) => rol.id === parseInt(selectedRole, 10)) }
+            : usuario
+        )
+      );
+      toast.success("Rol asignado correctamente.");
+      setIsAssignModalOpen(false);
+      setSelectedUser(null);
+      setSelectedRole("");
+    } catch (error) {
+      console.error("Error al asignar rol:", error);
+      toast.error("Error al asignar el rol.");
     }
   };
 
@@ -95,9 +134,15 @@ const GestionUsuariosPage = () => {
         ]}
         data={paginatedData.map((usuario) => ({
           ...usuario,
-          rol: usuario.rol?.nombre || "Sin rol", // Maneja la relación del rol si existe
+          rol: usuario.rol?.nombre || "Sin rol",
           acciones: (
             <div className="flex space-x-2">
+              <button
+                onClick={() => handleOpenAssignModal(usuario)}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                <FaEdit size={16} />
+              </button>
               <button
                 onClick={() => handleDeleteUsuario(usuario.id)}
                 className="text-red-500 hover:text-red-700"
@@ -108,6 +153,31 @@ const GestionUsuariosPage = () => {
           ),
         }))}
       />
+      <ModalComponent
+        title={`Asignar Rol a ${selectedUser?.nombre || "Usuario"}`}
+        visible={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        onSave={handleAssignRole}
+      >
+        <div>
+          <label htmlFor="rol" className="block text-sm font-medium text-gray-700">
+            Seleccionar Rol
+          </label>
+          <select
+            id="rol"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">Selecciona un rol</option>
+            {roles.map((rol) => (
+              <option key={rol.id} value={rol.id}>
+                {rol.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      </ModalComponent>
     </div>
   );
 };

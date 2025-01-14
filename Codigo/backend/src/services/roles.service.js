@@ -40,6 +40,7 @@ export const rolesService = {
       return await prisma.usuarios.update({
         where: { id: usuarioId },
         data: { rolId },
+        include: { rol: true },
       });
     } catch (error) {
       throw new Error('Error al asignar el rol: ' + error.message);
