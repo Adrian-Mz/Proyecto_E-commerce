@@ -134,21 +134,44 @@ const GestionUsuariosPage = () => {
         ]}
         data={paginatedData.map((usuario) => ({
           ...usuario,
-          rol: usuario.rol?.nombre || "Sin rol",
+          rol: usuario.rol ? usuario.rol.nombre : "Sin rol",
           acciones: (
             <div className="flex space-x-2">
-              <button
-                onClick={() => handleOpenAssignModal(usuario)}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                <FaEdit size={16} />
-              </button>
-              <button
-                onClick={() => handleDeleteUsuario(usuario.id)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <FaTrash size={16} />
-              </button>
+              {/* Mostrar solo editar si es Administrador */}
+              {usuario.rol && usuario.rol.nombre === "Administrador" && (
+                <button
+                  onClick={() => handleOpenAssignModal(usuario)}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <FaEdit size={16} />
+                </button>
+              )}
+              {/* Mostrar editar y eliminar si es Cliente */}
+              {usuario.rol && usuario.rol.nombre === "Cliente" && (
+                <>
+                  <button
+                    onClick={() => handleOpenAssignModal(usuario)}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    <FaEdit size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteUsuario(usuario.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <FaTrash size={16} />
+                  </button>
+                </>
+              )}
+              {/* Caso para usuarios sin rol */}
+              {!usuario.rol && (
+                <button
+                  onClick={() => handleOpenAssignModal(usuario)}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <FaEdit size={16} />
+                </button>
+              )}
             </div>
           ),
         }))}
