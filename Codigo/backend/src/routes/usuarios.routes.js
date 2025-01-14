@@ -6,7 +6,6 @@ import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
 import { handleValidation } from '../middlewares/handleValidation.js';
 
-
 const router = express.Router();
 
 // Ruta para obtener todos los usuarios (protegida, solo Administradores)
@@ -32,7 +31,13 @@ router.get(
   async (req, res, next) => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: 'El ID debe ser un número válido.' });
+      }
       const usuario = await UsuariosService.getUsuarioById(id);
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuario no encontrado.' });
+      }
       res.status(200).json(usuario);
     } catch (error) {
       next(error);
@@ -44,7 +49,7 @@ router.get(
 router.post('/', validarUsuario, handleValidation, async (req, res, next) => {
   try {
     const nuevoUsuario = await UsuariosService.createUsuario(req.body);
-    res.status(201).json(nuevoUsuario);
+    res.status(201).json({ mensaje: 'Usuario creado exitosamente.', usuario: nuevoUsuario });
   } catch (error) {
     next(error);
   }
@@ -61,8 +66,11 @@ router.put(
   async (req, res, next) => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: 'El ID debe ser un número válido.' });
+      }
       const usuario = await UsuariosService.updateUsuario(id, req.body);
-      res.status(200).json(usuario);
+      res.status(200).json({ mensaje: 'Usuario actualizado exitosamente.', usuario });
     } catch (error) {
       next(error);
     }
@@ -78,6 +86,13 @@ router.delete(
   async (req, res, next) => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: 'El ID debe ser un número válido.' });
+      }
+      // Verifica si el administrador intenta autoeliminarse
+      if (req.usuario.id === id) {
+        return res.status(403).json({ error: 'No puedes eliminar tu propia cuenta.' });
+      }
       await UsuariosService.deleteUsuario(id);
       res.status(204).send();
     } catch (error) {
@@ -101,13 +116,12 @@ router.post('/recuperar', async (req, res, next) => {
   try {
     const { correo } = req.body;
 
-    // Validar que el correo esté presente y sea una cadena válida
     if (!correo || typeof correo !== 'string' || !correo.trim()) {
-      return res.status(400).json({ message: 'El campo "correo" es obligatorio y debe ser un correo válido.' });
+      return res.status(400).json({ error: 'El campo "correo" es obligatorio y debe ser válido.' });
     }
 
     const resultado = await UsuariosService.recuperarPassword(correo.trim());
-    res.status(200).json({ message: resultado });
+    res.status(200).json({ mensaje: resultado });
   } catch (error) {
     next(error);
   }
@@ -122,7 +136,7 @@ router.post(
     try {
       const { correo, passwordTemporal, nuevaPassword } = req.body;
       const mensaje = await UsuariosService.cambiarPassword(correo, passwordTemporal, nuevaPassword);
-      res.status(200).json({ message: mensaje });
+      res.status(200).json({ mensaje });
     } catch (error) {
       next(error);
     }

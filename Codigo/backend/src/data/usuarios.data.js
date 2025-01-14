@@ -5,11 +5,17 @@ const prisma = new PrismaClient();
 export const UsuariosData = {
   // Obtiene todos los usuarios desde la base de datos
   async getAllUsuarios() {
-    return await prisma.usuarios.findMany();
+    return await prisma.usuarios.findMany({
+      orderBy: { id: 'asc' }, // Orden ascendente por ID
+      include: { rol: true }, // Incluye los datos del rol
+    });
   },
 
   // Obtener un rol por su nombre
   async getRolPorNombre(nombreRol) {
+    if (!nombreRol) {
+      throw new Error('El nombre del rol es obligatorio.');
+    }
     return await prisma.roles.findUnique({
       where: { nombre: nombreRol },
     });
@@ -17,6 +23,9 @@ export const UsuariosData = {
 
   // Obtener un rol por su ID
   async getRolPorId(id) {
+    if (!Number.isInteger(id)) {
+      throw new Error('El ID del rol debe ser un número válido.');
+    }
     return await prisma.roles.findUnique({
       where: { id },
     });
@@ -29,15 +38,19 @@ export const UsuariosData = {
     }
     return await prisma.usuarios.findUnique({
       where: { id },
+      include: { rol: true }, // Incluye los datos del rol
     });
   },
 
   // Crea un nuevo usuario en la base de datos
   async createUsuario(data) {
-    if (!data || !data.nombre || !data.correo || !data.password) {
+    if (!data || !data.nombre || !data.correo || !data.password || !data.rolId) {
       throw new Error('Faltan datos obligatorios para crear el usuario.');
     }
-    return await prisma.usuarios.create({ data });
+    return await prisma.usuarios.create({
+      data,
+      include: { rol: true }, // Incluye los datos del rol en la respuesta
+    });
   },
 
   // Actualiza un usuario existente en la base de datos
@@ -48,6 +61,7 @@ export const UsuariosData = {
     return await prisma.usuarios.update({
       where: { id },
       data,
+      include: { rol: true }, // Incluye los datos del rol en la respuesta
     });
   },
 
@@ -63,14 +77,20 @@ export const UsuariosData = {
 
   // Obtiene un usuario específico por su correo
   async getUsuarioByCorreo(correo) {
+    if (!correo) {
+      throw new Error('El correo es obligatorio.');
+    }
     return await prisma.usuarios.findUnique({
       where: { correo },
-      include: {rol:true},  //Incluye los datos del rol
+      include: { rol: true }, // Incluye los datos del rol
     });
   },
 
   // Actualiza la contraseña de un usuario por su correo
   async updatePasswordByCorreo(correo, nuevaPassword) {
+    if (!correo || !nuevaPassword) {
+      throw new Error('El correo y la nueva contraseña son obligatorios.');
+    }
     return await prisma.usuarios.update({
       where: { correo },
       data: { password: nuevaPassword },
