@@ -57,21 +57,43 @@ export const carritoData = {
     });
   },
 
+  async getCarritosByProductoId(productoId) {
+    return await prisma.carrito.findMany({
+      where: {
+        productos: {
+          some: { productoId }, // Busca carritos que contengan el producto con el ID especificado
+        },
+      },
+      include: {
+        productos: {
+          include: {
+            producto: true, // Incluye información del producto relacionado
+          },
+        },
+      },
+    });
+  },
 
   // Función para calcular el total del carrito
   async calcularTotalCarrito(carritoId) {
-    const total = await prisma.carrito_productos.aggregate({
+    const productosEnCarrito = await prisma.carrito_productos.findMany({
       where: { carritoId },
-      _sum: {
+      select: {
         cantidad: true,
         precio_unitario: true,
       },
     });
-
-    return {
-      cantidad: total._sum.cantidad || 0,
-      precio_total: total._sum.cantidad * total._sum.precio_unitario || 0,
-    };
-  }
+  
+    const total = productosEnCarrito.reduce(
+      (acc, producto) => {
+        acc.cantidad += producto.cantidad;
+        acc.precio_total += producto.cantidad * producto.precio_unitario;
+        return acc;
+      },
+      { cantidad: 0, precio_total: 0 }
+    );
+  
+    return total;
+  }  
 
 };

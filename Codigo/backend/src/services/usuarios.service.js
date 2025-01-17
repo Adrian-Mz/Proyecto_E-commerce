@@ -22,28 +22,27 @@ export const UsuariosService = {
     return usuario;
   },
 
-  // Crea un nuevo usuario con validaciones y encriptación de contraseña
   async createUsuario(data) {
     const { nombre, correo, apellido, password, direccion, telefono, pais, fechaNacimiento } = data;
-
+  
     if (!nombre || !correo || !password) {
       throw new Error('Todos los campos obligatorios deben ser proporcionados.');
     }
-
+  
     const usuarioExistente = await UsuariosData.getUsuarioByCorreo(correo);
     if (usuarioExistente) {
       throw new Error('El correo ya está registrado.');
     }
-
+  
     // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-
+  
     // Obtener el rol por defecto (usuario)
     const rolUsuario = await UsuariosData.getRolPorId(2); // Nuevo método en UsuariosData
     if (!rolUsuario) {
       throw new Error('El rol por defecto no está configurado en la base de datos.');
     }
-
+  
     // Preparar los datos del usuario
     const nuevoUsuarioData = {
       nombre,
@@ -56,10 +55,30 @@ export const UsuariosService = {
       fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
       rolId: rolUsuario.id, // Asignar el rol automáticamente
     };
-
+  
     // Crear el usuario
-    return await UsuariosData.createUsuario(nuevoUsuarioData);
-  },
+    const usuarioCreado = await UsuariosData.createUsuario(nuevoUsuarioData);
+  
+    // Crear el mensaje de bienvenida
+    const mensaje = `
+      <h1>Bienvenido a Tu App</h1>
+      <p>Hola ${nombre},</p>
+      <p>Gracias por registrarte en nuestra plataforma. Ya puedes iniciar sesión con tu correo electrónico y disfrutar de nuestros servicios.</p>
+      <p>Saludos cordiales,</p>
+      <p>El equipo de Tu App</p>
+    `;
+  
+    // Enviar notificación por correo
+    try {
+      await enviarCorreo(correo, '¡Bienvenido a Tu App!', mensaje);
+      console.log(`Correo de bienvenida enviado a ${correo}`);
+    } catch (error) {
+      console.error(`Error al enviar el correo de bienvenida a ${correo}:`, error.message);
+      // El registro del usuario ya está completo, así que no lanzamos un error aquí.
+    }
+  
+    return usuarioCreado;
+  },  
 
   // Actualiza los datos de un usuario existente
   async updateUsuario(id, data) {

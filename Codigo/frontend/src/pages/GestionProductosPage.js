@@ -100,18 +100,31 @@ const GestionProductosPage = () => {
         categoriaId: parseInt(newProduct.categoriaId, 10),
         promocionId: parseInt(newProduct.promocionId, 10),
       };
-
+  
       const createdProduct = await ProductosService.createProducto(newProductData);
-
+  
       setData((prevData) => [...prevData, createdProduct]);
       clearNewProduct();
       setIsAddModalOpen(false);
       toast.success("Producto añadido correctamente");
     } catch (error) {
       console.error("Error al añadir producto:", error.response?.data || error.message);
-      toast.error("Error al añadir producto");
+  
+      // Manejo detallado de errores del backend
+      const backendErrors = error.response?.data?.errors || [];
+      const generalError = error.response?.data?.error || "Ocurrió un error al añadir el producto.";
+  
+      if (backendErrors.length > 0) {
+        // Mostrar errores específicos como notificaciones
+        backendErrors.forEach((err) => {
+          toast.error(err.msg || err.message, { position: "top-right" });
+        });
+      } else {
+        // Mostrar mensaje general si no hay errores específicos
+        toast.error(generalError, { position: "top-right" });
+      }
     }
-  };
+  };  
 
   const handleEditProduct = async () => {
     try {
@@ -156,9 +169,20 @@ const GestionProductosPage = () => {
       toast.success("Producto eliminado correctamente");
     } catch (error) {
       console.error("Error al eliminar producto:", error);
-      toast.error("Error al eliminar producto");
+  
+      // Manejar errores específicos del backend
+      const backendErrors = error.response?.data?.errors || [];
+      const generalError = error.response?.data?.error || "Ocurrió un error al eliminar el producto.";
+  
+      if (backendErrors.length > 0) {
+        backendErrors.forEach((err) => {
+          toast.error(err.msg || err.message, { position: "top-right" });
+        });
+      } else {
+        toast.error(generalError, { position: "top-right" });
+      }
     }
-  };
+  };  
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {

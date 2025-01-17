@@ -1,21 +1,18 @@
 import express from 'express';
 import { CarritoService } from '../services/carrito.service.js';
 import { validarCarrito } from '../validations/carrito.validation.js';
-import { validationResult } from 'express-validator';
+import { handleValidation } from '../middlewares/handleValidation.js';
+import { verificarToken} from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-// Middleware para manejar errores de validación
-const handleValidation = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};
-
 // Obtener el carrito
-router.get('/:usuarioId', validarCarrito.obtenerCarrito, handleValidation, async (req, res) => {
+router.get(
+  '/:usuarioId', 
+  validarCarrito.obtenerCarrito, 
+  handleValidation, 
+  verificarToken,
+  async (req, res) => {
   try {
     const usuarioId = parseInt(req.params.usuarioId, 10);
     const carrito = await CarritoService.obtenerCarrito(usuarioId);
@@ -26,7 +23,10 @@ router.get('/:usuarioId', validarCarrito.obtenerCarrito, handleValidation, async
 });
 
 // Añadir producto al carrito
-router.post('/:usuarioId', async (req, res) => {
+router.post(
+  '/:usuarioId', 
+  verificarToken,
+  async (req, res) => {
   const usuarioId = parseInt(req.params.usuarioId, 10);
   const productos = req.body;
 
@@ -40,7 +40,12 @@ router.post('/:usuarioId', async (req, res) => {
 
 
 // Actualizar cantidad de un producto en el carrito
-router.put('/:usuarioId', validarCarrito.actualizarProducto, handleValidation, async (req, res) => {
+router.put(
+  '/:usuarioId', 
+  verificarToken,
+  validarCarrito.actualizarProducto, 
+  handleValidation, 
+  async (req, res) => {
   try {
     const usuarioId = parseInt(req.params.usuarioId, 10);
     const { productoId, cantidad } = req.body;
@@ -54,7 +59,10 @@ router.put('/:usuarioId', validarCarrito.actualizarProducto, handleValidation, a
 
 
 // Eliminar un producto del carrito
-router.delete('/:usuarioId/:productoId', async (req, res) => {
+router.delete(
+  '/:usuarioId/:productoId', 
+  verificarToken,
+  async (req, res) => {
   try {
     const usuarioId = parseInt(req.params.usuarioId, 10);
     const productoId = parseInt(req.params.productoId, 10);
@@ -66,7 +74,10 @@ router.delete('/:usuarioId/:productoId', async (req, res) => {
 });
 
 // Vaciar el carrito
-router.delete('/:usuarioId', async (req, res) => {
+router.delete(
+  '/:usuarioId', 
+  verificarToken,
+  async (req, res) => {
   try {
     const usuarioId = parseInt(req.params.usuarioId, 10);
     const carrito = await CarritoService.clearCart(usuarioId);

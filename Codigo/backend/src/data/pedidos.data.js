@@ -70,4 +70,16 @@ export const pedidosData = {
 
     return pedido.estadoId === 4; // Estado "Entregado"
   },
+  async getPedidosByProductoId(productoId) {
+    return prisma.pedidos.findMany({
+      where: {
+        productos: {
+          some: { productoId }, // Busca pedidos que contengan el producto con el ID especificado
+        },
+      },
+      include: {
+        productos: true, // Incluye información de los productos relacionados
+      },
+    });
+  }  
 };

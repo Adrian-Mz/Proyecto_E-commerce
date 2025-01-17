@@ -7,7 +7,6 @@ import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
 import { subirImagenCloudinary } from '../utils/cloudinary.js';
-import { buscarProductosMercadoLibre } from '../utils/mercadoLibre.js';
 import fs from 'fs';
 
 

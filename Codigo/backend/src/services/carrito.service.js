@@ -3,7 +3,6 @@ import { ProductosData } from '../data/productos.data.js';
 
 export const CarritoService = {
   // Obtener el carrito de un usuario
-   // Obtener el carrito de un usuario
    async obtenerCarrito(usuarioId) {
     const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito) {

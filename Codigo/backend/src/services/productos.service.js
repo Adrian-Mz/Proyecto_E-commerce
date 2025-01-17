@@ -1,6 +1,8 @@
 import { ProductosData } from '../data/productos.data.js';
 import { subirImagenCloudinary } from '../utils/cloudinary.js';
 import { buscarProductosMercadoLibre } from '../utils/mercadoLibre.js';
+import {pedidosData} from '../data/pedidos.data.js';
+import {carritoData} from '../data/carrito.data.js';
 import fs from 'fs';
 
 export const ProductosService = {
@@ -104,15 +106,35 @@ export const ProductosService = {
   },
 
   // Eliminar un producto por ID
-  async deleteProducto(id) {
+async deleteProducto(id) {
     try {
+      // Validar que el ID sea válido
       validarId(id);
+
+      // Verificar si el producto está relacionado con algún pedido
+      const pedidosRelacionados = await pedidosData.getPedidosByProductoId(id);
+      if (pedidosRelacionados.length > 0) {
+        throw new Error(
+          `No se puede eliminar el producto. Está asociado a ${pedidosRelacionados.length} pedido(s).`
+        );
+      }
+
+      // Verificar si el producto está relacionado con algún carrito
+      const carritosRelacionados = await carritoData.getCarritosByProductoId(id);
+      if (carritosRelacionados.length > 0) {
+        throw new Error(
+          `No se puede eliminar el producto. Está agregado en ${carritosRelacionados.length} carrito(s).`
+        );
+      }
+
+      // Si no hay relaciones, eliminar el producto
       await ProductosData.deleteProducto(id);
       return { message: 'Producto eliminado exitosamente' };
     } catch (error) {
+      // Manejar errores y lanzar una excepción
       throw new Error(`Error al eliminar el producto: ${error.message}`);
     }
-  },
+  }
 };
 
 function validarId(id) {
