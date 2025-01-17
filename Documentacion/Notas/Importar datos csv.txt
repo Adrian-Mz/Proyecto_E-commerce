@@ -5,3 +5,4 @@
 \COPY metodo_pago FROM 'C:/Users/Saeteros/Downloads/metodo_pago.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY promociones FROM 'C:/Users/Saeteros/Downloads/promociones.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/productos.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY productos FROM 'C:/Users/Saeteros/Downloads/products_with_autoincremented_id.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
