@@ -8,13 +8,14 @@ export const CategoriaData = {
     return await prisma.categorias.findMany({
       include: {
         productos: {
-          orderBy: {
-            id: 'asc', // Ordena los productos por su ID en orden ascendente
-          },
+          orderBy: { id: 'asc' },
+        },
+        promociones: {
+          include: { promocion: true },
         },
       },
     });
-  },  
+  },
 
   // Obtener una categoría por ID
   async getCategoriaById(id) {
@@ -23,9 +24,14 @@ export const CategoriaData = {
     }
     return await prisma.categorias.findUnique({
       where: { id },
-      include: { productos: true },
+      include: {
+        productos: true,
+        promociones: {
+          include: { promocion: true },
+        },
+      },
     });
-  },
+  },  
 
   // Crear una nueva categoría
   async createCategoria(data) {

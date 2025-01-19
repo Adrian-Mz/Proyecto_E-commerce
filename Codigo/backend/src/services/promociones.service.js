@@ -39,24 +39,39 @@ export const promocionesService = {
 
   // Actualizar una promoción existente
   async actualizarPromocion(promocionId, datosPromocion) {
-    const { nombre, descripcion, descuento, fechaInicio, fechaFin } = datosPromocion;
+    const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
 
-    // Validaciones adicionales (opcional)
-    if (descuento && (descuento <= 0 || descuento > 100)) {
-      throw new Error('El descuento debe estar entre 1% y 100%.');
-    }
-    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
-      throw new Error('La fecha de inicio no puede ser posterior a la fecha de fin.');
+    // Validar categorías
+    if (categorias && !Array.isArray(categorias)) {
+        throw new Error("El campo 'categorias' debe ser un array.");
     }
 
-    return await promocionesData.updatePromocion(promocionId, {
-      nombre,
-      descripcion,
-      descuento,
-      fechaInicio,
-      fechaFin,
+    // Convertir fechas a formato ISO
+    const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
+    const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
+
+    // Actualizar la promoción
+    const promocionActualizada = await promocionesData.updatePromocion(promocionId, {
+        nombre,
+        descripcion,
+        descuento,
+        fechaInicio: fechaInicioISO,
+        fechaFin: fechaFinISO,
+        categorias,
     });
-  },
+
+    // Actualizar los productos de las categorías seleccionadas con la nueva promoción
+    if (categorias) {
+        await Promise.all(
+            categorias.map(async (categoriaId) => {
+                // Actualizar todos los productos de esta categoría con el nuevo promocionId
+                await ProductosData.updateProductosByCategoria(categoriaId, promocionId);
+            })
+        );
+    }
+
+    return promocionActualizada;
+  },  
   
   // Asignar promoción a todos los productos de una categoría
   async asignarPromocionPorCategoria(categoriaId, promocionId) {

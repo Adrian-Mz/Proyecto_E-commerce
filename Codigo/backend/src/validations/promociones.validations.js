@@ -57,4 +57,14 @@ export const validarActualizarPromocion = [
       }
       return true;
     }),
+  body('categorias')
+    .optional()
+    .isArray().withMessage("El campo 'categorias' debe ser un array.")
+    .custom((categorias) => {
+      if (!categorias.every(Number.isInteger)) {
+        throw new Error("El campo 'categorias' debe contener solo números enteros.");
+      }
+      return true;
+    }),
 ];
+

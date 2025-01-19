@@ -11,7 +11,7 @@ export const ProductosData = {
     const where = {
       AND: [
         search ? { nombre: { contains: search, mode: "insensitive" } } : {},
-        categoriaId ? { categoriaId: categoriaId } : {},
+        categoriaId ? { categoriaId: categoriaId } : {}, // Filtro por categoría directa
       ],
     };
   
@@ -19,66 +19,56 @@ export const ProductosData = {
       where,
       skip,
       take,
-      orderBy: { id: "asc" }, // Ordena los resultados por ID de forma ascendente
+      orderBy: { id: "asc" },
       include: {
-        categoria: true,
-        promocion: true,
+        categoria: true, // Relación directa con categoría
+        promocion: true, // Relación directa con promoción
       },
     });
   
     const total = await prisma.productos.count({ where });
   
     return { productos, total, page, pageSize };
-  }, 
+  },    
 
   // Obtener un producto por ID
   async getProductoById(id) {
-    if (typeof id !== 'number') {
-      throw new Error('El ID debe ser un número');
+    if (typeof id !== "number") {
+      throw new Error("El ID debe ser un número");
     }
-
-    // Obtener el producto de la base de datos
+  
     const producto = await prisma.productos.findUnique({
       where: { id },
       include: {
-        categoria: true,
-        promocion: true,
+        categoria: true, // Relación directa con categoría
+        promocion: true, // Relación directa con promoción
       },
     });
-
+  
     if (!producto) {
-      throw new Error('Producto no encontrado');
+      throw new Error("Producto no encontrado");
     }
-
-    // Verificar si el producto tiene una promoción asociada
-    if (!producto.promocion) {
-      console.log('La promoción no está asociada al producto:', producto.id);
-    }
-
+  
     return producto;
-  },
-
+  },  
 
   async createProducto(data) {
     if (
       !data ||
       !data.nombre ||
       !data.descripcion ||
-      typeof data.precio !== 'number' ||
-      typeof data.stock !== 'number' ||
-      !data.categoriaId ||
-      !data.promocionId ||
+      typeof data.precio !== "number" ||
+      typeof data.stock !== "number" ||
+      !data.categoriaId || // Asegúrate de que exista la categoría
       !data.especificaciones ||
       !data.marca ||
       !data.garantia
     ) {
-      throw new Error('Datos incompletos o inválidos para crear el producto');
+      throw new Error("Datos incompletos o inválidos para crear el producto");
     }
   
-    // Depuración: Mostrar los datos enviados a Prisma
-    console.log('Datos enviados a Prisma:', data);
+    console.log("Datos enviados a Prisma:", data);
   
-    // Crear el producto
     return await prisma.productos.create({
       data: {
         nombre: data.nombre,
@@ -86,14 +76,14 @@ export const ProductosData = {
         precio: data.precio,
         stock: data.stock,
         imagen: data.imagen,
-        categoriaId: data.categoriaId,
-        promocionId: data.promocionId,
+        categoriaId: data.categoriaId, // Aquí conecta con una sola categoría
+        promocionId: data.promocionId || null, // Promoción es opcional
         especificaciones: data.especificaciones,
         marca: data.marca,
         garantia: data.garantia,
       },
     });
-  },
+  },  
 
   // Actualizar un producto
   async updateProducto(id, data) {
@@ -121,4 +111,12 @@ export const ProductosData = {
       where: { id },
     });
   },
+
+  // Actualizar productos por categoría
+  async updateProductosByCategoria(categoriaId, promocionId) {
+    return await prisma.productos.updateMany({
+        where: { categoriaId },
+        data: { promocionId },
+    });
+  }
 };

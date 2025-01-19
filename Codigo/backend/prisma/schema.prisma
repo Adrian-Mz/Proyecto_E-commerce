@@ -65,7 +65,18 @@ model categorias {
   descripcion String
 
   productos   productos[]
-  promociones promociones[] // Relación con promociones
+  promociones categoria_promocion[] // Relación muchos a muchos
+}
+
+model categoria_promocion {
+  id            Int          @id @default(autoincrement())
+  categoriaId   Int
+  promocionId   Int
+
+  categoria     categorias    @relation(fields: [categoriaId], references: [id])
+  promocion     promociones   @relation(fields: [promocionId], references: [id])
+
+  @@unique([categoriaId, promocionId]) // Asegura que no se dupliquen combinaciones
 }
 
 model promociones {
@@ -75,9 +86,8 @@ model promociones {
   descuento   Decimal  @default(0.0)
   fechaInicio DateTime?
   fechaFin    DateTime?
-  categoriaId Int?     // Relación opcional con categoría
 
-  categoria   categorias? @relation(fields: [categoriaId], references: [id]) // Relación con categorías
+  categorias  categoria_promocion[] // Relación muchos a muchos
   productos   productos[]
 }
 

@@ -8,3 +8,19 @@
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/products_with_autoincremented_id.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/corrected_plantilla_datos_gabinetes.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/final_correct_products_with_id_start_44.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+
+
+
+
+Nuevos Datos:
+\COPY usuarios FROM 'C:/Users/Saeteros/Downloads/datos/usuarios.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY roles FROM 'C:/Users/Saeteros/Downloads/datos/roles.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY promociones FROM 'C:/Users/Saeteros/Downloads/datos/promociones.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY metodo_pago FROM 'C:/Users/Saeteros/Downloads/datos/metodo_pago.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY metodo_envio FROM 'C:/Users/Saeteros/Downloads/datos/metodo_envio.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY categorias FROM 'C:/Users/Saeteros/Downloads/datos/categorias.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY productos FROM 'C:/Users/Saeteros/Downloads/datos/productos.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY estado FROM 'C:/Users/Saeteros/Downloads/datos/estado.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+
+\COPY productos FROM 'C:/Users/Saeteros/Downloads/productos_reordenado.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+
