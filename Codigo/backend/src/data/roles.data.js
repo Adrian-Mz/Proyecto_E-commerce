@@ -6,7 +6,7 @@ export const rolesData = {
   // Obtener todos los roles
   async getAllRoles() {
     try {
-      return await prisma.roles.findMany();
+      return await prisma.roles.findMany({orderBy: {id: 'asc'}});
     } catch (error) {
       throw new Error('Error al obtener los roles: ' + error.message);
     }

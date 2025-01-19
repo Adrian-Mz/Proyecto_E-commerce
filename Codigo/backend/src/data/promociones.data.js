@@ -6,6 +6,7 @@ export const promocionesData = {
   // Obtener todas las promociones
   async getAllPromociones() {
     return await prisma.promociones.findMany({
+      orderBy: { id: 'asc' },
       include: { categoria: true }, // Incluye la categoría relacionada
     });
   },
