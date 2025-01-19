@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TableComponent from "../components/UI/TableComponent";
 import ModalComponent from "../components/UI/ModalComponent";
+import ConfirmDeleteModal from "../components/UI/ConfirmDeleteModal";
 import { UsuariosAPI } from "../api/api.usuarios";
 import { RolesAPI } from "../api/api.roles";
 import { FaTrash, FaEdit } from "react-icons/fa";
@@ -15,6 +16,8 @@ const GestionUsuariosPage = () => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const itemsPerPage = 5;
 
@@ -37,15 +40,24 @@ const GestionUsuariosPage = () => {
     fetchUsuariosAndRoles();
   }, []);
 
-  const handleDeleteUsuario = async (id) => {
+  const handleDeleteUsuario = async () => {
     try {
-      await UsuariosAPI.deleteUsuario(id);
-      setData((prevData) => prevData.filter((usuario) => usuario.id !== id));
-      toast.success("Usuario eliminado correctamente.");
+      if (userToDelete) {
+        await UsuariosAPI.deleteUsuario(userToDelete.id);
+        setData((prevData) => prevData.filter((usuario) => usuario.id !== userToDelete.id));
+        toast.success("Usuario eliminado correctamente.");
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+      }
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
       toast.error("Error al eliminar el usuario.");
     }
+  };
+
+  const handleOpenDeleteModal = (usuario) => {
+    setUserToDelete(usuario);
+    setIsDeleteModalOpen(true);
   };
 
   const handleOpenAssignModal = (usuario) => {
@@ -59,10 +71,9 @@ const GestionUsuariosPage = () => {
       toast.error("Por favor, selecciona un rol.");
       return;
     }
-  
+
     try {
-      // Convertir a número antes de enviarlo
-      await RolesAPI.assignRoleToUser(selectedUser.id, parseInt(selectedRole, 10)); 
+      await RolesAPI.assignRoleToUser(selectedUser.id, parseInt(selectedRole, 10));
       setData((prevData) =>
         prevData.map((usuario) =>
           usuario.id === selectedUser.id
@@ -156,21 +167,12 @@ const GestionUsuariosPage = () => {
                     <FaEdit size={16} />
                   </button>
                   <button
-                    onClick={() => handleDeleteUsuario(usuario.id)}
+                    onClick={() => handleOpenDeleteModal(usuario)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <FaTrash size={16} />
                   </button>
                 </>
-              )}
-              {/* Caso para usuarios sin rol */}
-              {!usuario.rol && (
-                <button
-                  onClick={() => handleOpenAssignModal(usuario)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  <FaEdit size={16} />
-                </button>
               )}
             </div>
           ),
@@ -201,6 +203,12 @@ const GestionUsuariosPage = () => {
           </select>
         </div>
       </ModalComponent>
+      <ConfirmDeleteModal
+        visible={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteUsuario}
+        message={`¿Estás seguro de que deseas eliminar al usuario "${userToDelete?.nombre}"?`}
+      />
     </div>
   );
 };

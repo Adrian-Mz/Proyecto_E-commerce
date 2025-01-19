@@ -240,7 +240,6 @@ const GestionProductosPage = () => {
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
           { key: "marca", label: "Marca" },
-          { key: "especificaciones", label: "Especificaciones" },
           { key: "precio", label: "Precio" },
           { key: "stock", label: "Stock" },
           { key: "categoria", label: "Categoría" },
@@ -249,6 +248,9 @@ const GestionProductosPage = () => {
         ]}
         data={paginatedData.map((item) => ({
           ...item,
+          descripcion: item.descripcion
+          ? item.descripcion.split(" ").slice(0, 10).join(" ") + (item.descripcion.split(" ").length > 10 ? "..." : "")
+          : "", // Limita a 10 palabras y añade "..." si es necesario
           precio: parseFloat(item.precio).toFixed(2),
           categoria: categorias.find((categoria) => categoria.id === item.categoriaId)?.nombre,
           promocion:
