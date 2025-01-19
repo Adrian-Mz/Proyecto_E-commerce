@@ -38,8 +38,8 @@ function App() {
             <Route path="/productos/:id" element={<ProductoDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
           </Routes>
-          <Footer />
         </main>
+        <Footer />
       </Router>
     </CartProvider>
   );
