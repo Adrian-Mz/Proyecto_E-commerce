@@ -20,7 +20,7 @@ const GestionProductosPage = () => {
     nombre: "",
     descripcion: "",
     especificaciones: "",
-    imagen: "",
+    imagen: null,
     marca: "",
     precio: "",
     stock: "",
@@ -93,38 +93,31 @@ const GestionProductosPage = () => {
 
   const handleAddProduct = async () => {
     try {
-      const newProductData = {
-        ...newProduct,
-        precio: parseFloat(newProduct.precio),
-        stock: parseInt(newProduct.stock, 10),
-        categoriaId: parseInt(newProduct.categoriaId, 10),
-        promocionId: parseInt(newProduct.promocionId, 10),
-      };
-  
-      const createdProduct = await ProductosService.createProducto(newProductData);
-  
+      const formData = new FormData();
+      Object.entries(newProduct).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const createdProduct = await ProductosService.createProducto(formData);
       setData((prevData) => [...prevData, createdProduct]);
       clearNewProduct();
       setIsAddModalOpen(false);
       toast.success("Producto añadido correctamente");
     } catch (error) {
       console.error("Error al añadir producto:", error.response?.data || error.message);
-  
-      // Manejo detallado de errores del backend
+
       const backendErrors = error.response?.data?.errors || [];
       const generalError = error.response?.data?.error || "Ocurrió un error al añadir el producto.";
-  
+
       if (backendErrors.length > 0) {
-        // Mostrar errores específicos como notificaciones
         backendErrors.forEach((err) => {
           toast.error(err.msg || err.message, { position: "top-right" });
         });
       } else {
-        // Mostrar mensaje general si no hay errores específicos
         toast.error(generalError, { position: "top-right" });
       }
     }
-  };  
+  };
 
   const handleEditProduct = async () => {
     try {
@@ -413,11 +406,11 @@ const renderProductInputs = (product, setProduct, categorias, promociones, marca
       />
     </div>
     <div>
-      <label>Imagen (URL):</label>
+      <label>Imagen:</label>
       <input
-        type="text"
-        value={product?.imagen || ""}
-        onChange={(e) => setProduct((prev) => ({ ...prev, imagen: e.target.value }))}
+        type="file"
+        accept="image/*"
+        onChange={(e) => setProduct((prev) => ({ ...prev, imagen: e.target.files[0] }))}
         className="border p-2 rounded w-full"
       />
     </div>
