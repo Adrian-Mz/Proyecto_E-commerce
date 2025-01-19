@@ -65,6 +65,7 @@ model categorias {
   descripcion String
 
   productos   productos[]
+  promociones promociones[] // Relación con promociones
 }
 
 model promociones {
@@ -74,7 +75,9 @@ model promociones {
   descuento   Decimal  @default(0.0)
   fechaInicio DateTime?
   fechaFin    DateTime?
+  categoriaId Int?     // Relación opcional con categoría
 
+  categoria   categorias? @relation(fields: [categoriaId], references: [id]) // Relación con categorías
   productos   productos[]
 }
 

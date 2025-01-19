@@ -36,6 +36,8 @@ export const ProductosData = {
     if (typeof id !== 'number') {
       throw new Error('El ID debe ser un número');
     }
+
+    // Obtener el producto de la base de datos
     const producto = await prisma.productos.findUnique({
       where: { id },
       include: {
@@ -43,11 +45,19 @@ export const ProductosData = {
         promocion: true,
       },
     });
+
     if (!producto) {
       throw new Error('Producto no encontrado');
     }
+
+    // Verificar si el producto tiene una promoción asociada
+    if (!producto.promocion) {
+      console.log('La promoción no está asociada al producto:', producto.id);
+    }
+
     return producto;
   },
+
 
   async createProducto(data) {
     if (

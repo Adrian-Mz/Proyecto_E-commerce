@@ -10,16 +10,18 @@ export const ProductosService = {
   async getAllProductos(params) {
     try {
       const { search, categoriaId, page, pageSize, orderBy, orderDirection } = params;
-  
+
       const validPage = Math.max(parseInt(page, 10) || 1, 1);
       const validPageSize = parseInt(pageSize, 10) || 0;
-  
+
       // Valida el campo para ordenar
       const validOrderBy = ["nombre", "precio", "createdAt"].includes(orderBy) ? orderBy : "nombre";
-  
+
       // Valida la dirección de orden
-      const validOrderDirection = ["asc", "desc"].includes(orderDirection?.toLowerCase()) ? orderDirection : "asc";
-  
+      const validOrderDirection = ["asc", "desc"].includes(orderDirection?.toLowerCase())
+        ? orderDirection
+        : "asc";
+
       const { productos, total } = await ProductosData.getAllProductos({
         search,
         categoriaId,
@@ -28,9 +30,27 @@ export const ProductosService = {
         orderBy: validOrderBy,
         orderDirection: validOrderDirection,
       });
-  
+
+      // Calcular el precio con promoción para cada producto
+      const productosConPromocion = productos.map((producto) => {
+        let precioConPromocion = null;
+        if (
+          producto.promocion &&
+          this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
+        ) {
+          const descuento = parseFloat(producto.promocion.descuento) / 100;
+          precioConPromocion =
+            parseFloat(producto.precio) - parseFloat(producto.precio) * descuento;
+        }
+
+        return {
+          ...producto,
+          precioConPromocion: precioConPromocion ? precioConPromocion.toFixed(2) : null,
+        };
+      });
+
       return {
-        productos,
+        productos: productosConPromocion,
         total,
         currentPage: validPage,
         totalPages: validPageSize > 0 ? Math.ceil(total / validPageSize) : 1,
@@ -48,10 +68,34 @@ export const ProductosService = {
       if (!producto) {
         throw new Error('Producto no encontrado');
       }
-      return producto;
+  
+      // Calcular el precio con promoción si hay una promoción activa
+      let precioConPromocion = null;
+      if (
+        producto.promocion &&
+        this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
+      ) {
+        const descuento = parseFloat(producto.promocion.descuento) / 100;
+        precioConPromocion =
+        parseFloat(producto.precio) - parseFloat(producto.precio) * descuento;
+      }
+  
+      // Agregar el precio con promoción al resultado
+      return {
+        ...producto,
+        precioConPromocion: precioConPromocion ? precioConPromocion.toFixed(2) : null,
+      };
     } catch (error) {
       throw new Error(`Error al obtener el producto: ${error.message}`);
     }
+  },
+
+  esPromocionActiva(fechaInicio, fechaFin) {
+    const ahora = new Date();
+    return (
+      (!fechaInicio || new Date(fechaInicio) <= ahora) &&
+      (!fechaFin || new Date(fechaFin) >= ahora)
+    );
   },
 
   async createProducto(data) {
@@ -106,7 +150,7 @@ export const ProductosService = {
   },
 
   // Eliminar un producto por ID
-async deleteProducto(id) {
+  async deleteProducto(id) {
     try {
       // Validar que el ID sea válido
       validarId(id);
