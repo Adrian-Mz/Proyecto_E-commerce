@@ -13,7 +13,7 @@ export const enviarCorreo = async (destinatario, asunto, contenido) => {
   }
 
   const sendSmtpEmail = {
-    sender: { name: 'Tu Empresa', email: 'ksaeteros2001@gmail.com' },
+    sender: { name: 'TrendShop', email: 'ksaeteros2001@gmail.com' },
     to: [{ email: destinatario }],
     subject: asunto,
     htmlContent: contenido,

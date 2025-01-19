@@ -34,6 +34,7 @@ export const ProductosService = {
       // Calcular el precio con promoción para cada producto
       const productosConPromocion = productos.map((producto) => {
         let precioConPromocion = null;
+        let mensajePromocion = "Producto sin promoción";
         if (
           producto.promocion &&
           this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
@@ -45,7 +46,8 @@ export const ProductosService = {
 
         return {
           ...producto,
-          precioConPromocion: precioConPromocion ? precioConPromocion.toFixed(2) : null,
+          precioConPromocion: precioConPromocion ? precioConPromocion.toFixed(2) : producto.precio,
+          mensajePromocion,
         };
       });
 

@@ -3,6 +3,14 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const devolucionesData = {
+  
+  // Registrar una nueva devolución
+  async createDevolucion(data) {
+    return await prisma.devoluciones.create({
+      data,
+    });
+  },
+  
   // Obtener todas las devoluciones
   async getAllDevoluciones() {
     return await prisma.devoluciones.findMany({
