@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import Header from "./components/UI/Header";
+import Footer from "./components/UI/Footer";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import LoginPage from "./pages/LoginPage";
@@ -37,6 +38,7 @@ function App() {
             <Route path="/productos/:id" element={<ProductoDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
           </Routes>
+          <Footer />
         </main>
       </Router>
     </CartProvider>
