@@ -3,13 +3,23 @@ import { ProductosService } from "../api/api.productos";
 import { CategoriasService } from "../api/api.categorias";
 import { toast } from "react-toastify"; // Para mostrar notificaciones
 import { useCart } from "../context/CartContext"; // Contexto del carrito
+import {
+  CCard,
+  CCardBody,
+  CCardFooter,
+  CCardImage,
+  CCardText,
+  CCardTitle,
+  CCol,
+  CRow,
+  CButton,
+} from "@coreui/react";
+import { FaHandPointUp, FaShoppingCart } from "react-icons/fa";
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
-  const [precioMin, setPrecioMin] = useState("");
-  const [precioMax, setPrecioMax] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,23 +66,6 @@ const ProductosPage = () => {
     }
   };
 
-  // Manejar el filtro por rango de precios
-  const handleFiltrarPorPrecio = async () => {
-    setLoading(true);
-    try {
-      const productosFiltrados = await ProductosService.getProductosFiltradosPorPrecio(
-        precioMin,
-        precioMax
-      );
-      setProductos(productosFiltrados.productos || []);
-    } catch (error) {
-      console.error("Error al filtrar por precio:", error);
-      toast.error("Error al filtrar productos por precio.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Agregar producto al carrito
   const agregarAlCarrito = (producto) => {
     try {
@@ -100,26 +93,18 @@ const ProductosPage = () => {
     }
   };
 
-    // Función para manejar stock dinámico
-    const renderStockStatus = (stock) => {
-      if (stock > 10) return <p className="text-green-500">En stock</p>;
-      if (stock > 0) return <p className="text-yellow-500">Quedan {stock} unidades</p>;
-      return <p className="text-red-500">Agotado</p>;
-    };
-
-    
   return (
-    <div className="flex min-h-screen bg-gray-900 text-gray-100">
+    <div className="flex min-h-screen bg-white text-gray-900">
       {/* Menú lateral */}
-      <aside className="w-1/4 bg-gray-800 p-4 shadow-lg">
+      <aside className="w-1/4 bg-gray-200 p-4 shadow-lg">
         <h2 className="text-xl font-bold mb-4">Categorías</h2>
         <ul>
           <li
             className={`cursor-pointer py-2 px-4 ${
               !categoriaSeleccionada
-                ? "bg-gray-700 text-white"
-                : "text-gray-300 hover:bg-gray-700"
-            }`}
+                ? "bg-gray-300 text-gray-900"
+                : "text-gray-600 hover:bg-gray-300"
+            } hover:scale-105 transition-transform duration-200 ease-in-out`}
             onClick={() => handleCategoriaSeleccionada(null)}
           >
             Todas las Categorías
@@ -129,81 +114,66 @@ const ProductosPage = () => {
               key={categoria.id}
               className={`cursor-pointer py-2 px-4 ${
                 categoriaSeleccionada === categoria.id
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-300 hover:bg-gray-700"
-              }`}
+                  ? "bg-gray-300 text-gray-900"
+                  : "text-gray-600 hover:bg-gray-300"
+              } hover:scale-105 transition-transform duration-200 ease-in-out`}
               onClick={() => handleCategoriaSeleccionada(categoria.id)}
             >
               {categoria.nombre}
             </li>
           ))}
         </ul>
-        <h2 className="text-xl font-bold mt-6 mb-4">Rango de Precios</h2>
-        <div className="flex flex-col space-y-2">
-          <input
-            type="number"
-            placeholder="Precio Mínimo"
-            className="p-2 rounded bg-gray-700 text-gray-100"
-            value={precioMin}
-            onChange={(e) => setPrecioMin(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Precio Máximo"
-            className="p-2 rounded bg-gray-700 text-gray-100"
-            value={precioMax}
-            onChange={(e) => setPrecioMax(e.target.value)}
-          />
-          <button
-            onClick={handleFiltrarPorPrecio}
-            className="bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-          >
-            Filtrar
-          </button>
-        </div>
       </aside>
 
       {/* Listado de productos */}
       <main className="flex-1 p-6">
-      <h1 className="text-2xl font-bold mb-4">Productos</h1>
+        <h1 className="text-2xl font-bold mb-4">Productos</h1>
         {loading ? (
           <p className="text-center">Cargando productos...</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CRow xs={{ cols: 1, gutter: 4 }} md={{ cols: 2 }} lg={{ cols: 3 }}>
             {paginatedProductos.map((producto) => (
-              <div
-                key={producto.id}
-                className="p-4 bg-gray-800 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
-              >
-                <img
-                  src={producto.imagen || "https://via.placeholder.com/150"}
-                  alt={producto.nombre}
-                  className="w-full h-48 rounded-md mb-4"
-                />
-                <h2 className="font-bold text-lg text-center">
-                  <a
-                    href={`/productos/${producto.id}`}
-                    className="hover:text-blue-400 no-underline"
-                  >
-                    {producto.nombre}
-                  </a>
-                </h2>
-                {producto.promocion && (
-                  <p className="text-red-400 text-center mb-2">
-                    Promoción: {producto.promocion.nombre}
-                  </p>
-                )}
-                <p className="font-bold text-blue-400 mb-4 text-center">{`$${producto.precio}`}</p>
-                {renderStockStatus(producto.stock)}
-                <button
-                  onClick={() => agregarAlCarrito(producto)}
-                  className="mt-auto bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 flex items-center justify-center w-full"
+              <CCol xs key={producto.id}>
+                <CCard
+                  className="hover:shadow-xl transition-transform transform hover:scale-105"
+                  style={{ borderColor: "#e2e8f0", backgroundColor: "#f9fafb" }}
                 >
-                  Agregar al Carrito
-                </button>
-              </div>
+                  <CCardImage
+                    orientation="top"
+                    src={producto.imagen || "https://via.placeholder.com/150"}
+                  />
+                  <CCardBody>
+                    <CCardTitle className="font-bold">{producto.nombre}</CCardTitle>
+                    <CCardText>
+                      <span className="font-bold">Precio:</span> ${producto.precio}
+                    </CCardText>
+                    {producto.promocion && (
+                      <CCardText>
+                        <span className="font-bold">Promoción:</span> {producto.promocion.nombre}
+                      </CCardText>
+                    )}
+                  </CCardBody>
+                  <CCardFooter className="flex justify-between items-center">
+                    <CButton
+                      color="primary"
+                      variant="outline"
+                      href={`/productos/${producto.id}`}
+                      className="d-flex align-items-center"
+                    >
+                      <FaHandPointUp className="me-2"/>
+                      Ver detalles
+                    </CButton>
+                    <CButton
+                      color="success"
+                      onClick={() => agregarAlCarrito(producto)}
+                    >
+                      <FaShoppingCart />
+                    </CButton>
+                  </CCardFooter>
+                </CCard>
+              </CCol>
             ))}
-          </div>
+          </CRow>
         )}
         {/* Controles de paginación */}
         <div className="flex justify-end mt-4 space-x-2">
