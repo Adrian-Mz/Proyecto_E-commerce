@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TableComponent from "../components/UI/TableComponent";
 import ModalComponent from "../components/UI/ModalComponent";
+import ConfirmDeleteModal from "../components/UI/ConfirmDeleteModal"; // Nuevo componente
 import { PromocionesService } from "../api/api.promociones";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -12,6 +13,9 @@ const GestionPromocionesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false); // Modal de confirmación
   const [newPromocion, setNewPromocion] = useState({
     nombre: "",
     descripcion: "",
@@ -19,9 +23,6 @@ const GestionPromocionesPage = () => {
     fechaInicio: "",
     fechaFin: "",
   });
-
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPromocion, setSelectedPromocion] = useState(null);
 
   useEffect(() => {
@@ -54,12 +55,18 @@ const GestionPromocionesPage = () => {
     try {
       const formattedData = {
         ...newPromocion,
-        descuento: parseFloat(newPromocion.descuento), // Asegurarse de que sea un número
-        fechaInicio: newPromocion.fechaInicio ? new Date(newPromocion.fechaInicio).toISOString() : null, // Formato ISO-8601
-        fechaFin: newPromocion.fechaFin ? new Date(newPromocion.fechaFin).toISOString() : null, // Formato ISO-8601
+        descuento: parseFloat(newPromocion.descuento), // Convertir a número
+        fechaInicio: newPromocion.fechaInicio
+          ? new Date(newPromocion.fechaInicio).toISOString()
+          : null, // Formato ISO-8601
+        fechaFin: newPromocion.fechaFin
+          ? new Date(newPromocion.fechaFin).toISOString()
+          : null, // Formato ISO-8601
       };
-  
-      const createdPromocion = await PromocionesService.createPromocion(formattedData);
+
+      const createdPromocion = await PromocionesService.createPromocion(
+        formattedData
+      );
       setData((prevData) => [...prevData, createdPromocion]);
       toast.success("Promoción añadida correctamente");
       setIsAddModalOpen(false);
@@ -69,28 +76,32 @@ const GestionPromocionesPage = () => {
       toast.error("Error al añadir promoción");
     }
   };
-  
+
   const handleEditPromocion = async () => {
     try {
       if (selectedPromocion) {
         const updatedPromocionData = {
           ...selectedPromocion,
-          descuento: parseFloat(selectedPromocion.descuento), // Asegurarse de que sea un número
-          fechaInicio: selectedPromocion.fechaInicio ? new Date(selectedPromocion.fechaInicio).toISOString() : null, // Formato ISO-8601
-          fechaFin: selectedPromocion.fechaFin ? new Date(selectedPromocion.fechaFin).toISOString() : null, // Formato ISO-8601
+          descuento: parseFloat(selectedPromocion.descuento), // Convertir a número
+          fechaInicio: selectedPromocion.fechaInicio
+            ? new Date(selectedPromocion.fechaInicio).toISOString()
+            : null, // Formato ISO-8601
+          fechaFin: selectedPromocion.fechaFin
+            ? new Date(selectedPromocion.fechaFin).toISOString()
+            : null, // Formato ISO-8601
         };
-  
+
         const updatedPromocion = await PromocionesService.updatePromocion(
           selectedPromocion.id,
           updatedPromocionData
         );
-  
+
         setData((prevData) =>
           prevData.map((item) =>
             item.id === updatedPromocion.id ? updatedPromocion : item
           )
         );
-  
+
         setSelectedPromocion(null);
         setIsEditModalOpen(false);
         toast.success("Promoción editada correctamente.");
@@ -101,11 +112,13 @@ const GestionPromocionesPage = () => {
     }
   };
 
-  const handleDeletePromocion = async (id) => {
+  const handleDeletePromocion = async () => {
     try {
-      await PromocionesService.deletePromocion(id);
-      setData((prevData) => prevData.filter((item) => item.id !== id));
+      await PromocionesService.deletePromocion(selectedPromocion.id);
+      setData((prevData) => prevData.filter((item) => item.id !== selectedPromocion.id));
       toast.success("Promoción eliminada correctamente.");
+      setIsConfirmDeleteModalOpen(false);
+      setSelectedPromocion(null);
     } catch (error) {
       console.error("Error al eliminar promoción:", error);
       toast.error("Error al eliminar promoción.");
@@ -137,10 +150,7 @@ const GestionPromocionesPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">Gestión de Promociones</h1>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          onClick={() => {
-            setIsAddModalOpen(true);
-            clearNewPromocion();
-          }}
+          onClick={() => setIsAddModalOpen(true)}
         >
           Añadir
         </button>
@@ -158,8 +168,8 @@ const GestionPromocionesPage = () => {
         data={paginatedData.map((item) => ({
           ...item,
           descuento: item.descuento ? `${parseFloat(item.descuento).toFixed(2)}%` : "0.00%",
-          fechaInicio: item.fechaInicio? item.fechaInicio.split("T")[0] : "-",
-          fechaFin: item.fechaFin? item.fechaFin.split("T")[0] : "-",
+          fechaInicio: item.fechaInicio ? item.fechaInicio.split("T")[0] : "-",
+          fechaFin: item.fechaFin ? item.fechaFin.split("T")[0] : "-",
           acciones: (
             <div className="flex space-x-2">
               <button
@@ -172,7 +182,10 @@ const GestionPromocionesPage = () => {
                 <FaEdit size={16} />
               </button>
               <button
-                onClick={() => handleDeletePromocion(item.id)}
+                onClick={() => {
+                  setSelectedPromocion(item);
+                  setIsConfirmDeleteModalOpen(true);
+                }}
                 className="text-red-500 hover:text-red-700"
               >
                 <FaTrash size={16} />
@@ -184,10 +197,7 @@ const GestionPromocionesPage = () => {
       <ModalComponent
         title="Añadir Promoción"
         visible={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false);
-          clearNewPromocion();
-        }}
+        onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddPromocion}
       >
         {renderPromocionInputs(newPromocion, setNewPromocion)}
@@ -200,6 +210,12 @@ const GestionPromocionesPage = () => {
       >
         {renderPromocionInputs(selectedPromocion, setSelectedPromocion)}
       </ModalComponent>
+      <ConfirmDeleteModal
+        visible={isConfirmDeleteModalOpen}
+        onClose={() => setIsConfirmDeleteModalOpen(false)}
+        onConfirm={handleDeletePromocion}
+        message="¿Estás seguro de que deseas eliminar esta promoción?"
+      />
       <div className="flex justify-end items-center mt-4">
         <button
           className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
@@ -222,59 +238,58 @@ const GestionPromocionesPage = () => {
 };
 
 const renderPromocionInputs = (promocion, setPromocion) => {
-    if (!promocion) {
-      return <div>Cargando...</div>; // Mensaje mientras el objeto se inicializa
-    }
-  
-    return (
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label>Nombre:</label>
-          <input
-            type="text"
-            value={promocion.nombre || ""}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, nombre: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-        <div>
-          <label>Descripción:</label>
-          <textarea
-            value={promocion.descripcion || ""}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-        <div>
-          <label>Descuento (%):</label>
-          <input
-            type="number"
-            value={promocion.descuento || ""}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, descuento: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-        <div>
-          <label>Fecha Inicio:</label>
-          <input
-            type="date"
-            value={promocion.fechaInicio || ""}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-        <div>
-          <label>Fecha Fin:</label>
-          <input
-            type="date"
-            value={promocion.fechaFin || ""}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
+  if (!promocion) {
+    return <div>Cargando...</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label>Nombre:</label>
+        <input
+          type="text"
+          value={promocion.nombre || ""}
+          onChange={(e) => setPromocion((prev) => ({ ...prev, nombre: e.target.value }))}
+          className="border p-2 rounded w-full"
+        />
       </div>
-    );
-  };
-  
+      <div>
+        <label>Descripción:</label>
+        <textarea
+          value={promocion.descripcion || ""}
+          onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+      <div>
+        <label>Descuento (%):</label>
+        <input
+          type="number"
+          value={promocion.descuento || ""}
+          onChange={(e) => setPromocion((prev) => ({ ...prev, descuento: e.target.value }))}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+      <div>
+        <label>Fecha Inicio:</label>
+        <input
+          type="date"
+          value={promocion.fechaInicio || ""}
+          onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+      <div>
+        <label>Fecha Fin:</label>
+        <input
+          type="date"
+          value={promocion.fechaFin || ""}
+          onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+    </div>
+  );
+};
 
 export default GestionPromocionesPage;
