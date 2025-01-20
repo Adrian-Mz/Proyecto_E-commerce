@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { CarritoService } from "../api/api.carrito";
+import { toast } from "react-toastify";
 
 // Crear el contexto del carrito
 const CartContext = createContext();
@@ -54,16 +55,22 @@ export const CartProvider = ({ children }) => {
 
   // Función para eliminar un producto específico del carrito
   const removeFromCart = async (productoId) => {
-    if (!userId) {
-      console.error("No hay usuario logueado.");
-      return;
-    }
-
     try {
-      const carritoActualizado = await CarritoService.eliminarProducto(userId, productoId);
-      setCartItems(carritoActualizado.productos || []);
+      if (userId) {
+        // Llama al servicio para eliminar el producto del carrito en el backend
+        await CarritoService.eliminarProducto(userId, productoId);
+  
+        // Actualiza el carrito local después de la eliminación
+        setCartItems((prevCart) => prevCart.filter((item) => item.productoId !== productoId));
+      } else {
+        // Para usuarios no logueados, simplemente actualiza el estado local
+        setCartItems((prevCart) => prevCart.filter((item) => item.id !== productoId));
+      }
+  
+      toast.success("Producto eliminado del carrito.");
     } catch (error) {
-      console.error("Error al eliminar producto del carrito:", error);
+      console.error("Error al eliminar el producto del carrito:", error);
+      toast.error("No se pudo eliminar el producto del carrito.");
     }
   };
 
