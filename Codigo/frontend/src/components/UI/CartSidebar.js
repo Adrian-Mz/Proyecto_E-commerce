@@ -10,14 +10,13 @@ const CartSidebar = ({ isOpen, onClose }) => {
       window.location.href = "/carrito"; // Redirigir a la página del carrito
     }
   };
-  
+
   // Manejar clic fuera del carrito para cerrarlo
   const handleOverlayClick = (event) => {
     if (event.target.id === "cart-overlay") {
       onClose(); // Llama a la función pasada desde el Header
     }
   };
-
 
   return (
     <>
@@ -51,15 +50,16 @@ const CartSidebar = ({ isOpen, onClose }) => {
           ) : (
             cartItems.map((item) => (
               <div
-                key={item.id}
+                key={item.productoId} // Cambiar según la estructura del carrito
                 className="flex items-center justify-between p-2 bg-gray-700 rounded-md mb-3"
               >
                 <div>
-                  <h3 className="text-sm font-bold">{item.nombre}</h3>
-                  <p className="text-sm text-gray-400">{`$${item.precio}`}</p>
+                  <h3 className="text-sm font-bold">{item.producto?.nombre || "Producto sin nombre"}</h3>
+                  <p className="text-sm text-gray-400">{`$${parseFloat(item.precio_unitario || 0).toFixed(2)}`}</p>
+                  <p className="text-sm text-gray-400">{`Cantidad: ${item.cantidad || 1}`}</p>
                 </div>
                 <button
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => removeFromCart(item.productoId)} // Ajustar si es necesario
                   className="text-red-500 hover:text-red-700"
                 >
                   <FaTrash />

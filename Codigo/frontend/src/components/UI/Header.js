@@ -3,10 +3,12 @@ import { FaUserCircle, FaShoppingCart, FaSearch } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import CartSidebar from "./CartSidebar";
+import { useCart } from "../../context/CartContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { changeUser } = useCart();
   const [usuario, setUsuario] = useState(null);
   const navigate = useNavigate();
 
@@ -39,6 +41,7 @@ const Header = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("usuario");
+    changeUser(null)
     setUsuario(null);
     setIsMenuOpen(false); // Cierra el menú
     navigate("/login");

@@ -3,13 +3,15 @@ import InputField from "./InputField";
 import Button from "./Button";
 import { UsuariosAPI } from "../../api/api.usuarios";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode"; // Corregido
+import { useCart } from "../../context/CartContext";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { changeUser, clearCart } = useCart(); // Importar funciones del contexto
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -29,8 +31,12 @@ const LoginForm = () => {
       // Guarda el token y el usuario en localStorage
       localStorage.setItem("usuario", JSON.stringify(response));
 
-      // Decodifica el token para obtener el rol
+      // Decodifica el token para obtener el ID del usuario
       const decodedToken = jwtDecode(response.token);
+
+      // Limpia el carrito actual y lo sincroniza con el usuario logueado
+      clearCart(); // Opcional: limpia el carrito visual antes de sincronizar
+      changeUser(decodedToken.id); // Establece el nuevo usuario para cargar su carrito
 
       setMessage("Inicio de sesión exitoso.");
 

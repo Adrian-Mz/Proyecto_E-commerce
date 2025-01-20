@@ -15,10 +15,9 @@ export const CarritoService = {
   // Agregar un producto al carrito
   async agregarProducto(usuarioId, productoId, cantidad) {
     try {
-      const response = await api.post(`/carrito/${usuarioId}`, {
-        productoId,
-        cantidad,
-      });
+      const response = await api.post(`/carrito/${usuarioId}`, [
+        { productoId, cantidad },
+      ]);
       return response.data;
     } catch (error) {
       console.error("Error al agregar producto al carrito:", error);
