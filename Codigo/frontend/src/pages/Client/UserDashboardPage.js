@@ -1,10 +1,18 @@
 import React from "react";
-import { Routes, Route, NavLink } from "react-router-dom";
+import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import UserProfilePage from "./UsuarioPage"; // Página de Perfil
 import UserSettingsPage from "./UserSettingsPage"; // Página de Configuración de Usuario
 
-const UserDashboardPage = () => {
+const UserDashboardPage = ({ changeUser }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("usuario"); // Elimina al usuario del almacenamiento local
+    changeUser(null); // Limpia el contexto del usuario
+    navigate("/login"); // Redirige al usuario a la página de inicio de sesión
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100">
       {/* Menú Lateral */}
@@ -34,10 +42,7 @@ const UserDashboardPage = () => {
             Configuración
           </NavLink>
           <button
-            onClick={() => {
-              localStorage.removeItem("usuario");
-              window.location.href = "/login";
-            }}
+            onClick={handleLogout}
             className="block w-full text-left py-3 px-6 text-red-500 hover:bg-gray-700 transition"
           >
             <FaSignOutAlt className="inline-block mr-2" />
