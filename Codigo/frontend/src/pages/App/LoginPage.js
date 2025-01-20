@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import LoginForm from "../components/UI/LoginForm";
-import loginImg from "../assets/login.jpg";
-import PasswordRecoveryModal from "../components/UI/PasswordRecoveryModal";
+import LoginForm from "../../components/UI/LoginForm";
+import loginImg from "../../assets/login.jpg";
+import PasswordRecoveryModal from "../../components/UI/PasswordRecoveryModal";
 
 
 const LoginPage = () => {

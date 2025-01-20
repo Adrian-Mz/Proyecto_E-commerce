@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
 import { FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import UserProfilePage from "./UsuarioPage"; // Página de Perfil
-import UserSettingsPage from "../pages/UserSettingsPage"; // Página de Configuración de Usuario
+import UserSettingsPage from "./UserSettingsPage"; // Página de Configuración de Usuario
 
 const UserDashboardPage = () => {
   return (

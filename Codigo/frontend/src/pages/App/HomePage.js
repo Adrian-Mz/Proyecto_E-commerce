@@ -1,7 +1,7 @@
 import React from "react";
-import DealsSection from "../components/UI/dealsSection";
-import { CarouselWithCaptionsExample } from "../components/UI/Carousel";
-import { CardGrid3Example } from "../components/UI/CardGrid";
+import DealsSection from "../../components/UI/dealsSection";
+import { CarouselWithCaptionsExample } from "../../components/UI/Carousel";
+import { CardGrid3Example } from "../../components/UI/CardGrid";
 
 const HomePage = () => {
   return (

@@ -12,8 +12,8 @@ import {
   CCol,
 } from "@coreui/react";
 import { FaShoppingCart } from "react-icons/fa";
-import { ProductosService } from "../api/api.productos";
-import { useCart } from "../context/CartContext";
+import { ProductosService } from "../../api/api.productos";
+import { useCart } from "../../context/CartContext";
 import { toast } from "react-toastify";
 
 const ProductoDetailPage = () => {

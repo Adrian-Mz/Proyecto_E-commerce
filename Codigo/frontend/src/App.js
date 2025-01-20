@@ -3,14 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import Header from "./components/UI/Header";
 import Footer from "./components/UI/Footer";
-import HomePage from "./pages/HomePage";
-import ProductsPage from "./pages/ProductsPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import UserDashboardPage from "./pages/UserDashboardPage";
-import ProductoDetailPage from "./pages/ProductoDetailPage";
-import CartPage from "./pages/CartPage";
-import AdminPage from "./pages/AdminPage";
+import HomePage from "./pages/App/HomePage";
+import ProductsPage from "./pages/App/ProductsPage";
+import LoginPage from "./pages/App/LoginPage";
+import RegisterPage from "./pages/App/RegisterPage";
+import UserDashboardPage from "./pages/Client/UserDashboardPage";
+import ProductoDetailPage from "./pages/App/ProductoDetailPage";
+import CartPage from "./pages/App/CartPage";
+import AdminPage from "./pages/Admin/AdminPage";
 import ProtectedRoute from "./components/UI/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -37,6 +37,16 @@ function App() {
             />
             <Route path="/productos/:id" element={<ProductoDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
+            {/* Ruta 404 para toda la aplicación */}
+            <Route
+              path="*"
+              element={
+                <div className="text-center mt-20">
+                  <h1 className="text-3xl font-bold text-red-500">404</h1>
+                  <p className="text-lg text-gray-700">Página no disponible</p>
+                </div>
+              }
+            />
           </Routes>
         </main>
         <Footer />

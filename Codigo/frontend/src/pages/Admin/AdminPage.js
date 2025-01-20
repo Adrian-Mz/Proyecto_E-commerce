@@ -1,11 +1,10 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Sidebar from '../components/UI/SideBar';
+import Sidebar from '../../components/UI/SideBar';
 import GestionProductosPage from './GestionProductosPage';
 import GestionUsuariosPage from './GestionUsuariosPage';
 import GestionCategoriasPage from './GestionCategoriasPage';
 import GestionPromocionesPage from './GestionPromocionesPage';
-
 
 const AdminPage = () => {
   const funcionalidades = [
@@ -23,8 +22,7 @@ const AdminPage = () => {
       titulo: "Gestión de Promociones",
       descripcion: "Organiza las promociones de descuento.",
       enlace: "/admin/promociones",
-    }
-    ,
+    },
     {
       titulo: "Gestión de Pedidos",
       descripcion: "Visualiza y actualiza el estado de los pedidos.",
@@ -39,14 +37,12 @@ const AdminPage = () => {
       titulo: "Gestión de Usuarios",
       descripcion: "Administra los usuarios registrados en la plataforma.",
       enlace: "/admin/usuarios",
-    }
+    },
   ];
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Contenedor principal */}
       <div className="flex flex-col flex-1">
-        {/* Sidebar y contenido principal */}
         <div className="flex">
           {/* Sidebar */}
           <Sidebar />
@@ -64,7 +60,6 @@ const AdminPage = () => {
                         Aquí puedes gestionar todas las funciones de tu tienda. Selecciona una opción para comenzar.
                       </p>
                     </div>
-
                     {/* Tarjetas de funcionalidades */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {funcionalidades.map((func, index) => (
@@ -90,7 +85,18 @@ const AdminPage = () => {
               <Route path="usuarios" element={<GestionUsuariosPage />} />
               <Route path="categorias" element={<GestionCategoriasPage />} />
               <Route path="promociones" element={<GestionPromocionesPage />} />
-              {/* Agrega más rutas aquí según las funcionalidades */}
+              <Route path="pedidos" element={<h1>Gestión de Pedidos</h1>} />
+              <Route path="devoluciones" element={<h1>Gestión de Devoluciones</h1>} />
+              {/* Ruta 404 */}
+              <Route
+                path="*"
+                element={
+                  <div className="text-center mt-20">
+                    <h1 className="text-3xl font-bold text-red-500">404</h1>
+                    <p className="text-lg text-gray-700">Página no disponible</p>
+                  </div>
+                }
+              />
             </Routes>
           </main>
         </div>

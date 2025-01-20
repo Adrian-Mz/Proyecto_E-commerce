@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import TableComponent from "../components/UI/TableComponent";
-import ModalComponent from "../components/UI/ModalComponent";
-import ConfirmDeleteModal from "../components/UI/ConfirmDeleteModal";
-import { UsuariosAPI } from "../api/api.usuarios";
-import { RolesAPI } from "../api/api.roles";
+import TableComponent from "../../components/UI/TableComponent";
+import ModalComponent from "../../components/UI/ModalComponent";
+import ConfirmDeleteModal from "../../components/UI/ConfirmDeleteModal";
+import { UsuariosAPI } from "../../api/api.usuarios";
+import { RolesAPI } from "../../api/api.roles";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

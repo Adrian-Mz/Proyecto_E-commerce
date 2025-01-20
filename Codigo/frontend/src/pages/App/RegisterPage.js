@@ -1,8 +1,8 @@
 import React from "react";
-import Logo from "../components/UI/Logo"
-import RegisterForm from "../components/UI/RegisterForm";
-import AuthLayout from "../components/UI/AuthLayout";
-import RegisterImg from "../assets/register.jpg";
+import Logo from "../../components/UI/Logo"
+import RegisterForm from "../../components/UI/RegisterForm";
+import AuthLayout from "../../components/UI/AuthLayout";
+import RegisterImg from "../../assets/register.jpg";
 
 const RegisterPage = () =>{
     return (

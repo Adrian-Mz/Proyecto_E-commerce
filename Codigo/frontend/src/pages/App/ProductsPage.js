@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { ProductosService } from "../api/api.productos";
-import { CategoriasService } from "../api/api.categorias";
+import { ProductosService } from "../../api/api.productos";
+import { CategoriasService } from "../../api/api.categorias";
 import { toast } from "react-toastify"; // Para mostrar notificaciones
-import { useCart } from "../context/CartContext"; // Contexto del carrito
+import { useCart } from "../../context/CartContext"; // Contexto del carrito
 import {
   CCard,
   CCardBody,
