@@ -94,10 +94,21 @@ const GestionProductosPage = () => {
   const handleAddProduct = async () => {
     try {
       const formData = new FormData();
+  
+      // Agregar cada campo manualmente al FormData
       Object.entries(newProduct).forEach(([key, value]) => {
-        formData.append(key, value);
+        if (key === "imagen" && value instanceof File) {
+          formData.append(key, value); // Asegúrate de que imagen sea un archivo
+        } else {
+          formData.append(key, value);
+        }
       });
-
+  
+      // Verifica que la imagen esté siendo añadida correctamente
+      for (const pair of formData.entries()) {
+        console.log(`${pair[0]}:`, pair[1]);
+      }
+  
       const createdProduct = await ProductosService.createProducto(formData);
       setData((prevData) => [...prevData, createdProduct]);
       clearNewProduct();
@@ -105,10 +116,10 @@ const GestionProductosPage = () => {
       toast.success("Producto añadido correctamente");
     } catch (error) {
       console.error("Error al añadir producto:", error.response?.data || error.message);
-
+  
       const backendErrors = error.response?.data?.errors || [];
       const generalError = error.response?.data?.error || "Ocurrió un error al añadir el producto.";
-
+  
       if (backendErrors.length > 0) {
         backendErrors.forEach((err) => {
           toast.error(err.msg || err.message, { position: "top-right" });
@@ -117,7 +128,7 @@ const GestionProductosPage = () => {
         toast.error(generalError, { position: "top-right" });
       }
     }
-  };
+  };  
 
   const handleEditProduct = async () => {
     try {

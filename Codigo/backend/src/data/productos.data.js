@@ -83,7 +83,7 @@ export const ProductosData = {
         garantia: data.garantia,
       },
     });
-  },  
+  },    
 
   // Actualizar un producto
   async updateProducto(id, data) {
@@ -118,5 +118,18 @@ export const ProductosData = {
         where: { categoriaId },
         data: { promocionId },
     });
-  }
+  },
+
+  async getCategoriaByName(nombre) {
+    return await prisma.categorias.findFirst({
+      where: { nombre },
+    });
+  },
+
+  // Obtener promoción por nombre
+  async getPromocionByName(nombre) {
+    return await prisma.promociones.findFirst({
+      where: { nombre },
+    });
+  },
 };

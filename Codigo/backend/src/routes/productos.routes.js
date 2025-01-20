@@ -48,12 +48,11 @@ router.get('/:id', async (req, res) => {
 // Ruta para crear un producto con imagen
 router.post(
   '/',
-  verificarToken,
-  verificarRol(['Administrador']),
-  validarProducto,
-  handleValidation,
-  upload.single('imagen'),
+  upload.single('imagen'), // El nombre debe coincidir con el del FormData
   async (req, res) => {
+    console.log('Archivo recibido:', req.file); // Verifica si el archivo llegó
+    console.log('Datos del cuerpo:', req.body); // Verifica los demás datos
+
     try {
       const productoData = req.body;
       const filePath = req.file?.path;
@@ -67,6 +66,7 @@ router.post(
       const nuevoProducto = await ProductosService.createProducto(productoData);
       res.status(201).json({ message: 'Producto creado exitosamente.', producto: nuevoProducto });
     } catch (error) {
+      console.error("Error en el backend:", error.message);
       res.status(400).json({ error: error.message });
     }
   }

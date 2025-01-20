@@ -3,7 +3,6 @@ import { subirImagenCloudinary } from '../utils/cloudinary.js';
 import { buscarProductosMercadoLibre } from '../utils/mercadoLibre.js';
 import {pedidosData} from '../data/pedidos.data.js';
 import {carritoData} from '../data/carrito.data.js';
-import fs from 'fs';
 
 export const ProductosService = {
   // Obtener todos los productos
@@ -102,19 +101,33 @@ export const ProductosService = {
 
   async createProducto(data) {
     try {
-      if (
-        !data ||
-        !data.nombre ||
-        !data.descripcion ||
-        typeof data.precio !== 'number' ||
-        typeof data.stock !== 'number' ||
-        !data.categoriaId
-      ) {
-        throw new Error('Datos incompletos o inválidos para crear el producto');
+      // Validar datos básicos
+      if (!data || !data.nombre || !data.descripcion) {
+        throw new Error('El nombre y la descripción son obligatorios');
       }
-
+  
+      // Convertir valores numéricos
+      data.precio = parseFloat(data.precio);
+      data.stock = parseInt(data.stock, 10);
+      data.categoriaId = parseInt(data.categoriaId, 10);
+      data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
+  
+      if (isNaN(data.precio) || isNaN(data.stock) || isNaN(data.categoriaId)) {
+        throw new Error('El precio, stock y categoría deben ser valores numéricos');
+      }
+  
+      // Validar que promoción (si se proporciona) sea un número válido
+      if (data.promocionId && isNaN(data.promocionId)) {
+        throw new Error('La promoción debe ser un valor numérico');
+      }
+  
+      // Limpiar campos adicionales
+      if (data.garantia) {
+        data.garantia = data.garantia.trim();
+      }
+  
+      // Procesar la imagen
       let imageUrl;
-
       if (data.imagenLocalPath) {
         imageUrl = await subirImagenCloudinary(data.imagenLocalPath, 'productos');
       } else {
@@ -122,19 +135,18 @@ export const ProductosService = {
         if (productoML) {
           imageUrl = productoML.imagen;
         } else {
-          throw new Error('No se encontró una imagen adecuada para el producto.');
+          throw new Error('No se encontró una imagen adecuada para el producto');
         }
       }
-
       data.imagen = imageUrl;
-
-      // Crear el producto en la base de datos
+  
+      // Enviar los datos procesados a ProductosData
       return await ProductosData.createProducto(data);
     } catch (error) {
       console.error(`Error al crear producto: ${error.message}`);
       throw error;
     }
-  },
+  },  
 
   // Actualizar un producto por ID
   async updateProducto(id, data) {
