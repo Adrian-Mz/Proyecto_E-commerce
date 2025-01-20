@@ -11,16 +11,17 @@ export const UsuariosService = {
 
   // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
+    console.log('ID recibido en UsuariosService.getUsuarioById:', id); // Verifica el ID recibido
     if (!Number.isInteger(id)) {
+      console.log('El ID no es válido en UsuariosService.getUsuarioById');
       throw new Error('El ID debe ser un número válido.');
     }
-
+  
+    // Delegar la consulta a UsuariosData
     const usuario = await UsuariosData.getUsuarioById(id);
-    if (!usuario) {
-      throw new Error('Usuario no encontrado.');
-    }
+    console.log('Resultado de UsuariosData.getUsuarioById:', usuario); // Verifica el resultado
     return usuario;
-  },
+  },  
 
   async createUsuario(data) {
     const { nombre, correo, apellido, password, direccion, telefono, pais, fechaNacimiento } = data;
@@ -138,7 +139,7 @@ export const UsuariosService = {
     // Generar el token JWT
     const token = jwt.sign(
       {
-        id: usuario.id,
+        id: Number(usuario.id),
         nombre: usuario.nombre,
         rol: usuario.rol.nombre, // Asegúrate de incluir el rol en la consulta de `getUsuarioByCorreo`
       },

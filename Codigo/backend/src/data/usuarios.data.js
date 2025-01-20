@@ -33,14 +33,14 @@ export const UsuariosData = {
 
   // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
-    if (!Number.isInteger(id)) {
-      throw new Error('El ID debe ser un número válido.');
-    }
-    return await prisma.usuarios.findUnique({
+    console.log('ID recibido en UsuariosData.getUsuarioById:', id); // Verifica el ID recibido
+    const usuario = await prisma.usuarios.findUnique({
       where: { id },
       include: { rol: true }, // Incluye los datos del rol
     });
-  },
+    console.log('Resultado de la consulta en la base de datos:', usuario); // Muestra el resultado
+    return usuario;
+  },  
 
   // Crea un nuevo usuario en la base de datos
   async createUsuario(data) {
