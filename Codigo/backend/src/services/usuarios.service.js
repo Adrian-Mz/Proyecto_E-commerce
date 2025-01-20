@@ -11,15 +11,12 @@ export const UsuariosService = {
 
   // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
-    console.log('ID recibido en UsuariosService.getUsuarioById:', id); // Verifica el ID recibido
     if (!Number.isInteger(id)) {
-      console.log('El ID no es válido en UsuariosService.getUsuarioById');
       throw new Error('El ID debe ser un número válido.');
     }
   
     // Delegar la consulta a UsuariosData
     const usuario = await UsuariosData.getUsuarioById(id);
-    console.log('Resultado de UsuariosData.getUsuarioById:', usuario); // Verifica el resultado
     return usuario;
   },  
 

@@ -10,15 +10,12 @@ export const verificarToken = (req, res, next) => {
   try {
     // Verifica y decodifica el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Token decodificado:', decoded); // Verifica qué contiene el token
 
     // Adjunta los datos del usuario al request, asegurándote de que el ID sea un número
     req.usuario = {
       ...decoded,
       id: parseInt(decoded.id, 10),
     };
-
-    console.log('Usuario adjuntado a req:', req.usuario);
 
     // Opcional: Renueva el token si está cerca de expirar
     const tiempoRestante = decoded.exp * 1000 - Date.now(); // Tiempo restante en milisegundos

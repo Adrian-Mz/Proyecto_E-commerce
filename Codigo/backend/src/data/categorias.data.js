@@ -6,17 +6,17 @@ export const CategoriaData = {
   // Obtener todas las categorías
   async getAllCategorias() {
     return await prisma.categorias.findMany({
-      include: {
-        productos: {
-          orderBy: { id: 'asc' },
+        orderBy: { id: 'asc' }, // Ordenar las categorías por ID
+        include: {
+            productos: {
+                orderBy: { id: 'asc' }, // Ordenar productos relacionados por ID
+            },
+            promociones: {
+                include: { promocion: true },
+            },
         },
-        promociones: {
-          include: { promocion: true },
-        },
-      },
     });
   },
-
   // Obtener una categoría por ID
   async getCategoriaById(id) {
     if (typeof id !== 'number') {
