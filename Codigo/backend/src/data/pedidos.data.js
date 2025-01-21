@@ -16,6 +16,7 @@ export const pedidosData = {
           select: {
             id: true,
             nombre: true,
+            apellido: true,
             correo: true,
           },
         },

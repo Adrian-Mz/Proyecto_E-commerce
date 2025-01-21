@@ -122,6 +122,7 @@ const GestionPedidosPage = () => {
         columns={[
           { key: "id", label: "ID Pedido" },
           { key: "usuario", label: "Usuario" },
+          { key: "correo", label: "Correo" },
           { key: "direccionEnvio", label: "Dirección de Envío" },
           { key: "total", label: "Total" },
           { key: "estado", label: "Estado" },
@@ -130,7 +131,8 @@ const GestionPedidosPage = () => {
         ]}
         data={paginatedData.map((pedido) => ({
           ...pedido,
-          usuario: `${pedido.usuario.nombre} ${pedido.usuario.apellido}`,
+          usuario: `${pedido.usuario?.nombre || "N/A"} ${pedido.usuario?.apellido || "N/A"}`,
+          correo: pedido.usuario?.correo || "N/A",
           estado: estados.find((estado) => estado.id === pedido.estadoId)?.nombre || "Desconocido",
           productos: (
             <ul className="list-disc ml-4">
