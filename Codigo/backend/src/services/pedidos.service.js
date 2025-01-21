@@ -8,7 +8,21 @@ const prisma = new PrismaClient();
 
 export const pedidosService = {
   
-   // Obtener todos los pedidos de un usuario específico
+  async obtenerHistorialPedidosUsuario(usuarioId) {
+    if (!usuarioId) {
+      throw new Error('El ID del usuario es obligatorio.');
+    }
+  
+    const pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
+  
+    if (!pedidos || pedidos.length === 0) {
+      throw new Error('No se encontraron pedidos para este usuario.');
+    }
+  
+    return pedidos;
+  },
+
+  // Obtener todos los pedidos de un usuario específico
    async obtenerPedidosDeUsuario(usuarioId) {
     if (!usuarioId) {
       throw new Error('El ID del usuario es obligatorio.');
@@ -31,7 +45,7 @@ export const pedidosService = {
 
     return pedidos;
   },
-  
+
   // Crear un nuevo pedido
   async crearPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, detallesPago) {
     if (!direccionEnvio?.trim()) {
@@ -41,22 +55,7 @@ export const pedidosService = {
     // Validar métodos de pago y envío
     const metodoPago = await this.validarMetodoPago(metodoPagoId);
     const metodoEnvio = await this.validarMetodoEnvio(metodoEnvioId);
-  
-    // Verificar si ya existe un pedido en estados bloqueantes
-    const estadosBloqueantes = [1, 2]; // Pendiente, Procesando
-    const pedidoExistente = await prisma.pedidos.findFirst({
-      where: {
-        usuarioId,
-        estadoId: { in: estadosBloqueantes },
-      },
-    });
-  
-    if (pedidoExistente) {
-      throw new Error(
-        'Ya tienes un pedido en proceso. Si deseas agregar más productos, realiza un nuevo pedido desde el carrito.'
-      );
-    }
-  
+    
     // Obtener productos desde el carrito
     const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito || !carrito.productos || carrito.productos.length === 0) {

@@ -51,6 +51,20 @@ export const pedidosData = {
     });
   },
   
+  async getPedidosByUsuarioId(usuarioId) {
+    return prisma.pedidos.findMany({
+      where: { usuarioId },
+      include: {
+        productos: {
+          include: { producto: true },
+        },
+        metodoPago: true,
+        metodoEnvio: true,
+        estado: true,
+      },
+    });
+  },  
+  
   async createPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, productos, total) {
     return prisma.pedidos.create({
       data: {
