@@ -51,9 +51,22 @@ const CartSidebar = ({ isOpen, onClose }) => {
             cartItems.map((item) => (
               <div
                 key={item.productoId} // Cambiar según la estructura del carrito
-                className="flex items-center justify-between p-2 bg-gray-700 rounded-md mb-3"
+                className="flex items-center p-2 bg-gray-700 rounded-md mb-3"
               >
-                <div>
+                <div className="w-16 h-16 bg-gray-500 rounded-md mr-4">
+                  {item.producto?.imagen ? (
+                    <img
+                      src={item.producto.imagen}
+                      alt={item.producto.nombre || "Producto sin nombre"}
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full bg-gray-600 text-gray-300">
+                      Sin Imagen
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
                   <h3 className="text-sm font-bold">{item.producto?.nombre || "Producto sin nombre"}</h3>
                   <p className="text-sm text-gray-400">{`$${parseFloat(item.precio_unitario || 0).toFixed(2)}`}</p>
                   <p className="text-sm text-gray-400">{`Cantidad: ${item.cantidad || 1}`}</p>
