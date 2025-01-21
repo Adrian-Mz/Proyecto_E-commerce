@@ -1,38 +1,51 @@
 import React, { useState, useEffect } from "react";
 import TableComponent from "../../components/UI/TableComponent";
 import ModalComponent from "../../components/UI/ModalComponent";
-import ConfirmDeleteModal from "../../components/UI/ConfirmDeleteModal"; // Nuevo componente
+import ConfirmDeleteModal from "../../components/UI/ConfirmDeleteModal";
 import { PromocionesService } from "../../api/api.promociones";
+import { CategoriasService } from "../../api/api.categorias";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const GestionPromocionesPage = () => {
   const [data, setData] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false); // Modal de confirmación
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+
   const [newPromocion, setNewPromocion] = useState({
     nombre: "",
     descripcion: "",
     descuento: "",
     fechaInicio: "",
     fechaFin: "",
+    categorias: [],
   });
+
   const [selectedPromocion, setSelectedPromocion] = useState(null);
+
+  const currentYear = new Date().getFullYear();
+  const minDate = `${currentYear}-01-01`;
+  const maxDate = `${currentYear}-12-31`;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const promocionesResponse = await PromocionesService.getPromociones();
+        const [promocionesResponse, categoriasResponse] = await Promise.all([
+          PromocionesService.getPromociones(),
+          CategoriasService.getCategorias(),
+        ]);
         setData(promocionesResponse || []);
+        setCategorias(categoriasResponse || []);
       } catch (error) {
-        console.error("Error al cargar promociones:", error);
-        toast.error("Error al cargar las promociones.");
+        console.error("Error al cargar datos:", error);
+        toast.error("Error al cargar los datos.");
       } finally {
         setIsLoading(false);
       }
@@ -48,69 +61,105 @@ const GestionPromocionesPage = () => {
       descuento: "",
       fechaInicio: "",
       fechaFin: "",
+      categorias: [],
     });
   };
 
   const handleAddPromocion = async () => {
     try {
+      // Convertir categorías a un arreglo de IDs si no es el formato esperado
+      const formattedCategorias =
+        Array.isArray(newPromocion.categorias) && newPromocion.categorias.length > 0
+          ? newPromocion.categorias.map((cat) => (typeof cat === "object" ? cat.id : cat))
+          : [];
+  
+      // Preparar los datos para el envío
       const formattedData = {
-        ...newPromocion,
-        descuento: parseFloat(newPromocion.descuento), // Convertir a número
-        fechaInicio: newPromocion.fechaInicio
-          ? new Date(newPromocion.fechaInicio).toISOString()
-          : null, // Formato ISO-8601
-        fechaFin: newPromocion.fechaFin
-          ? new Date(newPromocion.fechaFin).toISOString()
-          : null, // Formato ISO-8601
+        nombre: newPromocion.nombre,
+        descripcion: newPromocion.descripcion,
+        descuento: parseFloat(newPromocion.descuento) || 0,
+        fechaInicio: newPromocion.fechaInicio || null,
+        fechaFin: newPromocion.fechaFin || null,
+        categorias: formattedCategorias, // Enviamos un arreglo de IDs
       };
-
-      const createdPromocion = await PromocionesService.createPromocion(
-        formattedData
-      );
+  
+      console.log("Datos enviados al backend (ajustados):", formattedData); // Depuración
+  
+      // Enviar solicitud POST al backend
+      const createdPromocion = await PromocionesService.createPromocion(formattedData);
+  
+      // Actualizar el estado local con la nueva promoción
       setData((prevData) => [...prevData, createdPromocion]);
       toast.success("Promoción añadida correctamente");
       setIsAddModalOpen(false);
       clearNewPromocion();
     } catch (error) {
       console.error("Error al añadir promoción:", error.response?.data || error.message);
-      toast.error("Error al añadir promoción");
+  
+      // Mostrar mensajes de error específicos del backend o por validación
+      if (error.response && error.response.data && error.response.data.error) {
+        toast.error(`Error del servidor: ${error.response.data.error}`);
+      } else {
+        toast.error("Error al añadir promoción. Revisa los datos ingresados.");
+      }
     }
   };
+  
+  
 
   const handleEditPromocion = async () => {
     try {
       if (selectedPromocion) {
+        // Aseguramos que `categorias` sea un arreglo de números enteros
+        const formattedCategorias =
+          Array.isArray(selectedPromocion.categorias) && selectedPromocion.categorias.length > 0
+            ? selectedPromocion.categorias.map((cat) =>
+                typeof cat === "object" ? cat.id : parseInt(cat)
+              )
+            : [];
+  
+        // Preparar datos para el envío al backend
         const updatedPromocionData = {
-          ...selectedPromocion,
-          descuento: parseFloat(selectedPromocion.descuento), // Convertir a número
-          fechaInicio: selectedPromocion.fechaInicio
-            ? new Date(selectedPromocion.fechaInicio).toISOString()
-            : null, // Formato ISO-8601
-          fechaFin: selectedPromocion.fechaFin
-            ? new Date(selectedPromocion.fechaFin).toISOString()
-            : null, // Formato ISO-8601
+          nombre: selectedPromocion.nombre,
+          descripcion: selectedPromocion.descripcion,
+          descuento: parseFloat(selectedPromocion.descuento) || 0,
+          fechaInicio: selectedPromocion.fechaInicio || null,
+          fechaFin: selectedPromocion.fechaFin || null,
+          categorias: formattedCategorias, // Aseguramos que sean solo IDs
         };
-
+  
+        console.log("Datos enviados al backend (Update):", updatedPromocionData); // Depuración
+  
+        // Enviar solicitud PUT al backend
         const updatedPromocion = await PromocionesService.updatePromocion(
           selectedPromocion.id,
           updatedPromocionData
         );
-
+  
+        // Actualizar el estado local con los datos actualizados
         setData((prevData) =>
           prevData.map((item) =>
             item.id === updatedPromocion.id ? updatedPromocion : item
           )
         );
-
+  
         setSelectedPromocion(null);
         setIsEditModalOpen(false);
         toast.success("Promoción editada correctamente.");
       }
     } catch (error) {
       console.error("Error al editar promoción:", error.response?.data || error.message);
-      toast.error("Error al editar promoción.");
+  
+      // Mostrar mensaje de error del backend, si está disponible
+      if (error.response && error.response.data && error.response.data.errors) {
+        const backendError = error.response.data.errors[0].message;
+        toast.error(`Error del servidor: ${backendError}`);
+      } else {
+        toast.error("Error al editar promoción. Revisa los datos ingresados.");
+      }
     }
   };
+  
 
   const handleDeletePromocion = async () => {
     try {
@@ -140,6 +189,100 @@ const GestionPromocionesPage = () => {
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
+  const renderPromocionInputs = (promocion, setPromocion) => {
+    if (!promocion) {
+      return <div>Cargando...</div>;
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label>Nombre:</label>
+          <input
+            type="text"
+            value={promocion.nombre || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, nombre: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Descripción:</label>
+          <textarea
+            value={promocion.descripcion || ""}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Descuento (%):</label>
+          <input
+            type="number"
+            value={promocion.descuento || ""}
+            min="0"
+            max="100"
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              if (value >= 0 && value <= 100) {
+                setPromocion((prev) => ({ ...prev, descuento: e.target.value }));
+              } else if (value > 100) {
+                setPromocion((prev) => ({ ...prev, descuento: "100" })); // Forzamos límite superior
+              } else {
+                setPromocion((prev) => ({ ...prev, descuento: "0" })); // Forzamos límite inferior
+              }
+            }}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Categorías:</label>
+          <div className="flex flex-col">
+            {categorias.length > 0 ? (
+              categorias.map((categoria) => (
+                <label key={categoria.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={promocion.categorias?.includes(categoria.id) || false}
+                    onChange={(e) => {
+                      const newCategorias = e.target.checked
+                        ? [...(promocion.categorias || []), categoria.id]
+                        : (promocion.categorias || []).filter((id) => id !== categoria.id);
+                      setPromocion((prev) => ({ ...prev, categorias: newCategorias }));
+                    }}
+                  />
+                  <span>{categoria.nombre}</span>
+                </label>
+              ))
+            ) : (
+              <span>Cargando categorías...</span>
+            )}
+          </div>
+        </div>
+        <div>
+          <label>Fecha Inicio:</label>
+          <input
+            type="date"
+            value={promocion.fechaInicio || ""}
+            min={minDate}
+            max={maxDate}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Fecha Fin:</label>
+          <input
+            type="date"
+            value={promocion.fechaFin || ""}
+            min={minDate}
+            max={maxDate}
+            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
+            className="border p-2 rounded w-full"
+          />
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return <div className="text-center">Cargando datos...</div>;
   }
@@ -161,6 +304,7 @@ const GestionPromocionesPage = () => {
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
           { key: "descuento", label: "Descuento (%)" },
+          { key: "categorias", label: "Categorías" },
           { key: "fechaInicio", label: "Fecha Inicio" },
           { key: "fechaFin", label: "Fecha Fin" },
           { key: "acciones", label: "Acciones" },
@@ -168,6 +312,9 @@ const GestionPromocionesPage = () => {
         data={paginatedData.map((item) => ({
           ...item,
           descuento: item.descuento ? `${parseFloat(item.descuento).toFixed(2)}%` : "0.00%",
+          categorias: item.categorias.length
+            ? item.categorias.map((cat) => cat.categoria.nombre).join(", ")
+            : "Sin categorías",
           fechaInicio: item.fechaInicio ? item.fechaInicio.split("T")[0] : "-",
           fechaFin: item.fechaFin ? item.fechaFin.split("T")[0] : "-",
           acciones: (
@@ -194,6 +341,7 @@ const GestionPromocionesPage = () => {
           ),
         }))}
       />
+
       <ModalComponent
         title="Añadir Promoción"
         visible={isAddModalOpen}
@@ -232,61 +380,6 @@ const GestionPromocionesPage = () => {
         >
           &gt;
         </button>
-      </div>
-    </div>
-  );
-};
-
-const renderPromocionInputs = (promocion, setPromocion) => {
-  if (!promocion) {
-    return <div>Cargando...</div>;
-  }
-
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <div>
-        <label>Nombre:</label>
-        <input
-          type="text"
-          value={promocion.nombre || ""}
-          onChange={(e) => setPromocion((prev) => ({ ...prev, nombre: e.target.value }))}
-          className="border p-2 rounded w-full"
-        />
-      </div>
-      <div>
-        <label>Descripción:</label>
-        <textarea
-          value={promocion.descripcion || ""}
-          onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
-          className="border p-2 rounded w-full"
-        />
-      </div>
-      <div>
-        <label>Descuento (%):</label>
-        <input
-          type="number"
-          value={promocion.descuento || ""}
-          onChange={(e) => setPromocion((prev) => ({ ...prev, descuento: e.target.value }))}
-          className="border p-2 rounded w-full"
-        />
-      </div>
-      <div>
-        <label>Fecha Inicio:</label>
-        <input
-          type="date"
-          value={promocion.fechaInicio || ""}
-          onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
-          className="border p-2 rounded w-full"
-        />
-      </div>
-      <div>
-        <label>Fecha Fin:</label>
-        <input
-          type="date"
-          value={promocion.fechaFin || ""}
-          onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
-          className="border p-2 rounded w-full"
-        />
       </div>
     </div>
   );

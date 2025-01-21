@@ -5,6 +5,17 @@ import { handleValidation } from '../middlewares/handleValidation.js';
 
 const router = express.Router();
 
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const promocion = await promocionesService.obtenerPromocionPorId(parseInt(id, 10));
+    res.status(200).json(promocion);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
 // Obtener todas las promociones
 router.get('/', async (req, res) => {
   try {
@@ -14,6 +25,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Crear una nueva promoción
 router.post('/', 

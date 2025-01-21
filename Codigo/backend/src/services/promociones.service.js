@@ -2,114 +2,135 @@ import { promocionesData } from '../data/promociones.data.js';
 import { ProductosData } from '../data/productos.data.js';
 
 export const promocionesService = {
+  // Obtener una promoción por ID
+  async obtenerPromocionPorId(promocionId) {
+    const promocion = await promocionesData.getPromocionById(promocionId);
+
+    if (!promocion) {
+      throw new Error(`No se encontró la promoción con ID ${promocionId}.`);
+    }
+
+    // Formatear las categorías asociadas para que sean claras
+    const categorias = promocion.categorias.map((relacion) => ({
+      id: relacion.categoria.id,
+      nombre: relacion.categoria.nombre,
+      descripcion: relacion.categoria.descripcion,
+    }));
+
+    return {
+      id: promocion.id,
+      nombre: promocion.nombre,
+      descripcion: promocion.descripcion,
+      descuento: promocion.descuento,
+      fechaInicio: promocion.fechaInicio,
+      fechaFin: promocion.fechaFin,
+      categorias,
+    };
+  },
+
   // Obtener todas las promociones
   async obtenerPromociones() {
-    return await promocionesData.getAllPromociones();
+    const promociones = await promocionesData.getAllPromociones();
+    return promociones.map((promocion) => ({
+      id: promocion.id,
+      nombre: promocion.nombre,
+      descripcion: promocion.descripcion,
+      descuento: promocion.descuento,
+      fechaInicio: promocion.fechaInicio,
+      fechaFin: promocion.fechaFin,
+      categorias: promocion.categorias.map((relacion) => ({
+        id: relacion.categoria.id,
+        nombre: relacion.categoria.nombre,
+        descripcion: relacion.categoria.descripcion,
+      })),
+    }));
   },
 
   // Crear una nueva promoción
   async crearPromocion(datosPromocion) {
-    const { nombre, descripcion, descuento, fechaInicio, fechaFin, categoriaId } = datosPromocion;
-  
-    // Validaciones adicionales (opcional)
+    const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
+
     if (!nombre || !descripcion || !descuento) {
       throw new Error('Todos los campos obligatorios deben ser completados.');
     }
-    if (descuento <= 0 || descuento > 100) {
-      throw new Error('El descuento debe estar entre 1% y 100%.');
+
+    if (categorias && categorias.length > 0) {
+      const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categorias);
+
+      if (categoriasConConflictos.length > 0) {
+        throw new Error(
+          `No se puede crear la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
+            .map((c) => `Categoría ID: ${c.categoriaId} (Promoción ID: ${c.promocionId})`)
+            .join(', ')}`
+        );
+      }
     }
-    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
-      throw new Error('La fecha de inicio no puede ser posterior a la fecha de fin.');
-    }
-  
-    // Convertir fechas al formato ISO-8601 si están definidas
+
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-  
+
     return await promocionesData.createPromocion({
       nombre,
       descripcion,
       descuento,
       fechaInicio: fechaInicioISO,
       fechaFin: fechaFinISO,
-      categoriaId,
+      categorias: categorias || [],
     });
   },
-  
 
   // Actualizar una promoción existente
   async actualizarPromocion(promocionId, datosPromocion) {
-    const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
-
-    // Validar categorías
-    if (categorias && !Array.isArray(categorias)) {
-        throw new Error("El campo 'categorias' debe ser un array.");
-    }
-
-    // Convertir fechas a formato ISO
-    const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
-    const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-
-    // Actualizar la promoción
-    const promocionActualizada = await promocionesData.updatePromocion(promocionId, {
-        nombre,
-        descripcion,
-        descuento,
-        fechaInicio: fechaInicioISO,
-        fechaFin: fechaFinISO,
-        categorias,
-    });
-
-    // Actualizar los productos de las categorías seleccionadas con la nueva promoción
-    if (categorias) {
-        await Promise.all(
-            categorias.map(async (categoriaId) => {
-                // Actualizar todos los productos de esta categoría con el nuevo promocionId
-                await ProductosData.updateProductosByCategoria(categoriaId, promocionId);
-            })
-        );
-    }
-
-    return promocionActualizada;
-  },  
-  
-  // Asignar promoción a todos los productos de una categoría
-  async asignarPromocionPorCategoria(categoriaId, promocionId) {
-    if (!categoriaId || !promocionId) {
-      throw new Error("Debe proporcionar una categoría y una promoción.");
-    }
-
-    // Validar si la categoría existe
-    const categoria = await promocionesData.getCategoriaById(categoriaId);
-    if (!categoria) {
-      throw new Error(`La categoría con ID ${categoriaId} no existe.`);
-    }
-
-    // Validar si la promoción existe
-    const promocion = await promocionesData.getPromocionById(promocionId);
-    if (!promocion) {
+    const promocionActual = await promocionesData.getPromocionById(promocionId);
+    if (!promocionActual) {
       throw new Error(`La promoción con ID ${promocionId} no existe.`);
     }
-
-    // Obtener productos de la categoría
-    const productos = await promocionesData.getProductosByCategoria(categoriaId);
-
-    if (productos.length === 0) {
-      throw new Error(`No hay productos en la categoría con ID ${categoriaId}.`);
+  
+    const {
+      nombre = promocionActual.nombre,
+      descripcion = promocionActual.descripcion,
+      descuento = promocionActual.descuento,
+      fechaInicio = promocionActual.fechaInicio,
+      fechaFin = promocionActual.fechaFin,
+      categorias,
+    } = datosPromocion;
+  
+    // Validar las categorías solo si se envían
+    if (categorias && categorias.length > 0) {
+      // Obtener categorías que ya tienen relaciones activas con otras promociones
+      const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categorias, promocionId);
+  
+      if (categoriasConConflictos.length > 0) {
+        throw new Error(
+          `No se puede actualizar la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
+            .map((c) => `Categoría ID: ${c.categoriaId}`)
+            .join(', ')}`
+        );
+      }
+  
+      // Filtrar categorías que no están ya relacionadas con la promoción actual
+      const nuevasCategorias = categorias.filter(
+        (categoriaId) => !promocionActual.categorias.some((relacion) => relacion.categoriaId === categoriaId)
+      );
+  
+      // Agregar solo las nuevas categorías a la promoción
+      if (nuevasCategorias.length > 0) {
+        await promocionesData.agregarCategoriasAPromocion(promocionId, nuevasCategorias);
+      }
     }
-
-    // Asignar la promoción a cada producto
-    const actualizaciones = productos.map((producto) =>
-      ProductosData.updateProducto(producto.id, { promocionId })
-    );
-
-    await Promise.all(actualizaciones);
-
-    return {
-      mensaje: "Promoción asignada correctamente a los productos de la categoría.",
-      productosActualizados: productos.length,
-    };
-  },
+  
+    const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
+    const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
+  
+    // Actualizar los datos de la promoción
+    return await promocionesData.updatePromocion(promocionId, {
+      nombre,
+      descripcion,
+      descuento,
+      fechaInicio: fechaInicioISO,
+      fechaFin: fechaFinISO,
+    });
+  },  
 
   // Eliminar una promoción
   async eliminarPromocion(promocionId) {
@@ -119,16 +140,6 @@ export const promocionesService = {
     }
 
     return await promocionesData.deletePromocion(promocionId);
-  },
-
-  // Obtener una promoción específica por ID
-  async obtenerPromocionPorId(promocionId) {
-    const promocion = await promocionesData.getPromocionById(promocionId);
-    if (!promocion) {
-      throw new Error(`No se encontró la promoción con ID ${promocionId}`);
-    }
-
-    return promocion;
   },
 
   // Obtener promociones por categoría
