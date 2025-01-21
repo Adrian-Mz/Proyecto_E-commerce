@@ -5,6 +5,7 @@ import GestionProductosPage from './GestionProductosPage';
 import GestionUsuariosPage from './GestionUsuariosPage';
 import GestionCategoriasPage from './GestionCategoriasPage';
 import GestionPromocionesPage from './GestionPromocionesPage';
+import GestionPedidosPage from './GestionPedidosPage';
 
 const AdminPage = () => {
   const funcionalidades = [
@@ -85,7 +86,7 @@ const AdminPage = () => {
               <Route path="usuarios" element={<GestionUsuariosPage />} />
               <Route path="categorias" element={<GestionCategoriasPage />} />
               <Route path="promociones" element={<GestionPromocionesPage />} />
-              <Route path="pedidos" element={<h1>Gestión de Pedidos</h1>} />
+              <Route path="pedidos" element={<GestionPedidosPage />} />
               <Route path="devoluciones" element={<h1>Gestión de Devoluciones</h1>} />
               {/* Ruta 404 */}
               <Route

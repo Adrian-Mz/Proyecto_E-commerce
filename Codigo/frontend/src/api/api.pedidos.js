@@ -1,7 +1,18 @@
 import api from './api.config';
 
 export const PedidosAPI = {
-  // Obtener un pedido específico del usuario
+    // Obtener todos los pedidos
+  getPedidos: async () => {
+    try {
+      const response = await api.get('/pedidos');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener los pedidos:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+  
+    // Obtener un pedido específico del usuario
   getPedido: async (usuarioId, pedidoId) => {
     try {
       const response = await api.get(`/pedidos/${usuarioId}/pedidos/${pedidoId}`);
