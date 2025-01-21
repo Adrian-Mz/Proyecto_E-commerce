@@ -11,14 +11,24 @@ export const PedidosAPI = {
       throw error;
     }
   },
-  
-    // Obtener un pedido específico del usuario
-  getPedido: async (usuarioId, pedidoId) => {
+
+  getHistorialPedidos: async () => {
     try {
-      const response = await api.get(`/pedidos/${usuarioId}/pedidos/${pedidoId}`);
+      const response = await api.get("/pedidos/historial");
       return response.data;
     } catch (error) {
-      console.error('Error al obtener el pedido:', error.response?.data || error.message);
+      console.error("Error al obtener el historial de pedidos:", error.response?.data || error.message);
+      throw error;
+    }
+  },
+  
+  // Obtener un pedido específico del usuario autenticado
+  getPedido: async (pedidoId) => {
+    try {
+      const response = await api.get(`/pedidos/${pedidoId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener el pedido:", error.response?.data || error.message);
       throw error;
     }
   },

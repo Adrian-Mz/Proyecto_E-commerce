@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaSignOutAlt, FaShoppingCart, FaKey  } from "react-icons/fa";
 import UserProfilePage from "./UsuarioPage"; // Página de Perfil
 import UserSettingsPage from "./UserSettingsPage"; // Página de Configuración de Usuario
+import UsuarioPedidosPage from "./UsuarioPedidosPage";
 
 const UserDashboardPage = ({ changeUser }) => {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ const UserDashboardPage = ({ changeUser }) => {
         <Routes>
           <Route path="profile" element={<UserProfilePage />} />
           <Route path="settings/*" element={<UserSettingsPage />} />
-          <Route path="orders" element={<div>Mis Pedidos (próximamente)</div>} />
+          <Route path="orders" element={<UsuarioPedidosPage />} />
         </Routes>
       </main>
     </div>

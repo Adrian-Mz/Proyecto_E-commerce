@@ -33,7 +33,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
       <div
         className={`fixed top-0 right-0 h-full w-80 bg-gray-800 text-gray-100 shadow-lg z-50 transform ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300`}
+          } transition-transform duration-300 flex flex-col`}
       >
         {/* Header del Carrito */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
@@ -67,7 +67,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-bold">{item.producto?.nombre || "Producto sin nombre"}</h3>
+                  <h5 className="text-sm font-bold">{item.producto?.nombre || "Producto sin nombre"}</h5>
                   <p className="text-sm text-gray-400">{`$${parseFloat(item.precio_unitario || 0).toFixed(2)}`}</p>
                   <p className="text-sm text-gray-400">{`Cantidad: ${item.cantidad || 1}`}</p>
                 </div>
