@@ -45,7 +45,7 @@ const LoginForm = () => {
         if (decodedToken.rol === "Administrador") {
           navigate("/admin");
         } else {
-          navigate("/dashboard");
+          navigate("/home");
         }
       }, 1000);
     } catch (error) {
