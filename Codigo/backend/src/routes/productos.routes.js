@@ -12,6 +12,23 @@ import fs from 'fs';
 
 const router = express.Router(); 
 
+// Ruta para buscar un productos
+router.get('/buscar', async (req, res, next) => {
+  try {
+    const { q } = req.query; // Captura el parámetro de búsqueda
+    if (!q || typeof q !== 'string' || q.trim().length === 0) {
+      return res.status(400).json({ error: 'El término de búsqueda es obligatorio.' });
+    }
+
+    // Llama al servicio para buscar productos
+    const productos = await ProductosService.buscarProductos(q.trim());
+    res.status(200).json(productos);
+  } catch (error) {
+    console.log('Error en la búsqueda:', error.message);
+    next(error);
+  }
+});
+
 // Ruta para obtener todos los productos
 router.get('/', async (req, res) => {
   try {
@@ -113,6 +130,8 @@ router.delete(
     }
   }
 );
+
+
 
 
 

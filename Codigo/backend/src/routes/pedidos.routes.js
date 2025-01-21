@@ -2,6 +2,8 @@ import express from 'express';
 import { pedidosService } from '../services/pedidos.service.js';
 import { validarCrearPedido } from '../validations/pedidos.validation.js';
 import { validationResult } from 'express-validator';
+import { verificarToken } from '../middlewares/auth.middleware.js';
+import { verificarRol } from '../middlewares/roles.middleware.js';
 
 const router = express.Router();
 
@@ -13,6 +15,27 @@ const handleValidationErrors = (req, res, next) => {
   }
   next();
 };
+
+// Obtener todos los pedidos de un usuario autenticado
+router.get('/usuario', verificarToken, async (req, res) => {
+  try {
+    const usuarioId = req.usuario.id; // Obtenemos el ID del usuario autenticado desde el token
+    const pedidos = await pedidosService.obtenerPedidosDeUsuario(usuarioId);
+    res.status(200).json(pedidos);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Obtener todos los pedidos (solo para administradores)
+router.get('/', verificarToken, verificarRol(['Administrador']), async (req, res) => {
+  try {
+    const pedidos = await pedidosService.obtenerTodosLosPedidos();
+    res.status(200).json(pedidos);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // Obtener un pedido específico por usuario
 router.get('/:usuarioId/pedidos/:pedidoId', async (req, res) => {

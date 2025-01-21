@@ -96,4 +96,5 @@ export const UsuariosData = {
       data: { password: nuevaPassword },
     });
   },
+
 };

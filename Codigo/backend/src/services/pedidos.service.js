@@ -7,6 +7,31 @@ import { ProductosData} from '../data/productos.data.js'
 const prisma = new PrismaClient();
 
 export const pedidosService = {
+  
+   // Obtener todos los pedidos de un usuario específico
+   async obtenerPedidosDeUsuario(usuarioId) {
+    if (!usuarioId) {
+      throw new Error('El ID del usuario es obligatorio.');
+    }
+
+    const pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
+    if (!pedidos || pedidos.length === 0) {
+      throw new Error('No se encontraron pedidos para este usuario.');
+    }
+
+    return pedidos;
+  },
+
+  // Obtener todos los pedidos (solo para administradores)
+  async obtenerTodosLosPedidos() {
+    const pedidos = await pedidosData.getAllPedidos();
+    if (!pedidos || pedidos.length === 0) {
+      throw new Error('No se encontraron pedidos en el sistema.');
+    }
+
+    return pedidos;
+  },
+  
   // Crear un nuevo pedido
   async crearPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, detallesPago) {
     if (!direccionEnvio?.trim()) {
@@ -266,21 +291,21 @@ export const pedidosService = {
   },
 };
 
-  // Función para calcular la fecha estimada de entrega
-  function calcularFechaEntrega(fechaPedido, tiempoEstimado) {
-    const rangoDias = tiempoEstimado.match(/\d+/g); // Extrae los números del rango
-    if (!rangoDias || rangoDias.length === 0) {
-      return null;
-    }
-
-    const diasMinimos = parseInt(rangoDias[0], 10);
-    const diasMaximos = rangoDias.length > 1 ? parseInt(rangoDias[1], 10) : diasMinimos;
-
-    // Por simplicidad, usamos el rango máximo para la estimación
-    const fecha = new Date(fechaPedido);
-    fecha.setDate(fecha.getDate() + diasMaximos);
-
-    return fecha;
+// Función para calcular la fecha estimada de entrega
+function calcularFechaEntrega(fechaPedido, tiempoEstimado) {
+  const rangoDias = tiempoEstimado.match(/\d+/g); // Extrae los números del rango
+  if (!rangoDias || rangoDias.length === 0) {
+    return null;
   }
+
+  const diasMinimos = parseInt(rangoDias[0], 10);
+  const diasMaximos = rangoDias.length > 1 ? parseInt(rangoDias[1], 10) : diasMinimos;
+
+  // Por simplicidad, usamos el rango máximo para la estimación
+  const fecha = new Date(fechaPedido);
+  fecha.setDate(fecha.getDate() + diasMaximos);
+
+  return fecha;
+}
 
 

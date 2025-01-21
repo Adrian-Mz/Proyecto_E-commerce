@@ -3,6 +3,54 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const pedidosData = {
+  async getAllPedidos() {
+    return prisma.pedidos.findMany({
+      include: {
+        productos: {
+          include: { producto: true },
+        },
+        metodoPago: true,
+        metodoEnvio: true,
+        estado: true,
+        usuario: {
+          select: {
+            id: true,
+            nombre: true,
+            correo: true,
+          },
+        },
+      },
+    });
+  },
+
+  async getPedidosByUsuarioId(usuarioId) {
+    return prisma.pedidos.findMany({
+      where: { usuarioId },
+      include: {
+        productos: {
+          include: { producto: true },
+        },
+        metodoPago: true,
+        metodoEnvio: true,
+        estado: true,
+      },
+    });
+  },
+
+  async getPedidoById(pedidoId, usuarioId) {
+    return prisma.pedidos.findFirst({
+      where: { id: pedidoId, usuarioId },
+      include: {
+        productos: {
+          include: { producto: true },
+        },
+        metodoPago: true,
+        metodoEnvio: true,
+        estado: true,
+      },
+    });
+  },
+  
   async createPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, productos, total) {
     return prisma.pedidos.create({
       data: {
@@ -26,20 +74,6 @@ export const pedidosData = {
       },
     });
   },  
-
-  async getPedidoById(pedidoId, usuarioId) {
-    return prisma.pedidos.findFirst({
-      where: { id: pedidoId, usuarioId },
-      include: {
-        productos: {
-          include: { producto: true },
-        },
-        metodoPago: true,
-        metodoEnvio: true,
-        estado: true,
-      },
-    });
-  },
 
   async getMetodosPago() {
     return prisma.metodo_pago.findMany();

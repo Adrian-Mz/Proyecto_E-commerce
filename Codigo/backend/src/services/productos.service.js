@@ -192,7 +192,13 @@ export const ProductosService = {
       // Manejar errores y lanzar una excepción
       throw new Error(`Error al eliminar el producto: ${error.message}`);
     }
+  },
+
+  async buscarProductos(termino) {
+      // Usa una búsqueda "like" en la base de datos
+    return await ProductosData.buscarProductosPorNombreOCategoria(termino);
   }
+  
 };
 
 function validarId(id) {

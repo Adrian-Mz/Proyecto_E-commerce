@@ -217,5 +217,4 @@ export const UsuariosService = {
 
     return 'Contraseña actualizada correctamente.';
   },
-
 };
