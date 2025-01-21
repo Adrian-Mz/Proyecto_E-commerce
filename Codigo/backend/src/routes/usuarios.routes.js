@@ -1,6 +1,6 @@
 import express from 'express';
 import { UsuariosService } from '../services/usuarios.service.js';
-import { validarUsuario } from '../validations/usuarios.validation.js';
+import { validarUsuario, validarActualizacionPerfil } from '../validations/usuarios.validation.js';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
@@ -99,6 +99,8 @@ router.post('/', validarUsuario, handleValidation, async (req, res, next) => {
 router.put(
   '/:id',
   verificarToken, // Verifica si el usuario está autenticado
+  validarActualizacionPerfil,
+  handleValidation,
   async (req, res, next) => {
     try {
       const id = parseInt(req.params.id, 10);
