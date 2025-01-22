@@ -82,8 +82,10 @@ const GestionPromocionesPage = () => {
 
   const handleAddPromocion = async () => {
     try {
-      // Convertir categorías a un arreglo de IDs si no es el formato esperado
-      const formattedCategorias = newPromocion.categorias?.map((cat) => cat.id) || [];
+      const formattedCategorias =
+      Array.isArray(newPromocion.categorias) && newPromocion.categorias.length > 0
+        ? newPromocion.categorias.map((cat) => cat.id)
+        : []; 
   
       // Preparar los datos para el envío
       const formattedData = {
