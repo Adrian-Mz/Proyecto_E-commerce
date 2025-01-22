@@ -41,8 +41,20 @@ const GestionPromocionesPage = () => {
           PromocionesService.getPromociones(),
           CategoriasService.getCategorias(),
         ]);
+
+        // Marcar las categorías asociadas con promociones activas
+        const categoriasConPromocionActiva = promocionesResponse.flatMap((promocion) =>
+          promocion.categorias.map((categoria) => categoria.id)
+        );
+
+        // Añadimos un flag `activa` para identificar estas categorías
+        const categoriasActualizadas = categoriasResponse.map((categoria) => ({
+          ...categoria,
+          activa: categoriasConPromocionActiva.includes(categoria.id),
+        }));
+
         setData(promocionesResponse || []);
-        setCategorias(categoriasResponse || []);
+        setCategorias(categoriasActualizadas || []);
       } catch (error) {
         console.error("Error al cargar datos:", error);
         toast.error("Error al cargar los datos.");
@@ -69,9 +81,7 @@ const GestionPromocionesPage = () => {
     try {
       // Convertir categorías a un arreglo de IDs si no es el formato esperado
       const formattedCategorias =
-        Array.isArray(newPromocion.categorias) && newPromocion.categorias.length > 0
-          ? newPromocion.categorias.map((cat) => (typeof cat === "object" ? cat.id : cat))
-          : [];
+      selectedPromocion.categorias?.map((cat) => cat.id) || [];
   
       // Preparar los datos para el envío
       const formattedData = {
@@ -99,6 +109,8 @@ const GestionPromocionesPage = () => {
       // Mostrar mensajes de error específicos del backend o por validación
       if (error.response && error.response.data && error.response.data.error) {
         toast.error(`Error del servidor: ${error.response.data.error}`);
+      } else if (error.message.includes("categorías")) {
+        toast.error("Una o más categorías seleccionadas ya están asociadas a otra promoción.");
       } else {
         toast.error("Error al añadir promoción. Revisa los datos ingresados.");
       }
@@ -151,9 +163,10 @@ const GestionPromocionesPage = () => {
       console.error("Error al editar promoción:", error.response?.data || error.message);
   
       // Mostrar mensaje de error del backend, si está disponible
-      if (error.response && error.response.data && error.response.data.errors) {
-        const backendError = error.response.data.errors[0].message;
-        toast.error(`Error del servidor: ${backendError}`);
+      if (error.response && error.response.data && error.response.data.error) {
+        toast.error(`Error del servidor: ${error.response.data.error}`);
+      } else if (error.message.includes("categorías")) {
+        toast.error("No se puede actualizar. Algunas categorías seleccionadas ya están en uso.");
       } else {
         toast.error("Error al editar promoción. Revisa los datos ingresados.");
       }
@@ -237,48 +250,88 @@ const GestionPromocionesPage = () => {
           <label>Categorías:</label>
           <div className="flex flex-col">
             {categorias.length > 0 ? (
-              categorias.map((categoria) => (
-                <label key={categoria.id} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={promocion.categorias?.includes(categoria.id) || false}
-                    onChange={(e) => {
-                      const newCategorias = e.target.checked
-                        ? [...(promocion.categorias || []), categoria.id]
-                        : (promocion.categorias || []).filter((id) => id !== categoria.id);
-                      setPromocion((prev) => ({ ...prev, categorias: newCategorias }));
-                    }}
-                  />
-                  <span>{categoria.nombre}</span>
-                </label>
-              ))
+              categorias.map((categoria) => {
+                const perteneceAPromocion =
+                  selectedPromocion?.categorias.some((rel) => rel.id === categoria.id) || false;
+
+                const asignadaAOtraPromocion = data.some(
+                  (promocion) =>
+                    promocion.id !== selectedPromocion?.id &&
+                    promocion.categorias.some((rel) => rel.id === categoria.id)
+                );
+
+                return (
+                  <label
+                    key={categoria.id}
+                    className={`flex items-center space-x-2 ${
+                      asignadaAOtraPromocion ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={perteneceAPromocion}
+                      disabled={asignadaAOtraPromocion}
+                      onChange={(e) => {
+                        const newCategorias = e.target.checked
+                          ? [...(selectedPromocion.categorias || []), categoria]
+                          : (selectedPromocion.categorias || []).filter(
+                              (cat) => cat.id !== categoria.id
+                            );
+                        setSelectedPromocion((prev) => ({
+                          ...prev,
+                          categorias: newCategorias,
+                        }));
+                      }}
+                    />
+                    <span>{categoria.nombre}</span>
+                  </label>
+                );
+              })
             ) : (
               <span>Cargando categorías...</span>
             )}
           </div>
         </div>
         <div>
-          <label>Fecha Inicio:</label>
-          <input
-            type="date"
-            value={promocion.fechaInicio || ""}
-            min={minDate}
-            max={maxDate}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaInicio: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-        <div>
-          <label>Fecha Fin:</label>
-          <input
-            type="date"
-            value={promocion.fechaFin || ""}
-            min={minDate}
-            max={maxDate}
-            onChange={(e) => setPromocion((prev) => ({ ...prev, fechaFin: e.target.value }))}
-            className="border p-2 rounded w-full"
-          />
-        </div>
+        <label>Fecha Inicio:</label>
+        <input
+          type="date"
+          value={
+            selectedPromocion?.fechaInicio
+              ? selectedPromocion.fechaInicio.split("T")[0]
+              : ""
+          }
+          min={minDate}
+          max={maxDate}
+          onChange={(e) =>
+            setSelectedPromocion((prev) => ({
+              ...prev,
+              fechaInicio: e.target.value,
+            }))
+          }
+          className="border p-2 rounded w-full"
+        />
+      </div>
+      <div>
+        <label>Fecha Fin:</label>
+        <input
+          type="date"
+          value={
+            selectedPromocion?.fechaFin
+              ? selectedPromocion.fechaFin.split("T")[0]
+              : ""
+          }
+          min={minDate}
+          max={maxDate}
+          onChange={(e) =>
+            setSelectedPromocion((prev) => ({
+              ...prev,
+              fechaFin: e.target.value,
+            }))
+          }
+          className="border p-2 rounded w-full"
+        />
+      </div>
       </div>
     );
   };
@@ -309,37 +362,41 @@ const GestionPromocionesPage = () => {
           { key: "fechaFin", label: "Fecha Fin" },
           { key: "acciones", label: "Acciones" },
         ]}
-        data={paginatedData.map((item) => ({
-          ...item,
-          descuento: item.descuento ? `${parseFloat(item.descuento).toFixed(2)}%` : "0.00%",
-          categorias: item.categorias.length
-            ? item.categorias.map((cat) => cat.categoria.nombre).join(", ")
-            : "Sin categorías",
-          fechaInicio: item.fechaInicio ? item.fechaInicio.split("T")[0] : "-",
-          fechaFin: item.fechaFin ? item.fechaFin.split("T")[0] : "-",
-          acciones: (
-            <div className="flex space-x-2">
-              <button
-                onClick={() => {
-                  setSelectedPromocion(item);
-                  setIsEditModalOpen(true);
-                }}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                <FaEdit size={16} />
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedPromocion(item);
-                  setIsConfirmDeleteModalOpen(true);
-                }}
-                className="text-red-500 hover:text-red-700"
-              >
-                <FaTrash size={16} />
-              </button>
-            </div>
-          ),
-        }))}
+        
+        data={paginatedData.map((item) => {        
+          return {
+            ...item,
+            descuento: item.descuento ? `${parseFloat(item.descuento).toFixed(2)}%` : "0.00%",
+            categorias: item.categorias?.length
+              ? item.categorias.map((rel) => rel.nombre || rel.categoria?.nombre).join(", ")
+              : "Sin categorías",
+            fechaInicio: item.fechaInicio ? item.fechaInicio.split("T")[0] : "-",
+            fechaFin: item.fechaFin ? item.fechaFin.split("T")[0] : "-",
+            acciones: (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedPromocion(item);
+                    setIsEditModalOpen(true);
+                  }}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <FaEdit size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedPromocion(item);
+                    setIsConfirmDeleteModalOpen(true);
+                  }}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <FaTrash size={16} />
+                </button>
+              </div>
+            ),
+          };
+        })}
+        
       />
 
       <ModalComponent
