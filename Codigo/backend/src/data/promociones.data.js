@@ -54,8 +54,9 @@ export const promocionesData = {
   // Actualizar una promoción existente
   async updatePromocion(promocionId, datosPromocion) {
     const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
-
-    return await prisma.promociones.update({
+  
+    // Actualización de los datos principales de la promoción
+    const updatedPromocion = await prisma.promociones.update({
       where: { id: promocionId },
       data: {
         nombre,
@@ -63,19 +64,50 @@ export const promocionesData = {
         descuento,
         fechaInicio,
         fechaFin,
-        ...(categorias
-          ? {
-              categorias: {
-                deleteMany: {}, // Elimina todas las relaciones existentes
-                create: categorias.map((categoriaId) => ({
-                  categoria: { connect: { id: categoriaId } },
-                })),
-              },
-            }
-          : {}),
       },
     });
-  },
+  
+    if (categorias && categorias.length > 0) {
+      // Obtener las relaciones actuales entre la promoción y las categorías
+      const relacionesActuales = await prisma.categoria_promocion.findMany({
+        where: { promocionId },
+        select: { categoriaId: true },
+      });
+  
+      const categoriasActuales = relacionesActuales.map((relacion) => relacion.categoriaId);
+  
+      // Identificar categorías a agregar y eliminar
+      const categoriasAEliminar = categoriasActuales.filter(
+        (categoriaId) => !categorias.includes(categoriaId)
+      );
+      const categoriasAAgregar = categorias.filter(
+        (categoriaId) => !categoriasActuales.includes(categoriaId)
+      );
+  
+      // Eliminar categorías que ya no están asociadas
+      if (categoriasAEliminar.length > 0) {
+        await prisma.categoria_promocion.deleteMany({
+          where: {
+            promocionId,
+            categoriaId: { in: categoriasAEliminar },
+          },
+        });
+      }
+  
+      // Agregar nuevas categorías a la promoción
+      if (categoriasAAgregar.length > 0) {
+        await prisma.categoria_promocion.createMany({
+          data: categoriasAAgregar.map((categoriaId) => ({
+            promocionId,
+            categoriaId,
+          })),
+          skipDuplicates: true, // Evita errores si alguna relación ya existe
+        });
+      }
+    }
+  
+    return updatedPromocion;
+  },  
 
   // Eliminar una promoción
   async deletePromocion(promocionId) {
@@ -84,6 +116,20 @@ export const promocionesData = {
     });
     return await prisma.promociones.delete({
       where: { id: promocionId },
+    });
+  },
+
+  // Eliminar categorías asociadas a una promoción específica
+  async eliminarCategoriasDePromocion(promocionId, categoriasIds) {
+    if (!Array.isArray(categoriasIds) || categoriasIds.length === 0) {
+      throw new Error('Debe proporcionar una lista de categorías válidas para eliminar.');
+    }
+
+    return await prisma.categoria_promocion.deleteMany({
+      where: {
+        promocionId,
+        categoriaId: { in: categoriasIds },
+      },
     });
   },
 
@@ -130,5 +176,26 @@ export const promocionesData = {
       })),
       skipDuplicates: true, // Evita errores si alguna categoría ya está relacionada
     });
+  },
+  
+  async actualizarCategoriasPromocion(promocionId, categorias) {
+    // Si no hay categorías, eliminamos todas las relaciones
+    if (!categorias || categorias.length === 0) {
+      await prisma.categoria_promocion.deleteMany({
+        where: { promocionId },
+      });
+    } else {
+      // Si hay categorías, eliminamos las existentes y agregamos las nuevas
+      await prisma.categoria_promocion.deleteMany({
+        where: { promocionId },
+      });
+      await prisma.categoria_promocion.createMany({
+        data: categorias.map((categoriaId) => ({
+          promocionId,
+          categoriaId,
+        })),
+        skipDuplicates: true, // Evitar duplicados si aplica
+      });
+    }
   }  
 };

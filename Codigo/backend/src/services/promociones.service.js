@@ -85,21 +85,21 @@ export const promocionesService = {
     if (!promocionActual) {
       throw new Error(`La promoción con ID ${promocionId} no existe.`);
     }
-  
+
     const {
       nombre = promocionActual.nombre,
       descripcion = promocionActual.descripcion,
       descuento = promocionActual.descuento,
       fechaInicio = promocionActual.fechaInicio,
       fechaFin = promocionActual.fechaFin,
-      categorias,
+      categorias = [],
     } = datosPromocion;
-  
+
     // Validar las categorías solo si se envían
     if (categorias && categorias.length > 0) {
       // Obtener categorías que ya tienen relaciones activas con otras promociones
       const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categorias, promocionId);
-  
+
       if (categoriasConConflictos.length > 0) {
         throw new Error(
           `No se puede actualizar la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
@@ -107,22 +107,38 @@ export const promocionesService = {
             .join(', ')}`
         );
       }
-  
-      // Filtrar categorías que no están ya relacionadas con la promoción actual
-      const nuevasCategorias = categorias.filter(
-        (categoriaId) => !promocionActual.categorias.some((relacion) => relacion.categoriaId === categoriaId)
+
+      // Categorías actuales asociadas con la promoción
+      const categoriasActuales = promocionActual.categorias.map((relacion) => relacion.categoriaId);
+
+      // Identificar categorías a eliminar (que están actualmente pero no en la nueva lista)
+      const categoriasAEliminar = categoriasActuales.filter(
+        (categoriaId) => !categorias.includes(categoriaId)
       );
-  
-      // Agregar solo las nuevas categorías a la promoción
-      if (nuevasCategorias.length > 0) {
-        await promocionesData.agregarCategoriasAPromocion(promocionId, nuevasCategorias);
+
+      // Identificar categorías a agregar (que no están actualmente asociadas)
+      const categoriasAAgregar = categorias.filter(
+        (categoriaId) => !categoriasActuales.includes(categoriaId)
+      );
+
+      // Eliminar categorías que ya no están asociadas
+      if (categoriasAEliminar.length > 0) {
+        await promocionesData.eliminarCategoriasDePromocion(promocionId, categoriasAEliminar);
+      }
+
+      // Agregar nuevas categorías a la promoción
+      if (categoriasAAgregar.length > 0) {
+        await promocionesData.agregarCategoriasAPromocion(promocionId, categoriasAAgregar);
       }
     }
-  
+
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-  
-    // Actualizar los datos de la promoción
+
+    // Actualizar las categorías de la promoción
+    await promocionesData.actualizarCategoriasPromocion(promocionId, categorias);
+
+    // Actualizar los datos principales de la promoción
     return await promocionesData.updatePromocion(promocionId, {
       nombre,
       descripcion,
@@ -130,7 +146,8 @@ export const promocionesService = {
       fechaInicio: fechaInicioISO,
       fechaFin: fechaFinISO,
     });
-  },  
+  },
+  
 
   // Eliminar una promoción
   async eliminarPromocion(promocionId) {
