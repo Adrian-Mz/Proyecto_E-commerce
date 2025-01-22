@@ -28,43 +28,46 @@ const GestionPromocionesPage = () => {
     categorias: [],
   });
 
-  const [selectedPromocion, setSelectedPromocion] = useState(null);
+  const [selectedPromocion, setSelectedPromocion] = useState({
+    categorias: [], // Se inicializa con un arreglo vacío
+  });
 
   const currentYear = new Date().getFullYear();
   const minDate = `${currentYear}-01-01`;
   const maxDate = `${currentYear}-12-31`;
 
+  const fetchData = async () => {
+    try {
+      const [promocionesResponse, categoriasResponse] = await Promise.all([
+        PromocionesService.getPromociones(),
+        CategoriasService.getCategorias(),
+      ]);
+
+      // Marcar las categorías asociadas con promociones activas
+      const categoriasConPromocionActiva = promocionesResponse.flatMap((promocion) =>
+        promocion.categorias.map((categoria) => categoria.id)
+      );
+
+      // Añadimos un flag `activa` para identificar estas categorías
+      const categoriasActualizadas = categoriasResponse.map((categoria) => ({
+        ...categoria,
+        activa: categoriasConPromocionActiva.includes(categoria.id),
+      }));
+
+      setData(promocionesResponse || []);
+      setCategorias(categoriasActualizadas || []);
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+      toast.error("Error al cargar los datos.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [promocionesResponse, categoriasResponse] = await Promise.all([
-          PromocionesService.getPromociones(),
-          CategoriasService.getCategorias(),
-        ]);
-
-        // Marcar las categorías asociadas con promociones activas
-        const categoriasConPromocionActiva = promocionesResponse.flatMap((promocion) =>
-          promocion.categorias.map((categoria) => categoria.id)
-        );
-
-        // Añadimos un flag `activa` para identificar estas categorías
-        const categoriasActualizadas = categoriasResponse.map((categoria) => ({
-          ...categoria,
-          activa: categoriasConPromocionActiva.includes(categoria.id),
-        }));
-
-        setData(promocionesResponse || []);
-        setCategorias(categoriasActualizadas || []);
-      } catch (error) {
-        console.error("Error al cargar datos:", error);
-        toast.error("Error al cargar los datos.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
 
   const clearNewPromocion = () => {
     setNewPromocion({
@@ -80,8 +83,7 @@ const GestionPromocionesPage = () => {
   const handleAddPromocion = async () => {
     try {
       // Convertir categorías a un arreglo de IDs si no es el formato esperado
-      const formattedCategorias =
-      selectedPromocion.categorias?.map((cat) => cat.id) || [];
+      const formattedCategorias = newPromocion.categorias?.map((cat) => cat.id) || [];
   
       // Preparar los datos para el envío
       const formattedData = {
@@ -101,6 +103,7 @@ const GestionPromocionesPage = () => {
       // Actualizar el estado local con la nueva promoción
       setData((prevData) => [...prevData, createdPromocion]);
       toast.success("Promoción añadida correctamente");
+      fetchData();
       setIsAddModalOpen(false);
       clearNewPromocion();
     } catch (error) {
@@ -116,7 +119,6 @@ const GestionPromocionesPage = () => {
       }
     }
   };
-  
   
 
   const handleEditPromocion = async () => {
@@ -159,6 +161,10 @@ const GestionPromocionesPage = () => {
         setIsEditModalOpen(false);
         toast.success("Promoción editada correctamente.");
       }
+
+      // Actualizar datos de la lista
+      fetchData();
+
     } catch (error) {
       console.error("Error al editar promoción:", error.response?.data || error.message);
   
@@ -181,6 +187,9 @@ const GestionPromocionesPage = () => {
       toast.success("Promoción eliminada correctamente.");
       setIsConfirmDeleteModalOpen(false);
       setSelectedPromocion(null);
+
+      // Refrescar datos
+      fetchData();
     } catch (error) {
       console.error("Error al eliminar promoción:", error);
       toast.error("Error al eliminar promoción.");
