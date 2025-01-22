@@ -1,5 +1,4 @@
 import { promocionesData } from '../data/promociones.data.js';
-import { ProductosData } from '../data/productos.data.js';
 
 export const promocionesService = {
   // Obtener una promoción por ID
@@ -49,17 +48,17 @@ export const promocionesService = {
   // Crear una nueva promoción
   async crearPromocion(datosPromocion) {
     const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
-  
+
     if (!nombre || !descripcion || !descuento) {
       throw new Error('Todos los campos obligatorios deben ser completados.');
     }
-  
+
     // Asegúrate de que categorias sea un arreglo o establece un valor vacío
     const categoriasValidas = Array.isArray(categorias) ? categorias : [];
-  
+
     if (categoriasValidas.length > 0) {
       const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categoriasValidas);
-  
+
       if (categoriasConConflictos.length > 0) {
         throw new Error(
           `No se puede crear la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
@@ -68,10 +67,10 @@ export const promocionesService = {
         );
       }
     }
-  
+
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-  
+
     return await promocionesData.createPromocion({
       nombre,
       descripcion,
@@ -80,7 +79,7 @@ export const promocionesService = {
       fechaFin: fechaFinISO,
       categorias: categoriasValidas,
     });
-  },  
+  },
 
   // Actualizar una promoción existente
   async actualizarPromocion(promocionId, datosPromocion) {
@@ -88,7 +87,7 @@ export const promocionesService = {
     if (!promocionActual) {
       throw new Error(`La promoción con ID ${promocionId} no existe.`);
     }
-
+  
     const {
       nombre = promocionActual.nombre,
       descripcion = promocionActual.descripcion,
@@ -97,12 +96,10 @@ export const promocionesService = {
       fechaFin = promocionActual.fechaFin,
       categorias = [],
     } = datosPromocion;
-
-    // Validar las categorías solo si se envían
+  
     if (categorias && categorias.length > 0) {
-      // Obtener categorías que ya tienen relaciones activas con otras promociones
       const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categorias, promocionId);
-
+  
       if (categoriasConConflictos.length > 0) {
         throw new Error(
           `No se puede actualizar la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
@@ -110,38 +107,15 @@ export const promocionesService = {
             .join(', ')}`
         );
       }
-
-      // Categorías actuales asociadas con la promoción
-      const categoriasActuales = promocionActual.categorias.map((relacion) => relacion.categoriaId);
-
-      // Identificar categorías a eliminar (que están actualmente pero no en la nueva lista)
-      const categoriasAEliminar = categoriasActuales.filter(
-        (categoriaId) => !categorias.includes(categoriaId)
-      );
-
-      // Identificar categorías a agregar (que no están actualmente asociadas)
-      const categoriasAAgregar = categorias.filter(
-        (categoriaId) => !categoriasActuales.includes(categoriaId)
-      );
-
-      // Eliminar categorías que ya no están asociadas
-      if (categoriasAEliminar.length > 0) {
-        await promocionesData.eliminarCategoriasDePromocion(promocionId, categoriasAEliminar);
-      }
-
-      // Agregar nuevas categorías a la promoción
-      if (categoriasAAgregar.length > 0) {
-        await promocionesData.agregarCategoriasAPromocion(promocionId, categoriasAAgregar);
-      }
     }
-
+  
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-
-    // Actualizar las categorías de la promoción
-    await promocionesData.actualizarCategoriasPromocion(promocionId, categorias);
-
-    // Actualizar los datos principales de la promoción
+  
+    // Actualizar categorías y sincronizar productos asociados
+    await promocionesData.actualizarCategoriasYProductos(promocionId, categorias);
+  
+    // Actualizar datos principales de la promoción
     return await promocionesData.updatePromocion(promocionId, {
       nombre,
       descripcion,
@@ -149,8 +123,7 @@ export const promocionesService = {
       fechaInicio: fechaInicioISO,
       fechaFin: fechaFinISO,
     });
-  },
-  
+  },  
 
   // Eliminar una promoción
   async eliminarPromocion(promocionId) {
@@ -159,6 +132,7 @@ export const promocionesService = {
       throw new Error(`No se encontró la promoción con ID ${promocionId}`);
     }
 
+    // Eliminar promoción y sincronizar productos afectados
     return await promocionesData.deletePromocion(promocionId);
   },
 

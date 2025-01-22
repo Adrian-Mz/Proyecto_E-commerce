@@ -9,10 +9,28 @@ export const CategoriaService = {
         id: categoria.id,
         nombre: categoria.nombre,
         descripcion: categoria.descripcion,
+        promocionesActivas: categoria.promociones
+          .filter((relacion) =>
+            this.esPromocionActiva(relacion.promocion.fechaInicio, relacion.promocion.fechaFin)
+          )
+          .map((relacion) => ({
+            id: relacion.promocion.id,
+            nombre: relacion.promocion.nombre,
+            descuento: relacion.promocion.descuento,
+          })),
       }));
     } catch (error) {
       throw new Error(`Error al obtener categorías: ${error.message}`);
     }
+  },  
+
+   // Función para verificar si una promoción está activa
+   esPromocionActiva(fechaInicio, fechaFin) {
+    const ahora = new Date();
+    return (
+      (!fechaInicio || new Date(fechaInicio) <= ahora) &&
+      (!fechaFin || new Date(fechaFin) >= ahora)
+    );
   },
 
   // Obtener una categoría por ID
