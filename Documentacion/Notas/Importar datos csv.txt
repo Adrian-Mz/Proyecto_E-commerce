@@ -12,7 +12,7 @@
 
 
 
-Nuevos Datos:
+Datos de las tablas
 \COPY usuarios FROM 'C:/Users/Saeteros/Downloads/datos/usuarios.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY roles FROM 'C:/Users/Saeteros/Downloads/datos/roles.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY promociones FROM 'C:/Users/Saeteros/Downloads/datos/promociones.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
@@ -24,3 +24,6 @@ Nuevos Datos:
 
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/productos_reordenado.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 
+todos los productos restantes:
+
+\COPY productos FROM 'C:/Users/Saeteros/Downloads/Formatted_Products_Data.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
