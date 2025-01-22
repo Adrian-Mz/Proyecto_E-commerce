@@ -92,8 +92,8 @@ const GestionPromocionesPage = () => {
         nombre: newPromocion.nombre,
         descripcion: newPromocion.descripcion,
         descuento: parseFloat(newPromocion.descuento) || 0,
-        fechaInicio: newPromocion.fechaInicio || null,
-        fechaFin: newPromocion.fechaFin || null,
+        fechaInicio: newPromocion.fechaInicio.split("T")[0] || null,
+        fechaFin: newPromocion.fechaFin.split("T")[0] || null,
         categorias: formattedCategorias, // Enviamos un arreglo de IDs
       };
   
@@ -304,45 +304,45 @@ const GestionPromocionesPage = () => {
           </div>
         </div>
         <div>
-        <label>Fecha Inicio:</label>
-        <input
-          type="date"
-          value={
-            selectedPromocion?.fechaInicio
-              ? selectedPromocion.fechaInicio.split("T")[0]
-              : ""
-          }
-          min={minDate}
-          max={maxDate}
-          onChange={(e) =>
-            setSelectedPromocion((prev) => ({
-              ...prev,
-              fechaInicio: e.target.value,
-            }))
-          }
-          className="border p-2 rounded w-full"
-        />
-      </div>
-      <div>
-        <label>Fecha Fin:</label>
-        <input
-          type="date"
-          value={
-            selectedPromocion?.fechaFin
-              ? selectedPromocion.fechaFin.split("T")[0]
-              : ""
-          }
-          min={minDate}
-          max={maxDate}
-          onChange={(e) =>
-            setSelectedPromocion((prev) => ({
-              ...prev,
-              fechaFin: e.target.value,
-            }))
-          }
-          className="border p-2 rounded w-full"
-        />
-      </div>
+          <label>Fecha Inicio:</label>
+          <input
+            type="date"
+            value={
+              promocion?.fechaInicio
+                ? promocion.fechaInicio.split("T")[0] // Convertir al formato YYYY-MM-DD
+                : ""
+            }
+            min={minDate}
+            max={maxDate}
+            onChange={(e) =>
+              setPromocion((prev) => ({
+                ...prev,
+                fechaInicio: e.target.value, // Actualizar fechaInicio
+              }))
+            }
+            className="border p-2 rounded w-full"
+          />
+        </div>
+        <div>
+          <label>Fecha Fin:</label>
+          <input
+            type="date"
+            value={
+              promocion?.fechaFin
+                ? promocion.fechaFin.split("T")[0] // Convertir al formato YYYY-MM-DD
+                : ""
+            }
+            min={minDate}
+            max={maxDate}
+            onChange={(e) =>
+              setPromocion((prev) => ({
+                ...prev,
+                fechaFin: e.target.value, // Actualizar fechaFin
+              }))
+            }
+            className="border p-2 rounded w-full"
+          />
+        </div>
       </div>
     );
   };
