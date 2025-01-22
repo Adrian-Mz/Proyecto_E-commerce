@@ -34,7 +34,10 @@ export const promocionesData = {
   // Crear una nueva promoción
   async createPromocion(datosPromocion) {
     const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
-
+  
+    // Validar que categorias sea un arreglo
+    const categoriasValidas = Array.isArray(categorias) ? categorias : [];
+  
     return await prisma.promociones.create({
       data: {
         nombre,
@@ -42,14 +45,16 @@ export const promocionesData = {
         descuento,
         fechaInicio,
         fechaFin,
-        categorias: {
-          create: categorias.map((categoriaId) => ({
-            categoria: { connect: { id: categoriaId } },
-          })),
-        },
+        ...(categoriasValidas.length > 0 && {
+          categorias: {
+            create: categoriasValidas.map((categoriaId) => ({
+              categoria: { connect: { id: categoriaId } },
+            })),
+          },
+        }),
       },
     });
-  },
+  },  
 
   // Actualizar una promoción existente
   async updatePromocion(promocionId, datosPromocion) {

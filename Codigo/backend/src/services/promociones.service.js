@@ -49,14 +49,17 @@ export const promocionesService = {
   // Crear una nueva promoción
   async crearPromocion(datosPromocion) {
     const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
-
+  
     if (!nombre || !descripcion || !descuento) {
       throw new Error('Todos los campos obligatorios deben ser completados.');
     }
-
-    if (categorias && categorias.length > 0) {
-      const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categorias);
-
+  
+    // Asegúrate de que categorias sea un arreglo o establece un valor vacío
+    const categoriasValidas = Array.isArray(categorias) ? categorias : [];
+  
+    if (categoriasValidas.length > 0) {
+      const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categoriasValidas);
+  
       if (categoriasConConflictos.length > 0) {
         throw new Error(
           `No se puede crear la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
@@ -65,19 +68,19 @@ export const promocionesService = {
         );
       }
     }
-
+  
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-
+  
     return await promocionesData.createPromocion({
       nombre,
       descripcion,
       descuento,
       fechaInicio: fechaInicioISO,
       fechaFin: fechaFinISO,
-      categorias: categorias || [],
+      categorias: categoriasValidas,
     });
-  },
+  },  
 
   // Actualizar una promoción existente
   async actualizarPromocion(promocionId, datosPromocion) {
