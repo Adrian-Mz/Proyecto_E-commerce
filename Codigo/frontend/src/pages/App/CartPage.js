@@ -3,6 +3,7 @@ import { useCart } from "../../context/CartContext";
 import { PedidosAPI } from "../../api/api.pedidos";
 import ModalComponent from "../../components/UI/ModalComponent";
 import { toast } from "react-toastify";
+import { FaCcVisa } from "react-icons/fa";
 
 const CartPage = () => {
   const { cartItems, calculateTotal, clearCart } = useCart();
@@ -14,7 +15,9 @@ const CartPage = () => {
   const [detallesTarjeta, setDetallesTarjeta] = useState({
     numeroTarjeta: "",
     nombreTitular: "",
-    fechaExpiracion: "",
+    fechaExpiracionMes: "",
+    fechaExpiracionAnio: "",
+    cvv: "",
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [datosUsuario, setDatosUsuario] = useState({
@@ -31,14 +34,12 @@ const CartPage = () => {
           return;
         }
 
-        // Llenar dirección de envío y datos de contacto automáticamente
         setDireccionEnvio(storedUser.direccion || "");
         setDatosUsuario({
           correoContacto: storedUser.correo,
           telefonoContacto: storedUser.telefono,
         });
 
-        // Obtener métodos de envío y pago
         const metodosEnvioResponse = await PedidosAPI.getMetodosEnvio();
         const metodosPagoResponse = await PedidosAPI.getMetodosPago();
         setMetodosEnvio(metodosEnvioResponse);
@@ -58,14 +59,21 @@ const CartPage = () => {
     }
 
     if (metodoPagoSeleccionado === "credito" || metodoPagoSeleccionado === "debito") {
-      setModalVisible(true); // Abre el modal para capturar los datos de la tarjeta
+      setModalVisible(true);
       return;
     }
 
-    realizarPedido(); // Realiza el pedido directamente si no es con tarjeta
+    realizarPedido();
   };
 
   const realizarPedido = async () => {
+    const fechaExpiracion = `${detallesTarjeta.fechaExpiracionMes}/${detallesTarjeta.fechaExpiracionAnio}`;
+
+    if (!/^\d{2}\/\d{2}$/.test(fechaExpiracion)) {
+      toast.error("La fecha de expiración debe estar en el formato MM/YY.");
+      return;
+    }
+
     try {
       const storedUser = JSON.parse(localStorage.getItem("usuario"));
       const pedidoData = {
@@ -77,6 +85,7 @@ const CartPage = () => {
         metodoEnvioId: parseInt(metodoEnvioSeleccionado, 10),
         detallesPago: {
           ...detallesTarjeta,
+          fechaExpiracion,
           correoContacto: datosUsuario.correoContacto,
           telefonoContacto: datosUsuario.telefonoContacto,
         },
@@ -85,31 +94,17 @@ const CartPage = () => {
       await PedidosAPI.createPedido(storedUser.id, pedidoData);
       toast.success("Pedido realizado con éxito.");
       clearCart();
-      setModalVisible(false); // Cierra el modal después de realizar el pedido
+      setModalVisible(false);
     } catch (error) {
       console.error("Error al realizar el pedido:", error);
       toast.error("Hubo un error al realizar el pedido.");
     }
   };
 
-  const validarFechaExpiracion = (fecha) => {
-    const regex = /^(0[1-9]|1[0-2])\/\d{2}$/; // Valida formato MM/AA
-    return regex.test(fecha);
-  };
-
-  const manejarFormatoFechaExpiracion = (valor) => {
-    const valorLimpio = valor.replace(/\D/g, ""); // Elimina cualquier carácter no numérico
-    if (valorLimpio.length <= 2) {
-      return valorLimpio; // Devuelve los primeros 2 dígitos
-    }
-    return `${valorLimpio.slice(0, 2)}/${valorLimpio.slice(2, 4)}`; // Aplica formato MM/AA
-  };
-
   return (
     <div className="p-6 bg-gray-100 text-gray-900 min-h-screen">
       <h1 className="text-2xl font-bold mb-6">Carrito de Compras</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Resumen de Compra */}
         <div className="col-span-2 bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-4">Resumen de Compra</h2>
           {cartItems.map((item) => (
@@ -132,7 +127,6 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Información del Pedido */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-4">Información de Envío</h2>
           <p className="mb-4">{direccionEnvio}</p>
@@ -171,47 +165,80 @@ const CartPage = () => {
         </div>
       </div>
 
-      {/* Modal */}
       <ModalComponent
         title="Detalles de Tarjeta"
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onSave={() => {
-          if (!validarFechaExpiracion(detallesTarjeta.fechaExpiracion)) {
-            toast.error("La fecha de expiración debe estar en formato MM/AA.");
-            return;
-          }
-          realizarPedido();
-        }}
+        onSave={() => realizarPedido()}
       >
-        <p className="mb-2 font-bold">Correo: {datosUsuario.correoContacto}</p>
-        <p className="mb-4 font-bold">Teléfono: {datosUsuario.telefonoContacto}</p>
-        <input
-          type="text"
-          placeholder="Número de Tarjeta"
-          value={detallesTarjeta.numeroTarjeta}
-          onChange={(e) => setDetallesTarjeta({ ...detallesTarjeta, numeroTarjeta: e.target.value })}
-          className="w-full p-3 border rounded mb-4"
-        />
-        <input
-          type="text"
-          placeholder="Nombre del Titular"
-          value={detallesTarjeta.nombreTitular}
-          onChange={(e) => setDetallesTarjeta({ ...detallesTarjeta, nombreTitular: e.target.value })}
-          className="w-full p-3 border rounded mb-4"
-        />
-        <input
-          type="text"
-          placeholder="Fecha de Expiración (MM/AA)"
-          value={detallesTarjeta.fechaExpiracion}
-          onChange={(e) =>
-            setDetallesTarjeta({
-              ...detallesTarjeta,
-              fechaExpiracion: manejarFormatoFechaExpiracion(e.target.value),
-            })
-          }
-          className="w-full p-3 border rounded"
-        />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Nombre en la tarjeta</label>
+            <input
+              type="text"
+              placeholder="Jason Doe"
+              value={detallesTarjeta.nombreTitular}
+              onChange={(e) =>
+                setDetallesTarjeta({ ...detallesTarjeta, nombreTitular: e.target.value })
+              }
+              className="w-full p-2 border rounded shadow-sm"
+            />
+          </div>
+          <div className="relative">
+            <label className="block text-sm font-medium">Número de tarjeta</label>
+            <input
+              type="text"
+              placeholder="XXXX-XXXX-XXXX-XXXX"
+              maxLength={16}
+              value={detallesTarjeta.numeroTarjeta}
+              onChange={(e) =>
+                setDetallesTarjeta({ ...detallesTarjeta, numeroTarjeta: e.target.value })
+              }
+              className="w-full p-2 border rounded shadow-sm"
+            />
+            <FaCcVisa className="absolute right-4 top-10 text-gray-500" />
+          </div>
+          <div className="flex space-x-4">
+            <div>
+              <label className="block text-sm font-medium">Expiración (MM/YY)</label>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="MM"
+                  maxLength={2}
+                  value={detallesTarjeta.fechaExpiracionMes}
+                  onChange={(e) =>
+                    setDetallesTarjeta({ ...detallesTarjeta, fechaExpiracionMes: e.target.value })
+                  }
+                  className="w-16 p-2 border rounded shadow-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="YY"
+                  maxLength={2}
+                  value={detallesTarjeta.fechaExpiracionAnio}
+                  onChange={(e) =>
+                    setDetallesTarjeta({ ...detallesTarjeta, fechaExpiracionAnio: e.target.value })
+                  }
+                  className="w-16 p-2 border rounded shadow-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium">CVV</label>
+              <input
+                type="text"
+                placeholder="•••"
+                maxLength={3}
+                value={detallesTarjeta.cvv}
+                onChange={(e) =>
+                  setDetallesTarjeta({ ...detallesTarjeta, cvv: e.target.value })
+                }
+                className="w-16 p-2 border rounded shadow-sm"
+              />
+            </div>
+          </div>
+        </div>
       </ModalComponent>
     </div>
   );
