@@ -3,11 +3,13 @@ import { pedidosData } from '../data/pedidos.data.js';
 import { carritoData } from '../data/carrito.data.js';
 import { estadoData } from '../data/estado.data.js';
 import { enviarCorreo } from '../utils/emailService.js';
+import { crearPagoStripe, confirmarPagoBackend } from '../utils/stripeservicios.js';
 
 const prisma = new PrismaClient();
 
 export const pedidosService = {
   
+  // Obtener el Historial de Pedidos del usuario
   async obtenerHistorialPedidosUsuario(usuarioId) {
     if (!usuarioId) {
       throw new Error('El ID del usuario es obligatorio.');
@@ -46,105 +48,141 @@ export const pedidosService = {
     return pedidos;
   },
 
-  // Crear un nuevo pedido
-  async crearPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, detallesPago) {
-    if (!direccionEnvio?.trim()) {
-      throw new Error('La dirección de envío es obligatoria.');
-    }
+ // Crear un nuevo pedido
+ async crearPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, detallesPago) {
+  console.log('Iniciando creación de pedido'); // Log inicial
 
-    // Validar métodos de pago y envío
-    const metodoPago = await this.validarMetodoPago(metodoPagoId);
-    const metodoEnvio = await this.validarMetodoEnvio(metodoEnvioId);
-    
-    // Obtener productos desde el carrito
-    const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
-    if (!carrito || !carrito.productos || carrito.productos.length === 0) {
-      throw new Error('El carrito está vacío. Agrega productos antes de confirmar el pedido.');
-    }
+  if (!direccionEnvio?.trim()) {
+    throw new Error('La dirección de envío es obligatoria.');
+  }
 
-    // Calcular el total usando los productos del carrito
-    const totalProductos = carrito.productos.reduce(
-      (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
-      0
+  console.log('Validando métodos de pago y envío');
+  const metodoPago = await this.validarMetodoPago(metodoPagoId);
+  const metodoEnvio = await this.validarMetodoEnvio(metodoEnvioId);
+
+  console.log('Método de pago seleccionado:', metodoPago);
+  console.log('Método de envío seleccionado:', metodoEnvio);
+
+  if (metodoPago.nombre !== "debito" && metodoPago.nombre !== "credito") {
+    throw new Error(`El método de pago ${metodoPago.nombre} no está permitido. Selecciona débito o crédito.`);
+  }
+
+  console.log('Obteniendo productos desde el carrito');
+  const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
+  if (!carrito || !carrito.productos || carrito.productos.length === 0) {
+    throw new Error('El carrito está vacío. Agrega productos antes de confirmar el pedido.');
+  }
+
+  console.log('Productos en el carrito:', carrito.productos);
+
+  const totalProductos = carrito.productos.reduce(
+    (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
+    0
+  );
+
+  const costoEnvio = metodoEnvio?.costo ? parseFloat(metodoEnvio.costo) : 0;
+  const total = totalProductos + costoEnvio;
+
+  console.log('Total calculado:', { totalProductos, costoEnvio, total });
+
+  console.log('Creando pedido en la base de datos');
+  const pedido = await pedidosData.createPedido(
+    usuarioId,
+    direccionEnvio,
+    metodoPagoId,
+    metodoEnvioId,
+    carrito.productos,
+    total
+  );
+
+  
+
+  console.log('Pedido creado:', pedido);
+  const pedidoId = pedido.id;
+
+  let clientSecret = null;
+  try {
+    console.log('Correo válido:', detallesPago.correoContacto);
+    const descripcion = `Pago del pedido #${pedidoId}`; // Descripción específica para Stripe
+    console.log('Generando PaymentIntent con Stripe:', { total, descripcion });
+
+    // Corrección: Enviar la descripción explícitamente
+    const stripePayment = await crearPagoStripe(
+      total, // Monto total
+      'usd', // Moneda
+      detallesPago.correoContacto, // Correo del cliente
+      descripcion, // Descripción generada dinámicamente
+  
     );
 
-    const costoEnvio = metodoEnvio?.costo ? parseFloat(metodoEnvio.costo) : 0;
-    const total = totalProductos + costoEnvio;
 
-    // Crear el pedido usando el total ya calculado
-    const pedido = await pedidosData.createPedido(
-      usuarioId,
-      direccionEnvio,
-      metodoPagoId,
-      metodoEnvioId,
-      carrito.productos,
-      total // Pasar el total calculado
-    );
+    console.log('PaymentIntent creado:', stripePayment);
 
-    const pedidoId = pedido.id;
+    clientSecret = stripePayment.clientSecret;
 
-    // Registrar el pago
-    await this.registrarPago(pedido.id, metodoPagoId, {
+    const paymentIntent = await confirmarPagoBackend(stripePayment.paymentIntentId, detallesPago);
+    console.log(`PaymentIntent confirmado para el pedido #${pedidoId}:`, paymentIntent);
+
+    console.log('Registrando pago en la base de datos');
+    await this.registrarPago(pedidoId, metodoPagoId, {
       ...detallesPago,
       monto: total,
     });
 
-    // Reducir el stock
-    await this.reducirStock(carrito.productos);
+    console.log(`Pago procesado correctamente para el pedido #${pedidoId}`);
+  } catch (error) {
+    console.error('Error al procesar el pago con Stripe:', error.message);
+    throw new Error('No se pudo procesar el pago.');
+  }
 
-    // Vaciar el carrito
-    const carritoLimpio = await carritoData.clearCarrito(carrito.id);
-    if (!carritoLimpio || carritoLimpio.count === 0) {
-      throw new Error('Hubo un problema al vaciar el carrito. Intenta nuevamente.');
-    }
+  console.log('Reduciendo stock');
+  await this.reducirStock(carrito.productos);
 
-    // Preparar el mensaje de correo
-    try {
-      const pedido = await pedidosData.getPedidoById(pedidoId, usuarioId); // Usamos la consulta mejorada
-    
-      if (!pedido) {
-        throw new Error(`No se pudo encontrar el pedido con ID ${pedidoId}`);
-      }
-    
-      const mensajeCorreo = `
-        <h1>Gracias por tu pedido</h1>
-        <p>Hola ${pedido.usuario.nombre},</p>
-        <p>Hemos recibido tu pedido con éxito. Aquí están los detalles:</p>
-        <ul>
-          ${pedido.productos
-            .map(
-              (item) => `
-            <li>${item.producto.nombre} - Cantidad: ${item.cantidad} - Precio: $${item.precio_unitario.toFixed(2)}</li>
-          `
-            )
-            .join('')}
-        </ul>
-        <p><strong>Total:</strong> $${pedido.total.toFixed(2)}</p>
-        <p><strong>Dirección de envío:</strong> ${pedido.direccionEnvio}</p>
-        <p><strong>Método de Envío:</strong> ${pedido.metodoEnvio.nombre} - Costo: $${pedido.metodoEnvio.costo.toFixed(2)}</p>
-        <p>Gracias por confiar en nosotros.</p>
-        <p>El equipo de Tu Tienda</p>
-      `;
-    
-      await enviarCorreo(pedido.usuario.correo, 'Confirmación de tu pedido', mensajeCorreo);
-      console.log(`Correo de confirmación enviado a ${pedido.usuario.correo}`);
-    } catch (error) {
-      console.error('Error al enviar el correo de confirmación de pedido:', error.message);
-    }    
+  console.log('Vaciando carrito');
+  const carritoLimpio = await carritoData.clearCarrito(carrito.id);
+  if (!carritoLimpio || carritoLimpio.count === 0) {
+    throw new Error('Hubo un problema al vaciar el carrito. Intenta nuevamente.');
+  }
 
-    const mensajeCostoEnvio = `El costo del método de envío seleccionado es de $${costoEnvio.toFixed(2)}.`;
+  try {
+    console.log('Preparando correo de confirmación');
+    const pedidoDetalles = await pedidosData.getPedidoById(pedidoId, usuarioId);
+    const mensajeCorreo = `
+      <h1>Gracias por tu pedido</h1>
+      <p>Hola ${pedidoDetalles.usuario.nombre},</p>
+      <p>Hemos recibido tu pedido con éxito. Aquí están los detalles:</p>
+      <ul>
+        ${pedidoDetalles.productos
+          .map(
+            (item) =>
+              `<li>${item.producto.nombre} - Cantidad: ${item.cantidad} - Precio: $${item.precio_unitario.toFixed(
+                2
+              )}</li>`
+          )
+          .join('')}
+      </ul>
+      <p><strong>Total:</strong> $${pedidoDetalles.total.toFixed(2)}</p>
+      <p><strong>Dirección de envío:</strong> ${pedidoDetalles.direccionEnvio}</p>
+      <p><strong>Método de Envío:</strong> ${pedidoDetalles.metodoEnvio.nombre} - Costo: $${pedidoDetalles.metodoEnvio.costo.toFixed(
+        2
+      )}</p>
+      <p>Gracias por confiar en nosotros.</p>
+      <p>El equipo de Tu Tienda</p>
+    `;
+    await enviarCorreo(pedidoDetalles.usuario.correo, 'Confirmación de tu pedido', mensajeCorreo);
+    console.log(`Correo de confirmación enviado a ${pedidoDetalles.usuario.correo}`);
+  } catch (error) {
+    console.error('Error al enviar el correo de confirmación de pedido:', error.message);
+  }
 
-    return {
-      mensaje: 'Pedido y pago registrados con éxito. Carrito vaciado.',
-      mensajeCostoEnvio,
-      pedido: {
-        ...pedido,
-        total: total.toFixed(2),
-      },
-    };
-  },
+  return {
+    mensaje: 'Pedido y pago registrados con éxito. Carrito vaciado.',
+    pedido,
+    clientSecret, // Devuelve el clientSecret para el frontend
+  };
+},
 
-  
+
   // Función para verificar si una promoción está activa
   esPromocionActiva(fechaInicio, fechaFin) {
     const ahora = new Date();

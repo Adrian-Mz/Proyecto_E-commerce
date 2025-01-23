@@ -97,11 +97,13 @@ router.get('/:usuarioId/pedidos/:pedidoId', async (req, res) => {
 
 
 // Crear un nuevo pedido
+// Crear un nuevo pedido
 router.post('/:usuarioId', validarCrearPedido, handleValidationErrors, async (req, res) => {
   const usuarioId = parseInt(req.params.usuarioId, 10);
   const { direccionEnvio, metodoPagoId, metodoEnvioId, detallesPago } = req.body;
 
   try {
+    console.log('Recibiendo datos para crear pedido:', req.body);
     const resultado = await pedidosService.crearPedido(
       usuarioId,
       direccionEnvio,
@@ -109,11 +111,15 @@ router.post('/:usuarioId', validarCrearPedido, handleValidationErrors, async (re
       metodoEnvioId,
       detallesPago
     );
+
     res.status(201).json(resultado);
   } catch (error) {
+    console.error('Error al crear el pedido o procesar el pago:', error.message);
     res.status(400).json({ error: error.message });
   }
 });
+
+
 
 // Ruta para eliminar un pedido
 router.delete("/:pedidoId", async (req, res) => {
