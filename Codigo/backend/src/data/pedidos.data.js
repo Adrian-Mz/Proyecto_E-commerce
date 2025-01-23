@@ -43,14 +43,30 @@ export const pedidosData = {
       where: { id: pedidoId, usuarioId },
       include: {
         productos: {
-          include: { producto: true },
+          include: {
+            producto: {
+              select: {
+                nombre: true,
+                precio: true,
+              },
+            },
+          },
         },
-        metodoPago: true,
-        metodoEnvio: true,
-        estado: true,
+        usuario: {
+          select: {
+            nombre: true,
+            correo: true,
+          },
+        },
+        metodoEnvio: {
+          select: {
+            nombre: true,
+            costo: true,
+          },
+        },
       },
     });
-  },
+  },  
   
   async getPedidosByUsuarioId(usuarioId) {
     return prisma.pedidos.findMany({
@@ -119,6 +135,7 @@ export const pedidosData = {
 
     return pedido.estadoId === 4; // Estado "Entregado"
   },
+
   async getPedidosByProductoId(productoId) {
     return prisma.pedidos.findMany({
       where: {
@@ -130,5 +147,7 @@ export const pedidosData = {
         productos: true, // Incluye información de los productos relacionados
       },
     });
-  }  
+  },
+  
+
 };
