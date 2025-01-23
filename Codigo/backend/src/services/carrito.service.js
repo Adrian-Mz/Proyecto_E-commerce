@@ -2,8 +2,9 @@ import { carritoData } from '../data/carrito.data.js';
 import { ProductosData } from '../data/productos.data.js';
 
 export const CarritoService = {
+  
   // Obtener el carrito de un usuario
-   async obtenerCarrito(usuarioId) {
+  async obtenerCarrito(usuarioId) {
     const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito) {
       throw new Error(`No se encontró un carrito para el usuario con ID ${usuarioId}`);
@@ -11,26 +12,29 @@ export const CarritoService = {
 
     const productos = carrito.productos || [];
     let promocionesActivas = true;
+    let hayPromociones = false; // Para verificar si algún producto tiene promoción
     const detallesPromociones = [];
 
     // Recorre los productos del carrito para generar mensajes detallados
     const productosConDetalles = productos.map((item) => {
-      const mensajePromocion = item.precio_unitario < parseFloat(item.producto.precio)
-        ? `Descuento aplicado: Precio original ${item.producto.precio}, Precio con descuento ${item.precio_unitario}.`
-        : "Sin descuento aplicado.";
+      const producto = item.producto;
+      const precioOriginal = parseFloat(producto.precio);
+      const precioUnitario = parseFloat(item.precio_unitario);
 
-      if (item.precio_unitario === parseFloat(item.producto.precio) && item.producto.promocion) {
+      let mensajePromocion = "Sin descuento aplicado.";
+      if (precioUnitario < precioOriginal) {
+        mensajePromocion = `Descuento aplicado: Precio original ${precioOriginal}, Precio con descuento ${precioUnitario}.`;
+        hayPromociones = true;
+      } else if (producto.promocion) {
         promocionesActivas = false; // Al menos una promoción no está activa
-        detallesPromociones.push({
-          producto: item.producto.nombre,
-          mensaje: "La promoción de este producto ha terminado.",
-        });
-      } else {
-        detallesPromociones.push({
-          producto: item.producto.nombre,
-          mensaje: mensajePromocion,
-        });
+        mensajePromocion = "La promoción de este producto ha terminado.";
       }
+
+      // Agregar detalles de promociones
+      detallesPromociones.push({
+        producto: producto.nombre,
+        mensaje: mensajePromocion,
+      });
 
       return {
         ...item,
@@ -40,13 +44,17 @@ export const CarritoService = {
 
     // Calcular el total del carrito
     const total = productosConDetalles.reduce(
-      (sum, item) => sum + item.cantidad * item.precio_unitario,
+      (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
       0
     );
 
-    const mensajePromocionGeneral = promocionesActivas
-      ? "Todas las promociones activas han sido aplicadas."
-      : "Algunas promociones han terminado. Revisa los detalles de los productos.";
+    // Generar el mensaje general de promociones
+    let mensajePromocionGeneral = "No hay promociones activas en este carrito.";
+    if (hayPromociones) {
+      mensajePromocionGeneral = promocionesActivas
+        ? "Todas las promociones activas han sido aplicadas."
+        : "Algunas promociones han terminado. Revisa los detalles de los productos.";
+    }
 
     return {
       ...carrito,

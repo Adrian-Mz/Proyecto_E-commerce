@@ -32,8 +32,9 @@ export const ProductosService = {
 
       // Calcular el precio con promoción para cada producto
       const productosConPromocion = productos.map((producto) => {
-        let precioConPromocion = null;
+        let precioConPromocion = producto.precio;
         let mensajePromocion = "Producto sin promoción";
+
         if (
           producto.promocion &&
           this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
@@ -41,11 +42,12 @@ export const ProductosService = {
           const descuento = parseFloat(producto.promocion.descuento) / 100;
           precioConPromocion =
             parseFloat(producto.precio) - parseFloat(producto.precio) * descuento;
+          mensajePromocion = `Promoción activa: ${producto.promocion.nombre} (${producto.promocion.descuento}% de descuento)`;
         }
 
         return {
           ...producto,
-          precioConPromocion: precioConPromocion ? precioConPromocion.toFixed(2) : producto.precio,
+          precioConPromocion: precioConPromocion.toFixed(2),
           mensajePromocion,
         };
       });
@@ -60,6 +62,7 @@ export const ProductosService = {
       throw new Error(`Error al obtener los productos: ${error.message}`);
     }
   },
+
 
   // Obtener un producto por ID
   async getProductoById(id) {
