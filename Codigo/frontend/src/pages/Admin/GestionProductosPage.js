@@ -95,40 +95,34 @@ const GestionProductosPage = () => {
     try {
       const formData = new FormData();
   
-      // Agregar cada campo manualmente al FormData
+      // Asegúrate de que la imagen es un archivo
       Object.entries(newProduct).forEach(([key, value]) => {
         if (key === "imagen" && value instanceof File) {
-          formData.append(key, value); // Asegúrate de que imagen sea un archivo
+          formData.append(key, value); // Añade la imagen como archivo
+          console.log("Archivo seleccionado:", newProduct.imagen);
         } else {
-          formData.append(key, value);
+          formData.append(key, value || ""); // Otros campos como texto
         }
       });
   
-      // Verifica que la imagen esté siendo añadida correctamente
+      // Debug: Verificar que la imagen y los campos están correctamente configurados
       for (const pair of formData.entries()) {
-        console.log(`${pair[0]}:`, pair[1]);
+        console.log(`${pair[0]}:`, pair[1]); // Verifica que `imagen` sea un `File`
       }
   
+      // Enviar la solicitud con FormData
       const createdProduct = await ProductosService.createProducto(formData);
+  
+      // Actualiza los datos
       setData((prevData) => [...prevData, createdProduct]);
       clearNewProduct();
       setIsAddModalOpen(false);
       toast.success("Producto añadido correctamente");
     } catch (error) {
       console.error("Error al añadir producto:", error.response?.data || error.message);
-  
-      const backendErrors = error.response?.data?.errors || [];
-      const generalError = error.response?.data?.error || "Ocurrió un error al añadir el producto.";
-  
-      if (backendErrors.length > 0) {
-        backendErrors.forEach((err) => {
-          toast.error(err.msg || err.message, { position: "top-right" });
-        });
-      } else {
-        toast.error(generalError, { position: "top-right" });
-      }
+      toast.error("Error al añadir producto. Verifica los datos.");
     }
-  };  
+  };   
 
   const handleEditProduct = async () => {
     try {
@@ -420,11 +414,17 @@ const renderProductInputs = (product, setProduct, categorias, promociones, marca
       <label>Imagen:</label>
       <input
         type="file"
+        name="imagen"
         accept="image/*"
-        onChange={(e) => setProduct((prev) => ({ ...prev, imagen: e.target.files[0] }))}
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            setProduct((prev) => ({ ...prev, imagen: e.target.files[0] }));
+          }
+        }}
         className="border p-2 rounded w-full"
       />
     </div>
+
   </div>
 );
 

@@ -63,32 +63,26 @@ router.get('/:id', async (req, res) => {
 
 
 router.post("/", upload.single("imagen"), async (req, res) => {
+  console.log("Headers:", req.headers); // Verificar que `multipart/form-data` esté presente
+  console.log("Body (antes de multer):", req.body); // Verificar el cuerpo antes del procesamiento
+  console.log("Archivo recibido:", req.file); // Verificar si `multer` procesó el archivo
+  console.log("Datos recibidos:", req.body); // Verificar los campos procesados
+
+  if (!req.file) {
+    return res.status(400).json({ error: "La imagen es obligatoria" });
+  }
+
+  const productoData = {
+    ...req.body,
+    imagenLocalPath: req.file.path,
+  };
+
   try {
-    console.log("Archivo recibido:", req.file);
-    console.log("Datos del cuerpo:", req.body);
-
-    // Validar que llegó un archivo
-    if (!req.file?.path) {
-      return res.status(400).json({ error: "La imagen es obligatoria" });
-    }
-
-    // Preparar datos para enviar al servicio
-    const productoData = {
-      ...req.body,
-      imagenLocalPath: req.file.path, // Ruta local del archivo para Cloudinary
-    };
-
-    // Llamar al servicio para crear el producto
     const nuevoProducto = await ProductosService.createProducto(productoData);
     res.status(201).json({ message: "Producto creado exitosamente.", producto: nuevoProducto });
   } catch (error) {
-    console.error("Error en el backend:", error.message);
+    console.error("Error al crear producto:", error.message);
     res.status(400).json({ error: error.message });
-  } finally {
-    // Eliminar archivo local, independientemente del éxito o error
-    if (req.file?.path && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
   }
 });
 

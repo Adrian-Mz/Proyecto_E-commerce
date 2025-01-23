@@ -57,9 +57,9 @@ export const ProductosData = {
       !data ||
       !data.nombre ||
       !data.descripcion ||
-      typeof data.precio !== "number" ||
-      typeof data.stock !== "number" ||
-      !data.categoriaId || // Asegúrate de que exista la categoría
+      isNaN(data.precio) || // Verificar que precio sea numérico
+      isNaN(data.stock) ||  // Verificar que stock sea numérico
+      !data.categoriaId ||  // Verificar que exista categoría
       !data.especificaciones ||
       !data.marca ||
       !data.garantia
@@ -83,7 +83,7 @@ export const ProductosData = {
         garantia: data.garantia,
       },
     });
-  },    
+  },  
 
   // Actualizar un producto
   async updateProducto(id, data) {

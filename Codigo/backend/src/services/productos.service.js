@@ -72,22 +72,28 @@ export const ProductosService = {
       if (!producto) {
         throw new Error('Producto no encontrado');
       }
-  
-      // Calcular el precio con promoción si hay una promoción activa
-      let precioConPromocion = null;
+
+      // Inicializar variables para el precio con promoción
+      let precioConPromocion = parseFloat(producto.precio);
+      let mensajePromocion = "Sin promoción activa para este producto.";
+
+      // Validar si la promoción está activa
       if (
         producto.promocion &&
         this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
       ) {
         const descuento = parseFloat(producto.promocion.descuento) / 100;
-        precioConPromocion =
-        parseFloat(producto.precio) - parseFloat(producto.precio) * descuento;
+        precioConPromocion = precioConPromocion - precioConPromocion * descuento;
+        mensajePromocion = `Promoción activa: ${producto.promocion.nombre} (${producto.promocion.descuento}% de descuento).`;
+      } else if (producto.promocion) {
+        mensajePromocion = "La promoción de este producto ha terminado.";
       }
-  
-      // Agregar el precio con promoción al resultado
+
+      // Retornar el producto con detalles de promoción
       return {
         ...producto,
-        precioConPromocion: precioConPromocion ? precioConPromocion.toFixed(2) : null,
+        precioConPromocion: precioConPromocion.toFixed(2),
+        mensajePromocion,
       };
     } catch (error) {
       throw new Error(`Error al obtener el producto: ${error.message}`);
@@ -104,9 +110,11 @@ export const ProductosService = {
 
   async createProducto(data) {
     try {
+      console.log("Datos recibidos:", data);
+  
       // Validar datos básicos
       if (!data || !data.nombre || !data.descripcion) {
-        throw new Error('El nombre y la descripción son obligatorios');
+        throw new Error("El nombre y la descripción son obligatorios");
       }
   
       // Convertir valores numéricos
@@ -115,14 +123,28 @@ export const ProductosService = {
       data.categoriaId = parseInt(data.categoriaId, 10);
       data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
   
+      console.log("Validaciones iniciales:", {
+        precio: data.precio,
+        stock: data.stock,
+        categoriaId: data.categoriaId,
+        promocionId: data.promocionId,
+      });
+  
       if (isNaN(data.precio) || isNaN(data.stock) || isNaN(data.categoriaId)) {
-        throw new Error('El precio, stock y categoría deben ser valores numéricos');
+        throw new Error("El precio, stock y categoría deben ser valores numéricos");
       }
   
       // Validar que promoción (si se proporciona) sea un número válido
       if (data.promocionId && isNaN(data.promocionId)) {
-        throw new Error('La promoción debe ser un valor numérico');
+        throw new Error("La promoción debe ser un valor numérico");
       }
+  
+      // Calcular el precio con IVA
+      const IVA = 0.15; // 15%
+      const precioConIVA = data.precio + data.precio * IVA;
+      data.precio = parseFloat(precioConIVA.toFixed(2)); // Mantener como número
+  
+      console.log("Precio con IVA calculado:", data.precio);
   
       // Limpiar campos adicionales
       if (data.garantia) {
@@ -132,24 +154,28 @@ export const ProductosService = {
       // Procesar la imagen
       let imageUrl;
       if (data.imagenLocalPath) {
-        imageUrl = await subirImagenCloudinary(data.imagenLocalPath, 'productos');
+        console.log("Procesando imagen local...");
+        imageUrl = await subirImagenCloudinary(data.imagenLocalPath, "productos");
       } else {
+        console.log("Buscando imagen en Mercado Libre...");
         const productoML = await buscarProductosMercadoLibre(data.nombre);
         if (productoML) {
           imageUrl = productoML.imagen;
         } else {
-          throw new Error('No se encontró una imagen adecuada para el producto');
+          throw new Error("No se encontró una imagen adecuada para el producto");
         }
       }
       data.imagen = imageUrl;
+  
+      console.log("Imagen procesada:", imageUrl);
   
       // Enviar los datos procesados a ProductosData
       return await ProductosData.createProducto(data);
     } catch (error) {
       console.error(`Error al crear producto: ${error.message}`);
-      throw error;
+      throw new Error(`Datos incompletos o inválidos para crear el producto: ${error.message}`);
     }
-  },  
+  },     
 
   // Actualizar un producto por ID
   async updateProducto(id, data) {

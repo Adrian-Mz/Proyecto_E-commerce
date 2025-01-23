@@ -23,13 +23,13 @@ export const ProductosService = {
 
   createProducto: async (productoData) => {
     try {
-      const response = await api.post('/productos', productoData);
+      const response = await api.post('/productos', productoData); // No configures "Content-Type"
       return response.data;
     } catch (error) {
       console.error('Error al crear producto:', error.response?.data || error.message);
       throw error;
     }
-  },
+  },  
 
   updateProducto: async (id, productoData) => {
     try {

@@ -8,7 +8,6 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
 }
 
-// Configuración para guardar archivos temporalmente
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log("Guardando archivo en la carpeta temporal...");
@@ -21,7 +20,6 @@ const storage = multer.diskStorage({
   },
 });
 
-// Validación de tipos de archivo
 const fileFilter = (req, file, cb) => {
   console.log("Tipo de archivo recibido:", file.mimetype);
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -32,7 +30,6 @@ const fileFilter = (req, file, cb) => {
     cb(new Error('Tipo de archivo no permitido.'));
   }
 };
-
 
 export const upload = multer({
   storage,
