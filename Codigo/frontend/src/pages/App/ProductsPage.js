@@ -144,15 +144,33 @@ const ProductosPage = () => {
                   />
                   <CCardBody>
                     <CCardTitle className="font-bold">{producto.nombre}</CCardTitle>
-                    <CCardText>
-                      <span className="font-bold">Precio:</span> ${producto.precio}
-                    </CCardText>
-                    {producto.promocion && (
-                      <CCardText>
-                        <span className="font-bold">Promoción:</span> {producto.promocion.nombre}
+                    {producto.promocion && producto.promocion.descuento > 0 ? (
+                      // Caso cuando el producto tiene una promoción válida (descuento > 0)
+                      <>
+                        {/* Precio original tachado */}
+                        <CCardText className="text-sm text-gray-500 line-through">
+                          ${producto.precio}
+                        </CCardText>
+                        {/* Porcentaje de descuento */}
+                        <CCardText className="text-red-600 font-semibold text-sm">
+                          {producto.promocion.descuento}% de descuento
+                        </CCardText>
+                        {/* Precio con descuento */}
+                        <CCardText className="text-lg font-bold text-green-600">
+                          ${(
+                            producto.precio -
+                            (producto.precio * producto.promocion.descuento) / 100
+                          )}
+                        </CCardText>
+                      </>
+                    ) : (
+                      // Caso cuando el producto no tiene promoción o el descuento es 0
+                      <CCardText className="text-lg font-bold text-gray-800">
+                        ${producto.precio}
                       </CCardText>
                     )}
                   </CCardBody>
+
                   <CCardFooter className="flex justify-between items-center">
                     <CButton
                       color="primary"
