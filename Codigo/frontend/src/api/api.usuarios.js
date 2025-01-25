@@ -88,4 +88,17 @@ export const UsuariosAPI = {
       throw error;
     }
   },
+
+  cambiarPassword: async (data) => {
+    try {
+      console.log("Datos enviados a /cambiar-password:", data);
+      const response = await api.post("/usuarios/cambiar-password", data, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al cambiar contraseña:", error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
