@@ -174,15 +174,42 @@ router.post('/recuperar', async (req, res, next) => {
   }
 });
 
+// Cambio de Contraseña desde el Perfil del Usuario
+router.post(
+  "/cambiar-password-perfil",
+  verificarToken,
+  async (req, res, next) => {
+    try {
+      const { passwordActual, nuevaPassword } = req.body;
+      const correo = req.usuario.correo; // Extraer correo desde el token
+
+      if (!correo || !passwordActual || !nuevaPassword) {
+        return res.status(400).json({ error: "Todos los campos son obligatorios." });
+      }
+
+      const mensaje = await UsuariosService.cambiarPasswordPerfil(correo, passwordActual, nuevaPassword);
+      res.status(200).json({ mensaje });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+
+
 // Ruta para cambiar la contraseña del usuario (protegida, acceso del propio usuario)
 router.post(
-  '/cambiar-password',
-  verificarToken, // El usuario debe estar autenticado
-  registrarAccion('usuarios', 'cambio de contraseña'), // Registra la acción en la auditoría
+  '/cambiar-password-temporal',
   async (req, res, next) => {
     try {
       const { correo, passwordTemporal, nuevaPassword } = req.body;
-      const mensaje = await UsuariosService.cambiarPassword(correo, passwordTemporal, nuevaPassword);
+
+      if (!correo || !passwordTemporal || !nuevaPassword) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+      }
+
+      const mensaje = await UsuariosService.cambiarPasswordTemporal(correo, passwordTemporal, nuevaPassword);
       res.status(200).json({ mensaje });
     } catch (error) {
       next(error);

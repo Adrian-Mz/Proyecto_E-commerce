@@ -15,6 +15,9 @@ export const verificarToken = (req, res, next) => {
     req.usuario = {
       ...decoded,
       id: parseInt(decoded.id, 10),
+      nombre: decoded.nombre,
+      correo: decoded.correo,
+      rol: decoded.rol,
     };
 
     // Opcional: Renueva el token si está cerca de expirar
@@ -24,6 +27,7 @@ export const verificarToken = (req, res, next) => {
         {
           id: req.usuario.id, // Ya convertido a número
           nombre: req.usuario.nombre,
+          correo: req.usuario.correo,
           rol: req.usuario.rol,
         },
         process.env.JWT_SECRET,

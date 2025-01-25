@@ -11,7 +11,7 @@ import estadoPedidos from "./routes/estado.routes.js";
 import devolucionesPedidos from "./routes/devoluciones.routes.js";
 import promocionesRoutes from "./routes/promociones.routes.js";
 import rolesRoutes from "./routes/roles.routes.js"
-import analisisRoutes from "./routes/analisis.routes.js";
+import analysisRoutes from './routes/analysis.routes.js';
 
 
 
@@ -31,7 +31,7 @@ app.use("/api/estado",estadoPedidos);
 app.use("/api/devoluciones", devolucionesPedidos);
 app.use("/api/promociones",promocionesRoutes);
 app.use("/api/roles",rolesRoutes);
-app.use("/api/analisis", analisisRoutes);
+app.use('/api/analysis', analysisRoutes);
 
 // Manejo global de errores (debe ir al final)
 app.use((err, req, res, next) => {

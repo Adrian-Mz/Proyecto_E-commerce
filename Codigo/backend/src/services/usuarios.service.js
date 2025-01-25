@@ -138,6 +138,7 @@ export const UsuariosService = {
       {
         id: Number(usuario.id),
         nombre: usuario.nombre,
+        correo: usuario.correo,
         rol: usuario.rol.nombre, // Asegúrate de incluir el rol en la consulta de `getUsuarioByCorreo`
       },
       process.env.JWT_SECRET,
@@ -192,29 +193,66 @@ export const UsuariosService = {
     ).join('');
   },
 
-  // Cambia la contraseña del usuario tras verificar la temporal
-  async cambiarPassword(correo, passwordTemporal, nuevaPassword) {
-    if (!correo || !passwordTemporal || !nuevaPassword) {
+  // Cambio de Contraseña desde el Perfil del Usuario
+  async cambiarPasswordPerfil(correo, passwordActual, nuevaPassword) {
+    if (!correo || !passwordActual || !nuevaPassword) {
       throw new Error('Todos los campos son obligatorios.');
     }
-
+  
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
       throw new Error('Usuario no encontrado.');
     }
+  
+    // Validar contraseña actual
+    const isPasswordValid = await bcrypt.compare(passwordActual, usuario.password);
+    if (!isPasswordValid) {
+      throw new Error('La contraseña actual es incorrecta.');
+    }
+  
+    // Validar nueva contraseña
+    if (nuevaPassword.length < 8) {
+      throw new Error('La nueva contraseña debe tener al menos 8 caracteres.');
+    }
+  
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
+  
+    // Actualizar la contraseña en la base de datos
+    await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
+  
+    return 'Contraseña actualizada correctamente.';
+  },
 
+  // Cambia la contraseña del usuario tras verificar la temporal
+  async cambiarPasswordTemporal(correo, passwordTemporal, nuevaPassword) {
+    if (!correo || !passwordTemporal || !nuevaPassword) {
+      throw new Error('Todos los campos son obligatorios.');
+    }
+  
+    const usuario = await UsuariosData.getUsuarioByCorreo(correo);
+    if (!usuario) {
+      throw new Error('Usuario no encontrado.');
+    }
+  
+    // Validar contraseña temporal
     const isPasswordValid = await bcrypt.compare(passwordTemporal, usuario.password);
     if (!isPasswordValid) {
       throw new Error('Contraseña temporal incorrecta.');
     }
-
+  
+    // Validar nueva contraseña
     if (nuevaPassword.length < 8) {
       throw new Error('La nueva contraseña debe tener al menos 8 caracteres.');
     }
-
+  
+    // Encriptar la nueva contraseña
     const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
+  
+    // Actualizar la contraseña en la base de datos
     await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
-
+  
     return 'Contraseña actualizada correctamente.';
-  },
+  }
+  
 };
