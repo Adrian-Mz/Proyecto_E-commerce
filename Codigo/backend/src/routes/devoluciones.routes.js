@@ -1,5 +1,7 @@
 import express from 'express';
 import { devolucionesService } from '../services/devoluciones.service.js';
+import { verificarToken} from '../middlewares/auth.middleware.js';
+import { verificarRol } from '../middlewares/roles.middleware.js';
 
 const router = express.Router();
 
@@ -33,19 +35,37 @@ router.post('/:pedidoId', async (req, res) => {
 });
 
 // Actualizar el estado de una devolución
-router.put('/:devolucionId', async (req, res) => {
-  const { devolucionId } = req.params;
-  const { nuevoEstadoId } = req.body;
+// Ruta para actualizar el estado de una devolución (solo Administradores)
+router.put(
+  '/:devolucionId',
+  verificarToken, // Verifica si el usuario está autenticado
+  verificarRol(['Administrador']), // Permite solo al rol de Administrador
+  async (req, res) => {
+    const { devolucionId } = req.params;
+    const { estado } = req.body;
 
-  try {
-    const devolucionActualizada = await devolucionesService.actualizarEstadoDevolucion(
-      parseInt(devolucionId, 10),
-      parseInt(nuevoEstadoId, 10)
-    );
-    res.status(200).json({ mensaje: 'Estado de la devolución actualizado correctamente.', devolucion: devolucionActualizada });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    try {
+      // Asegúrate de que el estado sea un número válido
+      if (!Number.isInteger(parseInt(estado, 10))) {
+        return res.status(400).json({ error: 'El estado debe ser un número válido.' });
+      }
+
+      // Llama al servicio para actualizar el estado de la devolución
+      const devolucionActualizada = await devolucionesService.actualizarEstadoDevolucion(
+        parseInt(devolucionId, 10),
+        parseInt(estado, 10),
+        req.usuario.correo // Extrae el correo del token
+      );
+
+      res.status(200).json({
+        mensaje: 'Estado de la devolución actualizado correctamente.',
+        devolucion: devolucionActualizada,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
-});
+);
+
 
 export default router;

@@ -28,3 +28,4 @@ todos los productos restantes:
 
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/Formatted_Products_Data.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
 \COPY productos FROM 'C:/Users/Saeteros/Downloads/transformed_data_new.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';
+\COPY productos FROM 'C:/Users/Saeteros/Downloads/datos_finales.csv' WITH CSV HEADER DELIMITER ',' ENCODING 'UTF8';

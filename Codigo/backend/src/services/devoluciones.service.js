@@ -2,6 +2,7 @@ import { devolucionesData } from "../data/devoluciones.data.js";
 import { pedidosData } from "../data/pedidos.data.js";
 import { enviarCorreo } from '../utils/emailService.js';
 
+
 export const devolucionesService = {
 
     async obtenerDevolucionPorId(devolucionId) {
@@ -38,40 +39,41 @@ export const devolucionesService = {
         };
     },
 
-    async actualizarEstadoDevolucion(devolucionId, nuevoEstadoId, correoUsuario) {
+    async actualizarEstadoDevolucion(devolucionId, nuevoEstadoId) {
+        // Obtener la devolución y su información relacionada
         const devolucion = await devolucionesData.getDevolucionById(devolucionId);
         if (!devolucion) {
-        throw new Error(`No se encontró una devolución con ID ${devolucionId}.`);
+          throw new Error(`No se encontró una devolución con ID ${devolucionId}.`);
         }
-
+      
+        // Verificar que exista un usuario relacionado al pedido
+        const usuarioIdRelacionado = devolucion.pedido?.usuarioId;
+        if (!usuarioIdRelacionado) {
+          throw new Error('El pedido asociado a esta devolución no tiene un usuario relacionado.');
+        }
+      
+        // Validar que el estado de la transición sea válido
         const estadosValidos = {
-        5: [6, 7], // Pendiente → Aceptada o Rechazada
-        6: [8], // Aceptada → Completada
-        7: [], // Rechazada (final)
+          5: [6, 7], // Pendiente → Aceptada o Rechazada
+          6: [8], // Aceptada → Completada
+          7: [], // Rechazada (final)
         };
-
+      
         if (!estadosValidos[devolucion.estadoId]?.includes(nuevoEstadoId)) {
-        throw new Error("La transición de estado no es válida.");
+          throw new Error('La transición de estado no es válida.');
         }
-
+      
+        // Actualizar la devolución en la base de datos
         const devolucionActualizada = await devolucionesData.updateDevolucion(devolucionId, {
-        estadoId: nuevoEstadoId,
-        fechaResolucion: new Date(),
+          estadoId: nuevoEstadoId,
+          fechaResolucion: new Date(),
         });
-
-        // Manejar notificaciones por correo
-        await this.enviarCorreoEstadoDevolucion(correoUsuario, nuevoEstadoId, devolucionActualizada);
-
-        // Si la devolución se completa o rechaza, limpiar el pedido
-        if (nuevoEstadoId === 7 || nuevoEstadoId === 8) {
-        await pedidosData.actualizarEstado(devolucion.pedidoId, 4); // Volver a "Entregado"
-        }
-
+      
         return {
-        mensaje: "Estado de devolución actualizado correctamente.",
-        devolucion: devolucionActualizada,
+          mensaje: 'Estado de devolución actualizado correctamente.',
+          devolucion: devolucionActualizada,
         };
-    },
+    },                  
 
     async enviarCorreoEstadoDevolucion(correoUsuario, estadoId, devolucion) {
         let asunto = "";
