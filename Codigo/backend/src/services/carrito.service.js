@@ -173,7 +173,7 @@ export const CarritoService = {
       total: total.toFixed(2),
       detallesPromociones: productosConPromociones,
     };
-  },  
+  },    
 
   // Actualizar la cantidad de un producto en el carrito
   async updateProductInCart(usuarioId, productoId, cantidad) {

@@ -25,7 +25,7 @@ export async function crearPagoStripe(monto, moneda, correoContacto) {
       },
     });
 
-    console.log('PaymentIntent creado:', paymentIntent);
+    //console.log('PaymentIntent creado:', paymentIntent);
     return {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
@@ -49,7 +49,8 @@ export async function confirmarPagoBackend(paymentIntentId, paymentMethodDetails
       },
     });
 
-    console.log('PaymentIntent confirmado:', paymentIntent);
+    //console.log('PaymentIntent confirmado:', paymentIntent);
+    console.log('PaymentIntent confirmado:');
     return paymentIntent;
   } catch (error) {
     console.error('Error al confirmar el PaymentIntent:', error.message);

@@ -1,12 +1,11 @@
 import axios from 'axios';
+import fs from 'fs'; // Importar fs para leer el archivo adjunto
+import path from 'path'; // Importar path para manejar rutas de archivos
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
-export const enviarCorreo = async (destinatario, asunto, contenido) => {
-  const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+export const enviarCorreo = async (destinatario, asunto, contenido, archivoAdjunto = null) => {
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   if (!isValidEmail(destinatario)) {
     throw new Error(`El correo electrónico "${destinatario}" no es válido.`);
@@ -17,9 +16,16 @@ export const enviarCorreo = async (destinatario, asunto, contenido) => {
     to: [{ email: destinatario }],
     subject: asunto,
     htmlContent: contenido,
+    attachment: archivoAdjunto
+      ? [
+          {
+            name: path.basename(archivoAdjunto),
+            content: fs.readFileSync(archivoAdjunto).toString('base64'),
+            type: 'application/pdf',
+          },
+        ]
+      : undefined,
   };
-
-  console.log('Datos del correo:', sendSmtpEmail);
 
   try {
     const response = await axios.post(
@@ -40,3 +46,4 @@ export const enviarCorreo = async (destinatario, asunto, contenido) => {
     throw new Error('No se pudo enviar el correo.');
   }
 };
+
