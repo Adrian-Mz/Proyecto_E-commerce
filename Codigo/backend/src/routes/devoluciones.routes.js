@@ -5,6 +5,16 @@ import { verificarRol } from '../middlewares/roles.middleware.js';
 
 const router = express.Router();
 
+// Obtener todas las devoluciones
+router.get('/', async (req, res) => {
+  try {
+    const devoluciones = await devolucionesService.obtenerTodasLasDevoluciones();
+    res.status(200).json(devoluciones);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Obtener una devolución por ID
 router.get('/:devolucionId', async (req, res) => {
     const { devolucionId } = req.params;
@@ -19,7 +29,7 @@ router.get('/:devolucionId', async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
+});
 
 // Registrar una solicitud de devolución
 router.post('/:pedidoId', async (req, res) => {
