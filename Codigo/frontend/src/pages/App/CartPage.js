@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { PedidosAPI } from "../../api/api.pedidos";
+import { CarritoService } from "../../api/api.carrito";
 import ModalComponent from "../../components/UI/ModalComponent";
 import { toast } from "react-toastify";
-import { FaCcVisa } from "react-icons/fa";
+import { FaCcVisa, FaPlus, FaMinus, FaTrash } from "react-icons/fa";
 
 const CartPage = () => {
-  const { cartItems, calculateTotal, clearCart } = useCart();
+  const { cartItems, calculateTotal, clearCart, setCartItems  } = useCart();
   const [direccionEnvio, setDireccionEnvio] = useState("");
   const [metodosEnvio, setMetodosEnvio] = useState([]);
   const [metodoEnvioSeleccionado, setMetodoEnvioSeleccionado] = useState("");
@@ -51,6 +52,118 @@ const CartPage = () => {
     };
     fetchMetodos();
   }, []);
+
+  // Incrementar cantidad
+  const incrementQuantity = async (item) => {
+    const storedUser = JSON.parse(localStorage.getItem("usuario"));
+    const usuarioId = storedUser?.id;
+
+    if (!usuarioId) {
+      toast.error("Usuario no autenticado.");
+      return;
+    }
+
+    if (item.cantidad < item.producto.stock) {
+      try {
+        const response = await CarritoService.actualizarProducto(
+          usuarioId,
+          item.productoId,
+          item.cantidad + 1
+        );
+
+        if (response && response.mensaje) {
+          toast.success(response.mensaje);
+
+          // Actualizar localmente solo el producto modificado
+          setCartItems((prevItems) =>
+            prevItems.map((product) =>
+              product.productoId === item.productoId
+                ? { ...product, cantidad: item.cantidad + 1 }
+                : product
+            )
+          );
+        } else {
+          toast.error("Error al actualizar el carrito.");
+        }
+      } catch (error) {
+        console.error("Error al aumentar cantidad:", error);
+        toast.error("No se pudo aumentar la cantidad.");
+      }
+    } else {
+      toast.error("No puedes superar el stock disponible.");
+    }
+  };
+
+  // Disminuir cantidad
+  const decrementQuantity = async (item) => {
+    const storedUser = JSON.parse(localStorage.getItem("usuario"));
+    const usuarioId = storedUser?.id;
+
+    if (!usuarioId) {
+      toast.error("Usuario no autenticado.");
+      return;
+    }
+
+    if (item.cantidad > 1) {
+      try {
+        const response = await CarritoService.actualizarProducto(
+          usuarioId,
+          item.productoId,
+          item.cantidad - 1
+        );
+
+        if (response && response.mensaje) {
+          toast.success(response.mensaje);
+
+          // Actualizar localmente solo el producto modificado
+          setCartItems((prevItems) =>
+            prevItems.map((product) =>
+              product.productoId === item.productoId
+                ? { ...product, cantidad: item.cantidad - 1 }
+                : product
+            )
+          );
+        } else {
+          toast.error("Error al actualizar el carrito.");
+        }
+      } catch (error) {
+        console.error("Error al disminuir cantidad:", error);
+        toast.error("No se pudo disminuir la cantidad.");
+      }
+    } else {
+      toast.error("La cantidad no puede ser menor a 1.");
+    }
+  };
+
+  // Eliminar producto
+  const handleRemoveItem = async (item) => {
+    const storedUser = JSON.parse(localStorage.getItem("usuario"));
+    const usuarioId = storedUser?.id;
+
+    if (!usuarioId) {
+      toast.error("Usuario no autenticado.");
+      return;
+    }
+
+    try {
+      const response = await CarritoService.eliminarProducto(usuarioId, item.productoId);
+
+      if (response && response.mensaje) {
+        toast.success(response.mensaje);
+
+        // Eliminar localmente el producto del carrito
+        setCartItems((prevItems) =>
+          prevItems.filter((product) => product.productoId !== item.productoId)
+        );
+      } else {
+        toast.error("Error al eliminar el producto.");
+      }
+    } catch (error) {
+      console.error("Error al eliminar el producto:", error);
+      toast.error("No se pudo eliminar el producto.");
+    }
+  };
+
 
   const handleRealizarPedido = async () => {
     if (!direccionEnvio || !metodoEnvioSeleccionado || !metodoPagoSeleccionado) {
@@ -117,8 +230,28 @@ const CartPage = () => {
               <div>
                 <h3 className="font-bold">{item.producto?.nombre}</h3>
                 <p className="text-sm text-gray-500">Cantidad: {item.cantidad}</p>
-                <p className="text-sm text-gray-900">{item.nombrePromocion}</p>
                 <p className="font-semibold">{`$${item.precio_unitario || 0}`}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  className="bg-gray-300 p-1 rounded hover:bg-gray-400"
+                  onClick={() => decrementQuantity(item)}
+                >
+                  <FaMinus />
+                </button>
+                <span className="text-sm">{item.cantidad}</span>
+                <button
+                  className="bg-gray-300 p-1 rounded hover:bg-gray-400"
+                  onClick={() => incrementQuantity(item)}
+                >
+                  <FaPlus />
+                </button>
+                <button
+                  className="bg-red-500 p-1 rounded hover:bg-red-600 text-white"
+                  onClick={() => handleRemoveItem(item)}
+                >
+                  <FaTrash />
+                </button>
               </div>
             </div>
           ))}
