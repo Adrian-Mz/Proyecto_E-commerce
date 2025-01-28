@@ -23,6 +23,7 @@ export const CartProvider = ({ children }) => {
             ...item,
             precio_unitario: parseFloat(item.precio_unitario), // Convertir el precio
             mensajePromocion: item.mensajePromocion || null, // Mensaje de promoción
+            nombrePromocion: item.producto?.promocion?.nombre || "No aplica promoción", // Nombre de la promoción
           }));
   
           setCartItems(productosConPromocion); // Actualizar el carrito con promociones
@@ -50,7 +51,8 @@ export const CartProvider = ({ children }) => {
         const productosActualizados = carritoActualizado.productos.map((item) => ({
           ...item,
           precio_unitario: parseFloat(item.precio_unitario), // Formato del precio
-          mensajePromocion: item.mensajePromocion || null, // Mensaje promocional
+          mensajePromocion: item.mensajePromocion || null,// Mensaje promocional
+          nombrePromocion: item.producto?.promocion?.nombre 
         }));
   
         setCartItems(productosActualizados); // Actualizar el estado del carrito

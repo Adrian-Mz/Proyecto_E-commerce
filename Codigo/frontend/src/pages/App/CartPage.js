@@ -117,6 +117,7 @@ const CartPage = () => {
               <div>
                 <h3 className="font-bold">{item.producto?.nombre}</h3>
                 <p className="text-sm text-gray-500">Cantidad: {item.cantidad}</p>
+                <p className="text-sm text-gray-900">{item.nombrePromocion}</p>
                 <p className="font-semibold">{`$${item.precio_unitario || 0}`}</p>
               </div>
             </div>
