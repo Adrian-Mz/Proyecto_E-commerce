@@ -94,48 +94,54 @@ export const CarritoService = {
     if (!Array.isArray(productos) || productos.length === 0) {
       throw new Error('Debes enviar un array de productos.');
     }
-
+  
     let carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
     if (!carrito) {
       carrito = await carritoData.createCarrito(usuarioId);
       carrito.productos = []; // Inicializar productos como un array vacío
     }
-
+  
+    const productosConPromociones = [];
+  
     for (const { productoId, cantidad } of productos) {
       const producto = await ProductosData.getProductoById(productoId);
       if (!producto) {
         throw new Error(`El producto con ID ${productoId} no existe.`);
       }
-
+  
       if (producto.stock < cantidad) {
         throw new Error(
           `Stock insuficiente para el producto con ID ${productoId}. Disponible: ${producto.stock}.`
         );
       }
-
+  
       // Calcula el precio con descuento si la promoción está activa
       let precio_unitario = parseFloat(producto.precio); // Precio original
+      let mensajePromocion = 'Sin descuento aplicado.';
       if (
         producto.promocion &&
         this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
       ) {
         const descuento = parseFloat(producto.promocion.descuento) / 100;
         precio_unitario = precio_unitario - precio_unitario * descuento; // Aplicar descuento
+        mensajePromocion = `Descuento aplicado: Precio original ${producto.precio}, Precio con descuento ${precio_unitario.toFixed(
+          2
+        )}.`;
       }
-
+  
       // Validar que productos esté inicializado como un array
       const productosEnCarrito = carrito.productos || [];
       const productoEnCarrito = productosEnCarrito.find((p) => p.productoId === productoId);
-
+  
       if (productoEnCarrito) {
         const nuevaCantidad = productoEnCarrito.cantidad + cantidad;
-
+  
         if (producto.stock < nuevaCantidad) {
           throw new Error(
             `Stock insuficiente para el producto con ID ${productoId}. Disponible: ${producto.stock}.`
           );
         }
-
+  
         await carritoData.updateProductoInCarrito(
           productoEnCarrito.id,
           nuevaCantidad,
@@ -144,10 +150,30 @@ export const CarritoService = {
       } else {
         await carritoData.addProductoCarrito(carrito.id, productoId, cantidad, precio_unitario);
       }
+  
+      // Agregar al array para el resumen de promociones
+      productosConPromociones.push({
+        productoId,
+        nombre: producto.nombre,
+        precioOriginal: producto.precio,
+        precioConPromocion: precio_unitario.toFixed(2),
+        mensajePromocion,
+      });
     }
-
-    return carritoData.getCarritoByUsuarioId(usuarioId);
-  },
+  
+    const carritoActualizado = await carritoData.getCarritoByUsuarioId(usuarioId);
+    const total = carritoActualizado.productos.reduce(
+      (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
+      0
+    );
+  
+    return {
+      mensaje: 'Productos agregados con éxito.',
+      carrito: carritoActualizado,
+      total: total.toFixed(2),
+      detallesPromociones: productosConPromociones,
+    };
+  },  
 
   // Actualizar la cantidad de un producto en el carrito
   async updateProductInCart(usuarioId, productoId, cantidad) {
