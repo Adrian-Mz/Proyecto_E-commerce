@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import InputField from "./InputField";
 import Button from "./Button";
@@ -42,12 +43,34 @@ const RegisterForm = () => {
     setShowPassword(!showPassword);
   };
 
+    // Validar el teléfono al enviar el formulario
+    const validatePhone = (phone) => {
+      const phoneRegex = /^09\d{8}$/;
+      if (!phoneRegex.test(phone)) {
+        return "El teléfono debe ser un número de 10 dígitos y empezar con '09'.";
+      }
+      return undefined;
+    };
+  
+
   // Enviar datos al backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationErrors({});
     setIsSubmitting(true);
-  
+    
+    const phoneError = validatePhone(formData.telefono);
+
+    if (phoneError) {
+      setValidationErrors((prevErrors) => ({
+        ...prevErrors,
+        telefono: phoneError,
+      }));
+      toast.error(phoneError);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Convertir fecha de nacimiento al formato correcto
       const formattedData = {
@@ -175,25 +198,37 @@ const RegisterForm = () => {
           <p className="text-red-500 text-sm">{validationErrors.direccion}</p>
         )}
 
-        <InputField
-          id="telefono"
-          label="Teléfono"
-          type="text"
-          placeholder="0123456789"
-          value={formData.telefono}
-          onChange={handleChange}
-          required
-        />
-        {validationErrors.telefono && (
-          <p className="text-red-500 text-sm">{validationErrors.telefono}</p>
-        )}
+        <div>
+          <label htmlFor="telefono" className="block text-sm font-medium text-white-100">
+            Teléfono
+          </label>
+          <div className="flex items-center relative mt-2">
+            <input
+              id="telefono"
+              type="text"
+              placeholder="09XXXXXXXX"
+              value={formData.telefono}
+              onChange={handleChange}
+              className="w-full p-2 border rounded text-gray-700"
+              required
+            />
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Flag_of_Ecuador.svg"
+              alt="Ecuador Flag"
+              className="w-6 h-6 absolute right-3"
+            />
+          </div>
+          {validationErrors.telefono && (
+            <p className="text-red-500 text-sm">{validationErrors.telefono}</p>
+          )}
+        </div>
 
         <div>
           <label
             htmlFor="pais"
             className="block text-sm font-medium text-gray-100"
           >
-            País
+            Ciudad
           </label>
           <select
             id="pais"
@@ -202,10 +237,10 @@ const RegisterForm = () => {
             className="w-full mt-2 px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value="">Selecciona tu país</option>
-            {countries.map((country, index) => (
-              <option key={index} value={country}>
-                {country}
+            <option value="">Selecciona tu ciudad</option>
+            {countries.map((countries, index) => (
+              <option key={index} value={countries}>
+                {countries}
               </option>
             ))}
           </select>
