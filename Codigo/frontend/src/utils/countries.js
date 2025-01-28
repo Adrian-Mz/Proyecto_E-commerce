@@ -1,26 +1,52 @@
 const countries = [
-    "Afganistán","Albania","Alemania","Andorra","Angola","Antigua y Barbuda","Arabia Saudita",
-    "Argelia","Argentina","Armenia","Australia","Austria","Azerbaiyán","Bahamas","Bangladés",
-    "Barbados","Baréin","Bélgica","Belice","Benín","Bielorrusia","Birmania","Bolivia","Bosnia y Herzegovina",
-    "Botsuana","Brasil","Brunéi","Bulgaria","Burkina Faso","Burundi","Bután","Cabo Verde","Camboya","Camerún",
-    "Canadá","Catar","Chad","Chile","China","Chipre","Ciudad del Vaticano","Colombia","Comoras","Corea del Norte",
-    "Corea del Sur","Costa de Marfil","Costa Rica","Croacia","Cuba","Dinamarca","Dominica","Ecuador","Egipto",
-    "El Salvador","Emiratos Árabes Unidos","Eritrea","Eslovaquia","Eslovenia","España","Estados Unidos","Estonia",
-    "Etiopía","Filipinas","Finlandia","Fiyi","Francia","Gabón","Gambia","Georgia","Ghana","Granada","Grecia",
-    "Guatemala","Guyana","Guinea","Guinea ecuatorial","Guinea-Bisáu","Haití","Honduras","Hungría","India",
-    "Indonesia","Irak","Irán","Irlanda","Islandia","Islas Marshall","Islas Salomón","Israel","Italia","Jamaica",
-    "Japón","Jordania","Kazajistán","Kenia","Kirguistán","Kiribati","Kuwait","Laos","Lesoto","Letonia","Líbano",
-    "Liberia","Libia","Liechtenstein","Lituania","Luxemburgo","Madagascar","Malasia","Malaui","Maldivas","Malí",
-    "Malta","Marruecos","Mauricio","Mauritania","México","Micronesia","Moldavia","Mónaco","Mongolia","Montenegro",
-    "Mozambique","Namibia","Nauru","Nepal","Nicaragua","Níger","Nigeria","Noruega","Nueva Zelanda","Omán",
-    "Países Bajos","Pakistán","Palaos","Palestina","Panamá","Papúa Nueva Guinea","Paraguay","Perú","Polonia",
-    "Portugal","Reino Unido","República Centroafricana","República Checa","República de Macedonia",
-    "República del Congo","República Democrática del Congo","República Dominicana","República Sudafricana","Ruanda",
-    "Rumanía","Rusia","Samoa","San Cristóbal y Nieves","San Marino","San Vicente y las Granadinas","Santa Lucía",
-    "Santo Tomé y Príncipe","Senegal","Serbia","Seychelles","Sierra Leona","Singapur","Siria","Somalia","Sri Lanka",
-    "Suazilandia","Sudán","Sudán del Sur","Suecia","Suiza","Surinam","Tailandia","Tanzania","Tayikistán",
-    "Timor Oriental","Togo","Tonga","Trinidad y Tobago","Túnez","Turkmenistán","Turquía","Tuvalu","Ucrania",
-    "Uganda","Uruguay","Uzbekistán","Vanuatu","Venezuela","Vietnam","Yemen","Yibuti","Zambia","Zimbabue"
+    // Azuay
+    "Cuenca", "Gualaceo", "Paute", "Nabón", "Girón", "Sígsig", "Chordeleg", "Santa Isabel",
+    // Bolívar
+    "Guaranda", "San Miguel", "Chillanes", "Echeandía", "Las Naves", "Caluma",
+    // Cañar
+    "Azogues", "Biblián", "Cañar", "La Troncal", "Déleg", "Suscal",
+    // Carchi
+    "Tulcán", "San Gabriel", "Mira", "Montúfar", "Espejo", "Bolívar",
+    // Chimborazo
+    "Riobamba", "Guano", "Penipe", "Alausí", "Chunchi", "Cumandá", "Pallatanga",
+    // Cotopaxi
+    "Latacunga", "Salcedo", "La Maná", "Pujilí", "Saquisilí", "Sigchos",
+    // El Oro
+    "Machala", "Santa Rosa", "Pasaje", "Huaquillas", "Arenillas", "Zaruma", "Piñas",
+    // Esmeraldas
+    "Esmeraldas", "Atacames", "Quinindé", "San Lorenzo", "Muisne", "Rioverde",
+    // Galápagos
+    "Puerto Ayora", "Puerto Baquerizo Moreno", "Puerto Villamil",
+    // Guayas
+    "Guayaquil", "Samborondón", "Durán", "Milagro", "Daule", "Salitre", "Playas", "El Empalme", "Naranjal", "Balao",
+    // Imbabura
+    "Ibarra", "Otavalo", "Cotacachi", "Atuntaqui", "Pimampiro", "Urcuquí",
+    // Loja
+    "Loja", "Catamayo", "Macará", "Puyango", "Saraguro", "Pindal", "Gonzanamá", "Cariamanga", "Zapotillo", "Quilanga",
+    // Los Ríos
+    "Babahoyo", "Quevedo", "Ventanas", "Vinces", "Buena Fe", "Valencia", "Mocache", "Puebloviejo",
+    // Manabí
+    "Portoviejo", "Manta", "Chone", "Bahía de Caráquez", "El Carmen", "Montecristi", "Jipijapa", "Paján", "Rocafuerte", "Santa Ana",
+    // Morona Santiago
+    "Macas", "Sucúa", "Gualaquiza", "Palora", "Huamboya", "Logroño", "San Juan Bosco", "Taisha",
+    // Napo
+    "Tena", "Archidona", "El Chaco", "Quijos", "Carlos Julio Arosemena Tola",
+    // Orellana
+    "Coca", "Dayuma", "Loreto", "Nuevo Rocafuerte", "Francisco de Orellana",
+    // Pastaza
+    "Puyo", "Shell", "Mera", "Arajuno", "Santa Clara", "Curaray",
+    // Pichincha
+    "Quito", "Sangolquí", "Cayambe", "Pedro Moncayo", "Rumiñahui", "Puerto Quito", "Machachi", "Tababela",
+    // Santa Elena
+    "Santa Elena", "La Libertad", "Salinas", "Ballenita", "Manglaralto",
+    // Santo Domingo de los Tsáchilas
+    "Santo Domingo", "La Concordia",
+    // Sucumbíos
+    "Lago Agrio", "Shushufindi", "Cuyabeno", "Putumayo", "Gonzalo Pizarro",
+    // Tungurahua
+    "Ambato", "Baños", "Pelileo", "Píllaro", "Cevallos", "Tisaleo", "Mocha",
+    // Zamora Chinchipe
+    "Zamora", "Yantzaza", "Centinela del Cóndor", "El Pangui", "Palanda", "Chinchipe",
 ];
 
 export default countries;
