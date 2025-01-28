@@ -42,13 +42,12 @@ export const CartProvider = ({ children }) => {
     const user = JSON.parse(localStorage.getItem("usuario"));
     if (user && user.id) {
       try {
-        const carritoActualizado = await CarritoService.agregarProducto(
-          user.id,
-          producto.id,
-          1 // Cantidad predeterminada
-        );
+        // Agregar producto al carrito en el backend
+        await CarritoService.agregarProducto(user.id, producto.id, 1);
+        // Obtener nuevamente el carrito para asegurar actualización correcta
+        const carrito = await CarritoService.obtenerCarrito(user.id);
   
-        const productosActualizados = carritoActualizado.productos.map((item) => ({
+        const productosActualizados = carrito.productos.map((item) => ({
           ...item,
           precio_unitario: parseFloat(item.precio_unitario), // Formato del precio
           mensajePromocion: item.mensajePromocion || null,// Mensaje promocional
