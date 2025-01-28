@@ -13,37 +13,47 @@ export const CartProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser)?.id || null : null;
   });
 
-  // Sincronizar carrito con el backend al iniciar sesión
   useEffect(() => {
     const syncCart = async () => {
       if (userId) {
         try {
           const carrito = await CarritoService.obtenerCarrito(userId);
-          setCartItems(carrito.productos || []);
+  
+          const productosConPromocion = carrito.productos.map((item) => ({
+            ...item,
+            precio_unitario: parseFloat(item.precio_unitario), // Convertir el precio
+            mensajePromocion: item.mensajePromocion || null, // Mensaje de promoción
+          }));
+  
+          setCartItems(productosConPromocion); // Actualizar el carrito con promociones
         } catch (error) {
           console.error("Error al sincronizar el carrito:", error);
         }
       } else {
-        setCartItems([]); // Vacía el carrito si no hay usuario
+        setCartItems([]);
       }
     };
-
+  
     syncCart();
   }, [userId]);
 
-  // Función para agregar productos al carrito
   const addToCart = async (producto) => {
-    const user = JSON.parse(localStorage.getItem("usuario")); // Obtener el usuario actual
+    const user = JSON.parse(localStorage.getItem("usuario"));
     if (user && user.id) {
       try {
-        // Llamada al backend para agregar el producto
         const carritoActualizado = await CarritoService.agregarProducto(
           user.id,
           producto.id,
           1 // Cantidad predeterminada
         );
-        // Actualizar el estado del carrito
-        setCartItems(carritoActualizado.productos || []);
+  
+        const productosActualizados = carritoActualizado.productos.map((item) => ({
+          ...item,
+          precio_unitario: parseFloat(item.precio_unitario), // Formato del precio
+          mensajePromocion: item.mensajePromocion || null, // Mensaje promocional
+        }));
+  
+        setCartItems(productosActualizados); // Actualizar el estado del carrito
       } catch (error) {
         console.error("Error al agregar producto al carrito:", error);
       }
@@ -51,6 +61,8 @@ export const CartProvider = ({ children }) => {
       console.error("Usuario no autenticado. No se puede agregar al carrito.");
     }
   };
+  
+  
   
 
   // Función para eliminar un producto específico del carrito

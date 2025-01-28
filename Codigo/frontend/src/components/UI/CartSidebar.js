@@ -68,7 +68,11 @@ const CartSidebar = ({ isOpen, onClose }) => {
                 </div>
                 <div className="flex-1">
                   <h5 className="text-sm font-bold">{item.producto?.nombre || "Producto sin nombre"}</h5>
-                  <p className="text-sm text-gray-400">{`$${parseFloat(item.precio_unitario || 0).toFixed(2)}`}</p>
+                  <p className="text-sm text-gray-400">
+                    {item.mensajePromocion
+                      ? item.mensajePromocion // Mostrar mensaje promocional si existe
+                      : `$${parseFloat(item.precio_unitario || 0).toFixed(2)}`} {/* Precio normal */}
+                  </p>
                   <p className="text-sm text-gray-400">{`Cantidad: ${item.cantidad || 1}`}</p>
                 </div>
                 <button

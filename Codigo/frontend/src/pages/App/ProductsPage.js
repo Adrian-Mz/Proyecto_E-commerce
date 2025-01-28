@@ -69,7 +69,23 @@ const ProductosPage = () => {
   // Agregar producto al carrito
   const agregarAlCarrito = (producto) => {
     try {
-      addToCart(producto);
+      const descuento = producto.promocion
+        ? parseFloat(producto.promocion.descuento) / 100
+        : 0;
+  
+      const precioConDescuento = producto.promocion
+        ? producto.precio - producto.precio * descuento
+        : producto.precio;
+  
+      const productoConPromocion = {
+        ...producto,
+        precio_unitario: precioConDescuento,
+        mensajePromocion: producto.promocion
+          ? `Precio con descuento $${precioConDescuento}.`
+          : "Sin descuento aplicado.",
+      };
+  
+      addToCart(productoConPromocion);
       toast.success(`${producto.nombre} agregado al carrito.`);
     } catch (error) {
       console.error("Error al agregar producto al carrito:", error);
@@ -158,8 +174,8 @@ const ProductosPage = () => {
                         {/* Precio con descuento */}
                         <CCardText className="text-lg font-bold text-green-600">
                           ${(
-                            producto.precio -
-                            (producto.precio * producto.promocion.descuento) / 100
+                            (producto.precio -
+                            (producto.precio * producto.promocion.descuento) / 100).toFixed(2)
                           )}
                         </CCardText>
                       </>

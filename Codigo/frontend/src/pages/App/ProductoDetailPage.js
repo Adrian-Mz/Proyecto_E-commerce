@@ -28,6 +28,21 @@ const ProductoDetailPage = () => {
     const fetchProducto = async () => {
       try {
         const data = await ProductosService.getProductoById(id);
+
+        // Calcular el precio con descuento si hay promoción
+        if (data.promocion) {
+          const descuento = parseFloat(data.promocion.descuento) / 100;
+          const precioConDescuento = (
+            data.precio -
+            data.precio * descuento
+          ).toFixed(2); // Asegurar 2 decimales
+
+          data.precio_unitario = precioConDescuento;
+          data.mensajePromocion = `Precio con descuento $${precioConDescuento}.`;
+        } else {
+          data.mensajePromocion = "Sin descuento aplicado.";
+        }
+
         setProducto(data);
 
         // Obtener productos relacionados de la misma categoría
@@ -35,7 +50,9 @@ const ProductoDetailPage = () => {
           const productosRelacionados = await ProductosService.getProductosPorCategoria(
             data.categoriaId
           );
-          setProductosRelacionados(productosRelacionados.productos.filter((p) => p.id !== id));
+          setProductosRelacionados(
+            productosRelacionados.productos.filter((p) => p.id !== id)
+          );
         }
       } catch (error) {
         console.error("Error al cargar el producto:", error);
@@ -85,11 +102,19 @@ const ProductoDetailPage = () => {
         {/* Contenedor de detalles */}
         <div>
           <h1 className="text-3xl font-bold mb-4 text-black">{producto.nombre}</h1>
-          <p className="text-xl font-bold text-blue-600 mb-2">{`$${producto.precio}`}</p>
-          {producto.promocion && (
-            <p className="text-lg text-red-500 font-bold mb-4">
-              Promoción: {producto.promocion.nombre}
-            </p>
+          {producto.promocion ? (
+            <>
+              {/* Precio original tachado */}
+              <p className="text-xl font-bold text-gray-500 line-through">{`$${producto.precio}`}</p>
+              {/* Precio con descuento */}
+              <p className="text-2xl font-bold text-blue-600 mb-2">{`$${producto.precio_unitario}`}</p>
+              {/* Mensaje de promoción */}
+              <p className="text-lg text-red-500 font-bold mb-4">
+               {producto.promocion.nombre}
+              </p>
+            </>
+          ) : (
+            <p className="text-xl font-bold text-blue-600 mb-2">{`$${producto.precio}`}</p>
           )}
           <p className="text-gray-700 mb-4">
             <strong>Marca:</strong> {producto.marca || "Sin especificar"}
@@ -102,7 +127,6 @@ const ProductoDetailPage = () => {
             color="success"
             className="d-flex align-items-center"
             onClick={() => agregarAlCarrito(producto)}
-            
           >
             <FaShoppingCart className="me-2" />
             Agregar al Carrito
@@ -129,11 +153,19 @@ const ProductoDetailPage = () => {
                 <CCardTitle className="text-black text-lg font-bold">
                   {relacionado.nombre}
                 </CCardTitle>
-                <CCardText className="text-blue-600 font-bold">{`$${relacionado.precio}`}</CCardText>
-                {relacionado.promocion && (
-                  <CCardText className="text-red-500 font-bold">
-                    Promoción: {relacionado.promocion.nombre}
-                  </CCardText>
+                {relacionado.promocion ? (
+                  <>
+                    {/* Precio original tachado */}
+                    <CCardText className="text-sm text-gray-500 line-through">{`$${relacionado.precio}`}</CCardText>
+                    {/* Precio con descuento */}
+                    <CCardText className="text-lg font-bold text-blue-600">{`$${(
+                      relacionado.precio -
+                      relacionado.precio *
+                        (parseFloat(relacionado.promocion.descuento) / 100)
+                    ).toFixed(2)}`}</CCardText>
+                  </>
+                ) : (
+                  <CCardText className="text-lg font-bold text-blue-600">{`$${relacionado.precio}`}</CCardText>
                 )}
               </CCardBody>
               <CCardFooter className="flex justify-between">
