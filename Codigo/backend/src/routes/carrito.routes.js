@@ -6,6 +6,59 @@ import { verificarToken} from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
+/////////////////////////////////////////////////////CARRITO TEMPORAL//////////////////////////////////////////////////////////////////////
+
+// Obtener el carrito temporal
+router.get('/temporal', async (req, res) => {
+  try {
+    const carrito = req.session.carrito || [];
+    const carritoConDetalles = await CarritoService.obtenerCarritoTemporal(carrito);
+    res.status(200).json(carritoConDetalles);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Agregar productos al carrito temporal
+router.post('/temporal', async (req, res) => {
+  try {
+    const productos = req.body; // Corregido: aquí obtienes los productos enviados en la solicitud
+
+    if (!Array.isArray(productos)) {
+      return res.status(400).json({ error: 'El cuerpo debe ser un array de productos.' });
+    }
+
+    console.log('Productos recibidos:', productos); // Productos enviados correctamente
+    console.log('Carrito temporal antes de agregar:', req.session.carrito);
+
+    req.session.carrito = req.session.carrito || [];
+    const carritoActualizado = await CarritoService.agregarProductoCarritoTemporal(
+      productos,
+      req.session.carrito
+    );
+
+    req.session.carrito = carritoActualizado;
+    res.status(201).json({ mensaje: 'Productos agregados.', carrito: carritoActualizado });
+  } catch (error) {
+    console.error('Error en la ruta POST /temporal:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+
+// Vaciar el carrito temporal
+router.delete('/temporal', async (req, res) => {
+  try {
+    req.session.carrito = [];
+    res.status(200).json({ mensaje: 'Carrito temporal vaciado correctamente.' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+///////////////////////////////////////////////////////////////CARRITO USUARIO/////////////////////////////////////////////////////////////////
+
 // Obtener el carrito
 router.get(
   '/:usuarioId', 
@@ -86,6 +139,5 @@ router.delete(
     res.status(400).json({ error: error.message });
   }
 });
-
 
 export default router;

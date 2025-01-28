@@ -3,6 +3,7 @@ import { ProductosData } from '../data/productos.data.js';
 
 export const CarritoService = {
   
+  
   // Obtener el carrito de un usuario
   async obtenerCarrito(usuarioId) {
     const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
@@ -210,4 +211,87 @@ export const CarritoService = {
 
     return await carritoData.clearCarrito(cart.id);
   },
+
+  /////////////////////////////////////////////////////////////CARRITO TEMPORAL//////////////////////////////////////////////////////////////////////////////
+
+  // Obtener el carrito temporal
+  async obtenerCarritoTemporal(carrito) {
+    const total = carrito.reduce(
+      (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
+      0
+    );
+
+    return {
+      productos: carrito,
+      total: total.toFixed(2),
+    };
+  },
+
+
+  // Agregar productos al carrito temporal
+  async agregarProductoCarritoTemporal(productos, carritoTemporal) {
+    // Asegurar que carritoTemporal sea un array
+    const carritoActualizado = Array.isArray(carritoTemporal) ? [...carritoTemporal] : [];
+  
+    for (const { productoId, cantidad } of productos) {
+      // Validar el producto en la base de datos
+      const producto = await ProductosData.getProductoById(parseInt(productoId, 10));
+      if (!producto) {
+        throw new Error(`El producto con ID ${productoId} no existe.`);
+      }
+  
+      if (producto.stock < cantidad) {
+        throw new Error(
+          `Stock insuficiente para el producto con ID ${productoId}. Disponible: ${producto.stock}.`
+        );
+      }
+  
+      // Calcular el precio con descuento si la promoción está activa
+      let precio_unitario = parseFloat(producto.precio);
+      if (
+        producto.promocion &&
+        this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
+      ) {
+        const descuento = parseFloat(producto.promocion.descuento) / 100;
+        precio_unitario = precio_unitario - precio_unitario * descuento;
+      }
+  
+      // Buscar el producto en el carrito temporal
+      const productoEnCarrito = carritoActualizado.find((p) => p.productoId === productoId);
+  
+      if (productoEnCarrito) {
+        // Si el producto ya está en el carrito, actualizamos la cantidad
+        const nuevaCantidad = productoEnCarrito.cantidad + cantidad;
+  
+        if (producto.stock < nuevaCantidad) {
+          throw new Error(
+            `Stock insuficiente para el producto con ID ${productoId}. Disponible: ${producto.stock}.`
+          );
+        }
+  
+        productoEnCarrito.cantidad = nuevaCantidad;
+        productoEnCarrito.precio_unitario = precio_unitario;
+      } else {
+        // Si el producto no está en el carrito, lo agregamos
+        carritoActualizado.push({
+          productoId,
+          cantidad,
+          precio_unitario,
+          nombre: producto.nombre, // Puedes agregar más detalles del producto si los necesitas
+        });
+      }
+    }
+  
+    // Calcular el total del carrito temporal
+    const total = carritoActualizado.reduce(
+      (sum, item) => sum + item.cantidad * parseFloat(item.precio_unitario),
+      0
+    );
+  
+    return {
+      productos: carritoActualizado,
+      total: total.toFixed(2),
+    };
+  }
+
 };
