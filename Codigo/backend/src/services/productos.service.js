@@ -223,9 +223,12 @@ export const ProductosService = {
     }
   },
 
-  async buscarProductos(termino) {
-      // Usa una búsqueda "like" en la base de datos
-    return await ProductosData.buscarProductosPorNombreOCategoria(termino);
+  async buscarProductos(termino, limit = 5) {
+    if (!termino || termino.length < 2) {
+      throw new Error("El término de búsqueda debe tener al menos 2 caracteres.");
+    }
+  
+    return await ProductosData.buscarProductosPorNombreOCategoria(termino, limit);
   }
   
 };
