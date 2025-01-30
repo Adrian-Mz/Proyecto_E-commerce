@@ -1,7 +1,6 @@
 import express from 'express';
 import { CategoriaService } from '../services/categorias.service.js';
 import { validarCategoriaParaCrear, validarCategoriaParaActualizar } from '../validations/categorias.validation.js';
-import { validationResult } from 'express-validator';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';

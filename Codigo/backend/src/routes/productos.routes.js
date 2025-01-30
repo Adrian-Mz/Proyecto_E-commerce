@@ -1,13 +1,12 @@
 import express from 'express'; 
 import { ProductosService } from '../services/productos.service.js'; 
-import { validarProducto, validarProductoActualizar } from '../validations/productos.validation.js'
+import { validarProductoActualizar } from '../validations/productos.validation.js'
 import { handleValidation } from '../middlewares/handleValidation.js';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
-import { subirImagenCloudinary } from '../utils/cloudinary.js';
-import fs from 'fs';
+
 
 
 const router = express.Router(); 
