@@ -134,24 +134,23 @@ export const ProductosData = {
   },
 
   // Buscar producto en la base de datos
-  async buscarProductosPorNombreOCategoria(termino) {
+  async buscarProductosPorNombreOCategoria(termino, limit = 5) {
     console.log('Buscando productos con el término:', termino);
-
+  
     const resultados = await prisma.productos.findMany({
       where: {
         OR: [
           { nombre: { contains: termino, mode: 'insensitive' } }, // Búsqueda por nombre
-          { categoria: { nombre: { contains: termino, mode: 'insensitive' } } }, // Búsqueda en la relación categoría
+          { categoria: { nombre: { contains: termino, mode: 'insensitive' } } }, // Búsqueda en categoría
         ],
       },
       include: {
         categoria: true, // Incluye datos de la categoría en los resultados
       },
-      orderBy: {
-        id: 'asc', // Ordena los resultados alfabéticamente por nombre
-      },
+      orderBy: { nombre: 'asc' }, // Ordena alfabéticamente por nombre
+      take: parseInt(limit, 10), // Limita la cantidad de resultados
     });
-
+  
     console.log('Resultados encontrados:', resultados);
     return resultados;
   },

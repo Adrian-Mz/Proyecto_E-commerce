@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { FaUserCircle, FaShoppingCart, FaSearch } from "react-icons/fa";
+import { FaUserCircle, FaShoppingCart } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import CartSidebar from "./CartSidebar";
+import SearchBar from "./SearchBar";
 import { useCart } from "../../context/CartContext";
 
 const Header = () => {
@@ -105,15 +106,7 @@ const Header = () => {
 
         {/* Botones de login/registro y carrito */}
         <div className="flex items-center space-x-6">
-          <div className="relative hidden md:block">
-            <input
-              type="text"
-              placeholder="¿Qué estás buscando?"
-              className="w-72 p-2 rounded-md border text-gray-900 focus:ring-2 focus:ring-blue-500"
-            />
-            <FaSearch className="absolute right-3 top-3 text-gray-500" />
-          </div>
-
+          <SearchBar />
           {/* Botones de login/registro */}
           {usuario ? (
             <div className="relative">

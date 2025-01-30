@@ -11,22 +11,45 @@ import { upload } from '../middlewares/upload.middleware.js';
 
 const router = express.Router(); 
 
-// Ruta para buscar un productos
+
+// Ruta para búsqueda de productos con autocompletado
 router.get('/buscar', async (req, res, next) => {
   try {
-    const { q } = req.query; // Captura el parámetro de búsqueda
+    const { q, limit } = req.query; // Captura el término de búsqueda y el límite
     if (!q || typeof q !== 'string' || q.trim().length === 0) {
       return res.status(400).json({ error: 'El término de búsqueda es obligatorio.' });
     }
 
-    // Llama al servicio para buscar productos
-    const productos = await ProductosService.buscarProductos(q.trim());
+    // Llama al servicio para buscar productos con autocompletado
+    const productos = await ProductosService.buscarProductos(q.trim(), limit);
     res.status(200).json(productos);
   } catch (error) {
     console.log('Error en la búsqueda:', error.message);
     next(error);
   }
 });
+
+router.get('/similares', async (req, res, next) => {
+  try {
+    const { productoId, categoriaId, marca } = req.query;
+
+    if (!categoriaId && !marca) {
+      return res.status(400).json({ error: "Debe proporcionar una categoría o marca." });
+    }
+
+    const productosSimilares = await ProductosService.getProductosSimilares(
+      parseInt(productoId, 10),
+      parseInt(categoriaId, 10),
+      marca
+    );
+
+    res.status(200).json(productosSimilares);
+  } catch (error) {
+    console.error("Error en productos similares:", error.message);
+    next(error);
+  }
+});
+
 
 // Ruta para obtener todos los productos
 router.get('/', async (req, res) => {

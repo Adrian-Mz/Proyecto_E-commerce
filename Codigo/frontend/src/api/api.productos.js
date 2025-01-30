@@ -70,4 +70,26 @@ export const ProductosService = {
       throw error;
     }
   },
+
+  // 🔍 Método para buscar productos con autocompletado
+  buscarProductos: async (query, limit = 5) => {
+    try {
+      const response = await api.get(`/productos/buscar?q=${query}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al buscar productos:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // 🔄 Obtener productos similares (misma categoría o marca)
+  getProductosSimilares: async (productoId, categoriaId, marca) => {
+    try {
+      const response = await api.get(`/productos/similares?productoId=${productoId}&categoriaId=${categoriaId}&marca=${marca}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener productos similares:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
