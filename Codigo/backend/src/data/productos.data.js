@@ -7,14 +7,14 @@ export const ProductosData = {
   async getAllProductos({ search = "", categoriaId = null, page = 1, pageSize = 0 }) {
     const skip = pageSize > 0 ? (page - 1) * pageSize : undefined;
     const take = pageSize > 0 ? pageSize : undefined;
-  
+
     const where = {
       AND: [
         search ? { nombre: { contains: search, mode: "insensitive" } } : {},
         categoriaId ? { categoriaId: categoriaId } : {}, // Filtro por categoría directa
       ],
     };
-  
+
     const productos = await prisma.productos.findMany({
       where,
       skip,
@@ -22,12 +22,19 @@ export const ProductosData = {
       orderBy: { id: "asc" },
       include: {
         categoria: true, // Relación directa con categoría
-        promocion: true, // Relación directa con promoción
+        promocion: {
+          where: {
+            OR: [
+              { fechaInicio: { lte: new Date() }, fechaFin: { gte: new Date() } }, // Promoción dentro del rango de fechas
+              { fechaInicio: null, fechaFin: null }, // Productos sin promoción asignada
+            ],
+          },
+        }, // Relación directa con promoción (solo si está activa)
       },
     });
-  
+
     const total = await prisma.productos.count({ where });
-  
+
     return { productos, total, page, pageSize };
   },    
 

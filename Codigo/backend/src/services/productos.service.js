@@ -12,14 +12,8 @@ export const ProductosService = {
 
       const validPage = Math.max(parseInt(page, 10) || 1, 1);
       const validPageSize = parseInt(pageSize, 10) || 0;
-
-      // Valida el campo para ordenar
       const validOrderBy = ["nombre", "precio", "createdAt"].includes(orderBy) ? orderBy : "nombre";
-
-      // Valida la dirección de orden
-      const validOrderDirection = ["asc", "desc"].includes(orderDirection?.toLowerCase())
-        ? orderDirection
-        : "asc";
+      const validOrderDirection = ["asc", "desc"].includes(orderDirection?.toLowerCase()) ? orderDirection: "asc";
 
       const { productos, total } = await ProductosData.getAllProductos({
         search,
@@ -30,7 +24,8 @@ export const ProductosService = {
         orderDirection: validOrderDirection,
       });
 
-      // Calcular el precio con promoción para cada producto
+      // **Productos con promocines activas** 
+      // ** Calcular el precio con promoción para cada producto**
       const productosConPromocion = productos.map((producto) => {
         let precioConPromocion = producto.precio;
         let mensajePromocion = "Producto sin promoción";
