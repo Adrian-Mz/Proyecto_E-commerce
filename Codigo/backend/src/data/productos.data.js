@@ -69,7 +69,8 @@ export const ProductosData = {
       !data.categoriaId ||  // Verificar que exista categoría
       !data.especificaciones ||
       !data.marca ||
-      !data.garantia
+      !data.garantia ||
+      isNaN(data.ivaPorcentaje)
     ) {
       throw new Error("Datos incompletos o inválidos para crear el producto");
     }
@@ -88,6 +89,7 @@ export const ProductosData = {
         especificaciones: data.especificaciones,
         marca: data.marca,
         garantia: data.garantia,
+        ivaPorcentaje: data.ivaPorcentaje
       },
     });
   },  

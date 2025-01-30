@@ -117,29 +117,30 @@ export const ProductosService = {
       data.stock = parseInt(data.stock, 10);
       data.categoriaId = parseInt(data.categoriaId, 10);
       data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
+      data.ivaPorcentaje = data.ivaPorcentaje ? parseFloat(data.ivaPorcentaje): 0;
   
       console.log("Validaciones iniciales:", {
         precio: data.precio,
         stock: data.stock,
         categoriaId: data.categoriaId,
         promocionId: data.promocionId,
+        ivaPorcentaje: data.ivaPorcentaje
       });
   
-      if (isNaN(data.precio) || isNaN(data.stock) || isNaN(data.categoriaId)) {
+      if (isNaN(data.precio) || isNaN(data.stock) || isNaN(data.categoriaId) || isNaN(data.ivaPorcentaje)) {
         throw new Error("El precio, stock y categoría deben ser valores numéricos");
       }
+
+      // Calcular el precio con IVA dinámico
+      const precioConIVA = data.precio + (data.precio * (data.ivaPorcentaje / 100));
+      data.precio = parseFloat(precioConIVA.toFixed(2)); // Mantener como número
+
+      console.log("Precio con IVA calculado:", data.precio);
   
       // Validar que promoción (si se proporciona) sea un número válido
       if (data.promocionId && isNaN(data.promocionId)) {
         throw new Error("La promoción debe ser un valor numérico");
       }
-  
-      // Calcular el precio con IVA
-      const IVA = 0.15; // 15%
-      const precioConIVA = data.precio + data.precio * IVA;
-      data.precio = parseFloat(precioConIVA.toFixed(2)); // Mantener como número
-  
-      console.log("Precio con IVA calculado:", data.precio);
   
       // Limpiar campos adicionales
       if (data.garantia) {
@@ -175,15 +176,27 @@ export const ProductosService = {
   // Actualizar un producto por ID
   async updateProducto(id, data) {
     try {
-      validarId(id);
-      if (!data || Object.keys(data).length === 0) {
-        throw new Error('Los datos para actualizar el producto no pueden estar vacíos');
-      }
+        validarId(id);
+        if (!data || Object.keys(data).length === 0) {
+            throw new Error('Los datos para actualizar el producto no pueden estar vacíos');
+        }
 
-      const producto = await ProductosData.updateProducto(id, data);
-      return producto;
+        // Obtener producto actual
+        const productoActual = await ProductosData.getProductoById(id);
+        if (!productoActual) {
+            throw new Error('Producto no encontrado');
+        }
+
+        // Si se cambia el IVA, recalcular el precio
+        if (data.ivaPorcentaje !== undefined) {
+            const precioBase = productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA actual
+            data.precio = precioBase * (1 + (data.ivaPorcentaje / 100)); // Aplicar nuevo IVA
+            data.precio = parseFloat(data.precio.toFixed(2));
+        }
+
+        return await ProductosData.updateProducto(id, data);
     } catch (error) {
-      throw new Error(`Error al actualizar el producto: ${error.message}`);
+        throw new Error(`Error al actualizar el producto: ${error.message}`);
     }
   },
 

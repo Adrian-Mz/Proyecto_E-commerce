@@ -25,6 +25,7 @@ model productos {
   imagen             String
   categoriaId        Int
   promocionId        Int?
+  ivaPorcentaje      Decimal?
 
 
   categoria          categorias         @relation(fields: [categoriaId], references: [id])
