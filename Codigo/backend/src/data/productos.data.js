@@ -151,7 +151,7 @@ export const ProductosData = {
       take: parseInt(limit, 10), // Limita la cantidad de resultados
     });
   
-    console.log('Resultados encontrados:', resultados);
+    console.log('Resultados relaciones encontrados con éxito');
     return resultados;
   },
 };
