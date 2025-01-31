@@ -3,7 +3,7 @@ import { CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle, CButton } 
 
 const ModalComponent = ({ title, visible, onClose, children, onSave }) => {
   return (
-    <CModal alignment="center" visible={visible} onClose={onClose}>
+    <CModal alignment="center" visible={visible} onClose={onClose} size="xl">
       <CModalHeader>
         <CModalTitle>{title}</CModalTitle>
       </CModalHeader>

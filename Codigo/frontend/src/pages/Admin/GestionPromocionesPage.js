@@ -221,7 +221,7 @@ const GestionPromocionesPage = () => {
     return (
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label>Nombre:</label>
+          <label className="font-bold mb-2">Nombre:</label>
           <input
             type="text"
             value={promocion.nombre || ""}
@@ -230,7 +230,7 @@ const GestionPromocionesPage = () => {
           />
         </div>
         <div>
-          <label>Descripción:</label>
+          <label className="font-bold mb-2">Descripción:</label>
           <textarea
             value={promocion.descripcion || ""}
             onChange={(e) => setPromocion((prev) => ({ ...prev, descripcion: e.target.value }))}
@@ -238,7 +238,7 @@ const GestionPromocionesPage = () => {
           />
         </div>
         <div>
-          <label>Descuento (%):</label>
+          <label className="font-bold mb-2">Descuento (%):</label>
           <input
             type="number"
             value={promocion.descuento || ""}
@@ -258,8 +258,8 @@ const GestionPromocionesPage = () => {
           />
         </div>
         <div>
-          <label>Categorías:</label>
-          <div className="flex flex-col">
+          <label className="font-bold mb-2">Categorías:</label>
+          <div className="grid grid-cols-3 gap-4">
             {categorias.length > 0 ? (
               categorias.map((categoria) => {
                 const perteneceAPromocion =
@@ -274,7 +274,7 @@ const GestionPromocionesPage = () => {
                 return (
                   <label
                     key={categoria.id}
-                    className={`flex items-center space-x-2 ${
+                    className={`flex items-center space-x-2 p-1 rounded-md ${
                       asignadaAOtraPromocion ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
@@ -294,7 +294,7 @@ const GestionPromocionesPage = () => {
                         }));
                       }}
                     />
-                    <span>{categoria.nombre}</span>
+                    <span className="text-sm text-gray-800">{categoria.nombre}</span>
                   </label>
                 );
               })
@@ -304,7 +304,7 @@ const GestionPromocionesPage = () => {
           </div>
         </div>
         <div>
-          <label>Fecha Inicio:</label>
+          <label className="font-bold mb-2">Fecha Inicio:</label>
           <input
             type="date"
             value={
@@ -324,7 +324,7 @@ const GestionPromocionesPage = () => {
           />
         </div>
         <div>
-          <label>Fecha Fin:</label>
+          <label className="font-bold mb-2">Fecha Fin:</label>
           <input
             type="date"
             value={
@@ -364,7 +364,6 @@ const GestionPromocionesPage = () => {
       </div>
       <TableComponent
         columns={[
-          { key: "id", label: "ID" },
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
           { key: "descuento", label: "Descuento (%)" },
