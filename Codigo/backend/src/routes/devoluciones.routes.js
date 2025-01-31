@@ -78,10 +78,6 @@ router.put('/:devolucionId/producto/:productoId/estado', verificarToken, verific
   }
 });
 
-
-
-
-
 // Ruta para actualizar el estado de una devolución (solo Administradores)
 router.put(
   '/:devolucionId',

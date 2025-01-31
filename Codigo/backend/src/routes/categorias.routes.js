@@ -6,16 +6,38 @@ import { verificarRol } from '../middlewares/roles.middleware.js';
 import { registrarAccion } from '../middlewares/auditoria.middleware.js';
 import { handleValidation } from '../middlewares/handleValidation.js';
 
-
 const router = express.Router();
+
+// Constantes para códigos HTTP
+const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  NOT_FOUND: 404,
+  INTERNAL_SERVER_ERROR: 500,
+};
+
+// Middleware para registrar solicitudes entrantes
+router.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Manejador centralizado de errores
+const handleError = (res, error, statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR) => {
+  console.error(error); // Registra el error en el servidor
+  res.status(statusCode).json({
+    error: error.message || 'Ocurrió un error inesperado.',
+  });
+};
 
 // Obtener todas las categorías
 router.get('/', async (req, res) => {
   try {
     const categorias = await CategoriaService.getAllCategorias();
-    res.status(200).json(categorias);
+    res.status(HTTP_STATUS.OK).json(categorias);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    handleError(res, error);
   }
 });
 
@@ -23,10 +45,18 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'El ID debe ser un número válido.' });
+    }
+
     const categoria = await CategoriaService.getCategoriaById(id);
-    res.status(200).json(categoria);
+    if (!categoria) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: `No se encontró una categoría con el ID ${id}.` });
+    }
+
+    res.status(HTTP_STATUS.OK).json(categoria);
   } catch (error) {
-    res.status(404).json({ error: error.message });
+    handleError(res, error);
   }
 });
 
@@ -41,12 +71,12 @@ router.post(
   async (req, res) => {
     try {
       const nuevaCategoria = await CategoriaService.createCategoria(req.body);
-      res.status(201).json({
+      res.status(HTTP_STATUS.CREATED).json({
         message: 'Categoría creada exitosamente.',
         categoria: nuevaCategoria,
       });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      handleError(res, error, HTTP_STATUS.BAD_REQUEST);
     }
   }
 );
@@ -62,13 +92,21 @@ router.put(
   async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'El ID debe ser un número válido.' });
+      }
+
       const categoriaActualizada = await CategoriaService.updateCategoria(id, req.body);
-      res.status(200).json({
+      if (!categoriaActualizada) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({ error: `No se encontró una categoría con el ID ${id}.` });
+      }
+
+      res.status(HTTP_STATUS.OK).json({
         message: 'Categoría actualizada correctamente.',
         categoria: categoriaActualizada,
       });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      handleError(res, error, HTTP_STATUS.BAD_REQUEST);
     }
   }
 );
@@ -82,10 +120,14 @@ router.delete(
   async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'El ID debe ser un número válido.' });
+      }
+
       await CategoriaService.deleteCategoria(id);
-      res.status(200).json({ message: 'Categoría eliminada exitosamente.' });
+      res.status(HTTP_STATUS.OK).json({ message: 'Categoría eliminada exitosamente.' });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      handleError(res, error, HTTP_STATUS.BAD_REQUEST);
     }
   }
 );

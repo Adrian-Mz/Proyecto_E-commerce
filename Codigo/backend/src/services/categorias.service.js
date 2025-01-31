@@ -62,12 +62,18 @@ export const CategoriaService = {
   },
 
   // Actualizar una categoría existente
+  // Actualizar una categoría existente
   async updateCategoria(id, data) {
     try {
       if (!data || Object.keys(data).length === 0) {
         throw new Error('Los datos para actualizar no pueden estar vacíos');
       }
-      return await CategoriaData.updateCategoria(id, data);
+
+      // Filtrar solo los campos permitidos
+      const { nombre, descripcion } = data;
+      const actualData = { nombre, descripcion };
+
+      return await CategoriaData.updateCategoria(id, actualData);
     } catch (error) {
       throw new Error(`Error al actualizar la categoría: ${error.message}`);
     }

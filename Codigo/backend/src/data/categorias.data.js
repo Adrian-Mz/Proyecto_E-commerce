@@ -46,9 +46,13 @@ export const CategoriaData = {
     if (typeof id !== 'number') {
       throw new Error('El ID debe ser un número');
     }
+
+    // Eliminar el campo 'id' del objeto 'data' para evitar errores de Prisma
+    const { id: _, ...actualData } = data;
+
     return await prisma.categorias.update({
       where: { id },
-      data,
+      data: actualData, // Usar solo los campos permitidos
     });
   },
 
