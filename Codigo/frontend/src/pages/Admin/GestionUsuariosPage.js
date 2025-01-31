@@ -134,7 +134,6 @@ const GestionUsuariosPage = () => {
       </div>
       <TableComponent
         columns={[
-          { key: "id", label: "ID" },
           { key: "nombre", label: "Nombre" },
           { key: "apellido", label: "Apellido" },
           { key: "correo", label: "Correo Electrónico" },

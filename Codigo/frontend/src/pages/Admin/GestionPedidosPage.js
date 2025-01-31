@@ -120,7 +120,6 @@ const GestionPedidosPage = () => {
       </div>
       <TableComponent
         columns={[
-          { key: "id", label: "ID Pedido" },
           { key: "usuario", label: "Usuario" },
           { key: "correo", label: "Correo" },
           { key: "direccionEnvio", label: "Dirección de Envío" },

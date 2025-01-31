@@ -234,7 +234,6 @@ const GestionProductosPage = () => {
       </div>
       <TableComponent
         columns={[
-          { key: "id", label: "ID" },
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
           { key: "marca", label: "Marca" },
