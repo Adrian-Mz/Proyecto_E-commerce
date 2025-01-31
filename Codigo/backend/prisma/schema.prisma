@@ -33,6 +33,23 @@ model productos {
 
   carritoProductos   carrito_productos[]
   pedidoProductos    pedido_productos[]
+  devoluciones     devolucion_productos[]
+}
+
+model devolucion_productos {
+  id              Int      @id @default(autoincrement())
+  devolucionId    Int
+  productoId      Int
+  cantidad        Int
+  motivo          String
+  estadoId        Int @default(9) // Por defecto, los productos inician como "Pendiente"
+  fechaDevolucion DateTime @default(now())
+
+  devolucion      devoluciones @relation(fields: [devolucionId], references: [id])
+  producto        productos    @relation(fields: [productoId], references: [id])
+  estado          estado       @relation(fields: [estadoId], references: [id])
+
+  @@unique([devolucionId, productoId])
 }
 
 model metodo_pago {
@@ -175,6 +192,8 @@ model devoluciones {
 
   pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   estado          estado    @relation(fields: [estadoId], references: [id])
+
+  productos       devolucion_productos[]
 }
 
 model estado {
@@ -184,6 +203,7 @@ model estado {
 
   pedidos     pedidos[]
   devoluciones devoluciones[]
+  devolucion_productos devolucion_productos[]
 }
 
 model carrito {

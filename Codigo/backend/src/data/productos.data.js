@@ -163,4 +163,11 @@ export const ProductosData = {
     console.log('Resultados relaciones encontrados con éxito');
     return resultados;
   },
+
+  async incremetarStock(productoId, cantidad) {
+    return await prisma.productos.update({
+      where: {id: productoId},
+      data: {stock: {increment:cantidad } },
+    });
+  }
 };
