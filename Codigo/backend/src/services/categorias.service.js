@@ -1,4 +1,6 @@
 import { CategoriaData } from '../data/categorias.data.js';
+import { promocionesData } from '../data/promociones.data.js';
+import { ProductosData } from '../data/productos.data.js';
 
 export const CategoriaService = {
   // Obtener todas las categorías
@@ -62,22 +64,28 @@ export const CategoriaService = {
   },
 
   // Actualizar una categoría existente
-  // Actualizar una categoría existente
   async updateCategoria(id, data) {
     try {
       if (!data || Object.keys(data).length === 0) {
         throw new Error('Los datos para actualizar no pueden estar vacíos');
       }
 
-      // Filtrar solo los campos permitidos
       const { nombre, descripcion } = data;
       const actualData = { nombre, descripcion };
 
-      return await CategoriaData.updateCategoria(id, actualData);
+      const categoriaActualizada = await CategoriaData.updateCategoria(id, actualData);
+
+      await promocionesData.sincronizarPromocionesPorCategoria(id);
+
+      // ACTUALIZAR PRODUCTOS ASOCIADOS A LA CATEGORÍA
+      await ProductosData.updateProductosByCategoria(id, categoriaActualizada.promocionId);
+
+      return categoriaActualizada;
     } catch (error) {
       throw new Error(`Error al actualizar la categoría: ${error.message}`);
     }
   },
+
 
   // Eliminar una categoría
   async deleteCategoria(id) {

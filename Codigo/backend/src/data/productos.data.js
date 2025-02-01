@@ -169,5 +169,14 @@ export const ProductosData = {
       where: {id: productoId},
       data: {stock: {increment:cantidad } },
     });
+  },
+
+  // Actualizar productos por categoría (Sincronizar promociones)
+  async updateProductosByCategoria(categoriaId, promocionId) {
+    return await prisma.productos.updateMany({
+      where: { categoriaId },
+      data: { promocionId },
+    });
   }
+
 };

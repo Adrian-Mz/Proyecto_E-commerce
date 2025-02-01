@@ -213,4 +213,26 @@ export const promocionesData = {
       skipDuplicates: true,
     });
   },
+
+  async sincronizarPromocionesPorCategoria(categoriaId) {
+    const promociones = await prisma.promociones.findMany({
+      where: {
+        categorias: {
+          some: { categoriaId }
+        }
+      }
+    });
+  
+    for (const promocion of promociones) {
+      await prisma.promociones.update({
+        where: { id: promocion.id },
+        data: {
+          fechaInicio: promocion.fechaInicio, // Mantener la fecha original
+          fechaFin: promocion.fechaFin,       // Mantener la fecha original
+          descuento: promocion.descuento,     // Mantener el descuento original
+        }
+      });
+    }
+  }
+  
 };
