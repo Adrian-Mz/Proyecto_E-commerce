@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import TableComponent from "../../components/UI/TableComponent";
-import ModalComponent from "../../components/UI/ModalComponent";
 import { PedidosAPI } from "../../api/api.pedidos";
 import { EstadosAPI } from "../../api/api.estados";
-import { FaEye } from "react-icons/fa";
+import { CCollapse, CButton, CCard, CCardBody, CProgress } from "@coreui/react";
+import { FaChevronDown, FaBoxOpen, FaCog, FaShippingFast, FaCheckCircle } from "react-icons/fa"; // Importar iconos
 import { toast } from "react-toastify";
 
 const UsuarioPedidosPage = () => {
@@ -11,8 +10,7 @@ const UsuarioPedidosPage = () => {
   const [estados, setEstados] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedPedido, setSelectedPedido] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [visiblePedidos, setVisiblePedidos] = useState({});
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -24,7 +22,6 @@ const UsuarioPedidosPage = () => {
         ]);
 
         setPedidos(pedidosResponse.pedidos || []);
-        // Mapea los estados para acceder rápidamente por ID
         const estadosMap = estadosResponse.reduce((acc, estado) => {
           acc[estado.id] = estado.nombre;
           return acc;
@@ -41,10 +38,33 @@ const UsuarioPedidosPage = () => {
     fetchPedidosAndEstados();
   }, []);
 
-  const handleVerPedido = (pedidoId) => {
-    const pedido = pedidos.find((p) => p.id === pedidoId);
-    setSelectedPedido(pedido);
-    setIsModalOpen(true);
+  const handleToggleCollapse = (pedidoId) => {
+    setVisiblePedidos((prev) => ({
+      ...prev,
+      [pedidoId]: !prev[pedidoId],
+    }));
+  };
+
+  const estadosOrdenados = [
+    { nombre: "Pendiente", icon: <FaBoxOpen className="text-green-500 text-lg" /> },
+    { nombre: "Procesando", icon: <FaCog className="text-yellow-500 text-lg" /> },
+    { nombre: "Enviado", icon: <FaShippingFast className="text-orange-500 text-lg" /> },
+    { nombre: "Entregado", icon: <FaCheckCircle className="text-green-500 text-lg" /> },
+  ];
+
+  const getProgressValue = (estado) => {
+    switch (estado) {
+      case "Pendiente":
+        return { value: 25, color: "success" };
+      case "Procesando":
+        return { value: 50, color: "success" };
+      case "Enviado":
+        return { value: 75, color: "success" };
+      case "Entregado":
+        return { value: 100, color: "success" };
+      default:
+        return { value: 0, color: "secondary" };
+    }
   };
 
   const handlePageChange = (direction) => {
@@ -91,64 +111,88 @@ const UsuarioPedidosPage = () => {
           </button>
         </div>
       </div>
-      <TableComponent
-        columns={[
-          { key: "id", label: "ID" },
-          { key: "fechaPedido", label: "Fecha de Pedido" },
-          { key: "estadoId", label: "Estado" },
-          { key: "total", label: "Total" },
-          { key: "acciones", label: "Acciones" },
-        ]}
-        data={paginatedPedidos.map((pedido) => ({
-          ...pedido,
-          fechaPedido: new Date(pedido.fechaPedido).toLocaleDateString(),
-          estadoId: estados[pedido.estadoId] || "Desconocido", // Usa el nombre del estado
-          total: `$${parseFloat(pedido.total || 0).toFixed(2)}`, // Validación adicional
-          acciones: (
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleVerPedido(pedido.id)}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                <FaEye size={16} />
-              </button>
-            </div>
-          ),
-        }))}
-      />
 
-      <ModalComponent
-        title={`Detalles del Pedido #${selectedPedido?.id}`}
-        visible={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      >
-        {selectedPedido?.productos?.length > 0 ? (
-          <div className="space-y-4">
-            {selectedPedido.productos.map((producto) => (
-              <div
-                key={producto.productoId}
-                className="flex items-center border-b pb-4"
-              >
-                <img
-                  src={producto.producto?.imagen || "/placeholder.png"}
-                  alt={producto.producto?.nombre || "Producto"}
-                  className="w-16 h-16 object-cover rounded"
-                />
-                <div className="ml-4">
-                  <h5 className="font-bold">{producto.producto?.nombre}</h5>
-                  <p className="text-sm text-gray-500">{producto.producto?.marca}</p>
-                  <p className="text-sm text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
-                  <p className="text-sm font-semibold">
-                    {`$${parseFloat(producto.precio_unitario || 0).toFixed(2)}`}
-                  </p>
-                </div>
+      <div className="space-y-4">
+        {paginatedPedidos.map((pedido) => {
+          const estadoNombre = estados[pedido.estadoId] || "Desconocido";
+          const progress = getProgressValue(estadoNombre);
+
+          return (
+            <CCard key={pedido.id} className="p-4 shadow-md bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Pedido</h2>
+                <CButton color="primary" size="sm" onClick={() => handleToggleCollapse(pedido.id)}>
+                  <FaChevronDown />
+                </CButton>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p>No hay productos en este pedido.</p>
-        )}
-      </ModalComponent>
+
+              <CCollapse visible={visiblePedidos[pedido.id]}>
+                <CCardBody className="mt-3">
+                  <CProgress
+                    animated
+                    variant="striped"
+                    color={progress.color}
+                    value={progress.value}
+                    className="mb-3"
+                  />
+
+                  {/* 🔹 Línea de Estados con Iconos */}
+                  <div className="flex justify-between items-center w-full mt-3 relative">
+                    {estadosOrdenados.map((estado, index) => {
+                      const estadoActualizado = pedido.historialEstados?.find((e) => e.nombre === estado.nombre);
+                      return (
+                        <div key={estado.nombre} className="flex flex-col items-center">
+                          <div
+                            className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-xs font-bold ${
+                              estadosOrdenados.findIndex((e) => e.nombre === estadoNombre) >= index
+                                ? "bg-gray-300"
+                                : "bg-gray-100"
+                            }`}
+                          >
+                            {estado.icon}
+                          </div>
+                          <p className="text-xs text-gray-700 mt-1">{estado.nombre}</p>
+                          <p className="text-xs text-gray-500">
+                            {estadoActualizado?.fechaActualizacion || "--"}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <hr className="my-4 border-black" />
+
+                  {/* 📌 Sección de Productos en columnas */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {pedido.productos.map((producto) => (
+                      <div
+                        key={producto.productoId}
+                        className="flex items-center justify-between border p-2 rounded-lg shadow-sm"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src={producto.producto?.imagen || "/placeholder.png"}
+                            alt={producto.producto?.nombre || "Producto"}
+                            className="w-14 h-14 object-cover rounded"
+                          />
+                          <div>
+                            <h5 className="font-bold text-sm">{producto.producto?.nombre}</h5>
+                            <p className="text-xs text-gray-500">{producto.producto?.marca}</p>
+                            <p className="text-xs text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm font-semibold text-right">
+                          {`$${(producto.cantidad * producto.precio_unitario).toFixed(2)}`}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CCardBody>
+              </CCollapse>
+            </CCard>
+          );
+        })}
+      </div>
     </div>
   );
 };
