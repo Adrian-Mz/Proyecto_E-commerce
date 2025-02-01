@@ -120,7 +120,9 @@ const UsuarioPedidosPage = () => {
           return (
             <CCard key={pedido.id} className="p-4 shadow-md bg-white rounded-lg">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Pedido</h2>
+                <h2 className="text-lg font-semibold">
+                  Pedido #{pedido.id} - {new Date(pedido.fechaPedido).toLocaleString()}
+                </h2>
                 <CButton color="primary" size="sm" onClick={() => handleToggleCollapse(pedido.id)}>
                   <FaChevronDown />
                 </CButton>
@@ -139,7 +141,7 @@ const UsuarioPedidosPage = () => {
                   {/* 🔹 Línea de Estados con Iconos */}
                   <div className="flex justify-between items-center w-full mt-3 relative">
                     {estadosOrdenados.map((estado, index) => {
-                      const estadoActualizado = pedido.historialEstados?.find((e) => e.nombre === estado.nombre);
+                      const estadoActualizado = pedido?.historialEstados?.find((e) => e.nombre === estado);
                       return (
                         <div key={estado.nombre} className="flex flex-col items-center">
                           <div
@@ -153,8 +155,13 @@ const UsuarioPedidosPage = () => {
                           </div>
                           <p className="text-xs text-gray-700 mt-1">{estado.nombre}</p>
                           <p className="text-xs text-gray-500">
-                            {estadoActualizado?.fechaActualizacion || "--"}
+                            Fecha Pedido: {pedido?.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString() : "--"}
                           </p>
+                          {pedido?.estado !== "Pendiente" && (
+                            <p className="text-xs text-gray-500">
+                              Fecha Actualización: {estadoActualizado?.fechaActualizacion ? new Date(estadoActualizado.fechaActualizacion).toLocaleDateString() : "--"}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
