@@ -148,6 +148,20 @@ export const pedidosData = {
       },
     });
   },
-  
+
+  async getHistorialEstadosPedido(pedidoId) {
+    return prisma.historial_estado_pedidos.findMany({
+      where: { pedidoId },
+      include: {
+        estado: {
+          select: {
+            nombre: true,
+            descripcion: true,
+          },
+        },
+      },
+      orderBy: { fechaCambio: 'asc' }, // Ordenar por fecha de cambio ascendente
+    });
+  }  
 
 };

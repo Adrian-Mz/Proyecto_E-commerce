@@ -14,4 +14,18 @@ export const estadoData = {
       where: { id },
     });
   },
+
+  // Obtener historial de cambios de estado de un pedido
+  async getHistorialEstadosPedido(pedidoId) {
+    return await prisma.historial_estado_pedidos.findMany({
+      where: { pedidoId },
+      include: {
+        estado: true, // Trae los datos del estado
+      },
+      orderBy: {
+        fechaCambio: "asc", // Orden cronológico de cambios
+      },
+    });
+  },
+  
 };

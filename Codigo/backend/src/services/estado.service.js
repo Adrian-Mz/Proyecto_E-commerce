@@ -17,7 +17,7 @@ export const estadoService = {
     if (!estado) {
       throw new Error("El estado proporcionado no es válido.");
     }
-
+  
     // Obtener el pedido actual
     const pedidoActual = await prisma.pedidos.findUnique({
       where: { id: pedidoId },
@@ -26,11 +26,11 @@ export const estadoService = {
         usuario: true, // Incluye datos del usuario
       },
     });
-
+  
     if (!pedidoActual) {
       throw new Error(`No se encontró un pedido con ID ${pedidoId}.`);
     }
-
+  
     // Validar flujo lógico de estados
     const estadosValidos = {
       1: [2], // Pendiente → Procesando
@@ -38,14 +38,14 @@ export const estadoService = {
       3: [4], // Enviado → Entregado
       4: [], // Entregado (estado final)
     };
-
+  
     if (!estadosValidos[pedidoActual.estadoId]?.includes(nuevoEstadoId)) {
       throw new Error(
         `No se puede cambiar el estado de '${pedidoActual.estado.nombre}' a '${estado.nombre}'.`
       );
     }
-
-    // Actualizar el estado del pedido
+  
+    // Actualizar el estado del pedido y registrar en historial de estado
     const pedidoActualizado = await prisma.pedidos.update({
       where: { id: pedidoId },
       data: { estadoId: nuevoEstadoId, fechaActualizacion: new Date() },
@@ -54,23 +54,24 @@ export const estadoService = {
         usuario: true,
       },
     });
-
+  
+    // Registrar el cambio en historial_estado_pedidos
+    await prisma.historial_estado_pedidos.create({
+      data: {
+        pedidoId,
+        estadoId: nuevoEstadoId,
+        fechaCambio: new Date(),
+      },
+    });
+  
     // Enviar correo al cliente sobre el cambio de estado
     await this.enviarNotificacionEstado(pedidoActualizado);
-
-    // Si el estado es 'Entregado'
-    if (nuevoEstadoId === 4) {
-      return {
-        mensaje: "El pedido ha finalizado correctamente.",
-        pedido: pedidoActualizado,
-      };
-    }
-
+  
     return {
       mensaje: "Estado actualizado correctamente.",
       pedido: pedidoActualizado,
     };
-  },
+  },  
 
   // Enviar notificación por correo al cliente
   async enviarNotificacionEstado(pedido) {

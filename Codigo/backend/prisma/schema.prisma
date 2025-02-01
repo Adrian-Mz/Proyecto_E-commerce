@@ -179,6 +179,8 @@ model pedidos {
   devoluciones       devoluciones[]
   productos          pedido_productos[]
   pagos              pagos[]
+
+  historialEstados   historial_estado_pedidos[]
 }
 
 
@@ -204,7 +206,22 @@ model estado {
   pedidos     pedidos[]
   devoluciones devoluciones[]
   devolucion_productos devolucion_productos[]
+
+  historialEstados        historial_estado_pedidos[]
 }
+
+model historial_estado_pedidos {
+  id          Int      @id @default(autoincrement())
+  pedidoId    Int
+  estadoId    Int
+  fechaCambio DateTime @default(now())
+
+  pedido      pedidos  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  estado      estado   @relation(fields: [estadoId], references: [id])
+
+  @@unique([pedidoId, estadoId, fechaCambio]) // Evita registros duplicados
+}
+
 
 model carrito {
   id          Int      @id @default(autoincrement())

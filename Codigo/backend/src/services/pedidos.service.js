@@ -26,22 +26,23 @@ export const pedidosService = {
   
 // Obtener pedidos según el contexto (usuario autenticado o administrador)
 async obtenerPedidos({ usuarioId = null, pedidoId = null, esAdmin = false }) {
+  let pedidos;
   if (pedidoId) {
-    // Si se solicita un pedido específico
-    return await pedidosData.getPedidoById(pedidoId, usuarioId);
+    pedidos = await pedidosData.getPedidoById(pedidoId, usuarioId);
+  } else if (usuarioId) {
+    pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
+  } else if (esAdmin) {
+    pedidos = await pedidosData.getAllPedidos();
+  } else {
+    throw new Error('Parámetros incorrectos para obtener pedidos.');
   }
 
-  if (usuarioId) {
-    // Si se solicita el historial del usuario autenticado
-    return await pedidosData.getPedidosByUsuarioId(usuarioId);
+  // Obtener historial de cambios de estado para cada pedido
+  for (let pedido of pedidos) {
+    pedido.historialEstados = await pedidosData.getHistorialEstadosPedido(pedido.id);
   }
 
-  if (esAdmin) {
-    // Si es un administrador, obtiene todos los pedidos
-    return await pedidosData.getAllPedidos();
-  }
-
-  throw new Error('Parámetros incorrectos para obtener pedidos.');
+  return pedidos;
 },
 
 // Crear un nuevo pedido
@@ -273,11 +274,23 @@ async crearPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, detall
     if (!estado) {
       throw new Error('El estado proporcionado no es válido.');
     }
-
-    return await prisma.pedidos.update({
-      where: { id: pedidoId },
-      data: { estadoId: nuevoEstadoId },
-    });
+  
+    // Iniciar una transacción para actualizar el pedido y registrar el historial
+    return await prisma.$transaction([
+      prisma.pedidos.update({
+        where: { id: pedidoId },
+        data: { 
+          estadoId: nuevoEstadoId,
+          fechaActualizacion: new Date() // Actualizar la fecha de actualización
+        },
+      }),
+      prisma.historial_estado_pedidos.create({
+        data: {
+          pedidoId,
+          estadoId: nuevoEstadoId,
+        },
+      }),
+    ]);
   },
 
   // Obtener estado del pedido por ID

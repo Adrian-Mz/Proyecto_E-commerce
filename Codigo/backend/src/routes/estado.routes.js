@@ -29,6 +29,18 @@ router.put('/pedidos/:pedidoId/estado', async (req, res) => {
   }
 });
 
+// Obtener historial de cambios de estado de un pedido
+router.get('/pedidos/:pedidoId/historial', async (req, res) => {
+  const { pedidoId } = req.params;
+
+  try {
+    const historial = await estadoData.getHistorialEstadosPedido(parseInt(pedidoId, 10));
+    res.status(200).json(historial);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 
 
 export default router;
