@@ -24,67 +24,24 @@ const prisma = new PrismaClient();
 
 export const pedidosService = {
   
-  // Obtener el Historial de Pedidos del usuario
-  async obtenerHistorialPedidosUsuario(usuarioId) {
-    if (!usuarioId) {
-      throw new Error('El ID del usuario es obligatorio.');
-    }
-  
-    const pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
-  
-    if (!pedidos || pedidos.length === 0) {
-      throw new Error('No se encontraron pedidos para este usuario.');
-    }
-  
-    return pedidos;
-  },
-
-  // Obtener todos los pedidos de un usuario específico
-   async obtenerPedidosDeUsuario(usuarioId) {
-    if (!usuarioId) {
-      throw new Error('El ID del usuario es obligatorio.');
-    }
-
-    const pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
-    if (!pedidos || pedidos.length === 0) {
-      throw new Error('No se encontraron pedidos para este usuario.');
-    }
-
-    return pedidos;
-  },
-
-  // Obtener todos los pedidos (solo para administradores)
-  async obtenerTodosLosPedidos() {
-    const pedidos = await pedidosData.getAllPedidos();
-    if (!pedidos || pedidos.length === 0) {
-      throw new Error('No se encontraron pedidos en el sistema.');
-    }
-
-    return pedidos;
-  },
-
- // Obtener todos los pedidos de un usuario específico
- async obtenerPedidosDeUsuario(usuarioId) {
-  if (!usuarioId) {
-    throw new Error('El ID del usuario es obligatorio.');
+// Obtener pedidos según el contexto (usuario autenticado o administrador)
+async obtenerPedidos({ usuarioId = null, pedidoId = null, esAdmin = false }) {
+  if (pedidoId) {
+    // Si se solicita un pedido específico
+    return await pedidosData.getPedidoById(pedidoId, usuarioId);
   }
 
-  const pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
-  if (!pedidos || pedidos.length === 0) {
-    throw new Error('No se encontraron pedidos para este usuario.');
+  if (usuarioId) {
+    // Si se solicita el historial del usuario autenticado
+    return await pedidosData.getPedidosByUsuarioId(usuarioId);
   }
 
-  return pedidos;
-},
-
-// Obtener todos los pedidos (solo para administradores)
-async obtenerTodosLosPedidos() {
-  const pedidos = await pedidosData.getAllPedidos();
-  if (!pedidos || pedidos.length === 0) {
-    throw new Error('No se encontraron pedidos en el sistema.');
+  if (esAdmin) {
+    // Si es un administrador, obtiene todos los pedidos
+    return await pedidosData.getAllPedidos();
   }
 
-  return pedidos;
+  throw new Error('Parámetros incorrectos para obtener pedidos.');
 },
 
 // Crear un nuevo pedido
@@ -206,33 +163,6 @@ async crearPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, detall
       (!fechaFin || new Date(fechaFin) >= ahora)
     );
   },  
-
-  // Obtener un pedido específico por usuario
-  async obtenerPedidoDeUsuario(usuarioId, pedidoId) {
-    if (!usuarioId || !pedidoId) {
-      throw new Error('El usuarioId y pedidoId son obligatorios.');
-    }
-
-    const pedido = await pedidosData.getPedidoById(pedidoId, usuarioId);
-    if (!pedido) {
-      throw new Error('El pedido no existe o no pertenece al usuario.');
-    }
-
-    return pedido;
-  },
-
-  // Obtener productos desde el carrito
-  async obtenerProductosDesdeCarrito(usuarioId) {
-    const carrito = await carritoData.getCarritoByUsuarioId(usuarioId);
-    if (!carrito?.productos?.length) {
-      throw new Error('El carrito está vacío. No se puede realizar el pedido.');
-    }
-    return carrito.productos.map((item) => ({
-      productoId: item.productoId,
-      cantidad: item.cantidad,
-      precio_unitario: item.precio_unitario,
-    }));
-  },
 
   // Eliminar un pedido
   async eliminarPedido(pedidoId) {

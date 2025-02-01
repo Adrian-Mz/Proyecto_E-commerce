@@ -17,11 +17,6 @@ const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 };
 
-// Middleware para registrar solicitudes entrantes
-router.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
 
 // Manejador centralizado de errores
 const handleError = (res, error, statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR) => {
