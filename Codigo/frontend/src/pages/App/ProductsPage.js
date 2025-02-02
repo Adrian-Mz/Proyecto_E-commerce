@@ -160,31 +160,36 @@ const ProductosPage = () => {
                   />
                   <CCardBody>
                     <CCardTitle className="font-bold">{producto.nombre}</CCardTitle>
-                    {producto.promocion && producto.promocion.descuento > 0 ? (
-                      // Caso cuando el producto tiene una promoción válida (descuento > 0)
-                      <>
-                        {/* Precio original tachado */}
-                        <CCardText className="text-sm text-gray-500 line-through">
-                          ${producto.precio}
+                    {/* Mostrar mensaje de "Producto Agotado" si no hay stock */}
+                      {producto.stock === 0 ? (
+                        <CCardText className="text-sm font-bold text-red-600">
+                          Producto Agotado
                         </CCardText>
-                        {/* Porcentaje de descuento */}
-                        <CCardText className="text-red-600 font-semibold text-sm">
-                          {producto.promocion.descuento}% de descuento
-                        </CCardText>
-                        {/* Precio con descuento */}
-                        <CCardText className="text-lg font-bold text-green-600">
-                          ${(
-                            (producto.precio -
-                            (producto.precio * producto.promocion.descuento) / 100).toFixed(2)
+                      ) : (
+                        <>
+                          {/* Mostrar precios con IVA y descuentos si aplican */}
+                          {producto.precioConPromocion && producto.precioConPromocion < producto.precio ? (
+                            <>
+                              <CCardText className="text-sm text-gray-500 line-through">
+                                ${producto.precio} <span className="text-xs">(IVA Incluido)</span>
+                              </CCardText>
+                              <CCardText className="text-red-600 font-semibold text-sm">
+                                {producto.promocion?.descuento}% de descuento
+                              </CCardText>
+                              <CCardText className="text-lg font-bold text-green-600">
+                                ${producto.precioConPromocion} <span className="text-xs">(IVA Incluido)</span>
+                              </CCardText>
+                            </>
+                          ) : (
+                            <>
+                              <CCardText className="text-lg font-bold text-gray-800">
+                                ${producto.precio} <span className="text-xs">(IVA Incluido)</span>
+                              </CCardText>
+                            </>
                           )}
-                        </CCardText>
-                      </>
-                    ) : (
-                      // Caso cuando el producto no tiene promoción o el descuento es 0
-                      <CCardText className="text-lg font-bold text-gray-800">
-                        ${producto.precio}
-                      </CCardText>
-                    )}
+                        </>
+                      )}
+
                   </CCardBody>
 
                   <CCardFooter className="flex justify-between items-center">
@@ -200,6 +205,8 @@ const ProductosPage = () => {
                     <CButton
                       color="success"
                       onClick={() => agregarAlCarrito(producto)}
+                      disabled={producto.stock === 0}
+                      className={`d-flex align-items-center ${producto.stock === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       <FaShoppingCart />
                     </CButton>

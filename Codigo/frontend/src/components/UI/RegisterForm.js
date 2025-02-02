@@ -21,6 +21,7 @@ const RegisterForm = () => {
   });
 
   const [validationErrors, setValidationErrors] = useState({});
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, color: "bg-red-500" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -37,21 +38,40 @@ const RegisterForm = () => {
     }));
 
     setFormData((prevData) => ({ ...prevData, [id]: value }));
+
+    if (id === "password") {
+      evaluatePasswordStrength(value);
+    }
   };
 
   const handlePasswordToggle = () => {
     setShowPassword(!showPassword);
   };
 
-    // Validar el teléfono al enviar el formulario
-    const validatePhone = (phone) => {
-      const phoneRegex = /^09\d{8}$/;
-      if (!phoneRegex.test(phone)) {
-        return "El teléfono debe ser un número de 10 dígitos y empezar con '09'.";
-      }
-      return undefined;
-    };
-  
+  // Validar el teléfono al enviar el formulario
+  const validatePhone = (phone) => {
+    const phoneRegex = /^09\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      return "El teléfono debe ser un número de 10 dígitos y empezar con '09'.";
+    }
+    return undefined;
+  };
+
+  // Evaluar la fuerza de la contraseña
+  const evaluatePasswordStrength = (password) => {
+    let score = 0;
+    if (password.length >= 8) score += 25;
+    if (/[A-Z]/.test(password)) score += 25;
+    if (/\d/.test(password)) score += 25;
+    if (/[@$!%*?&]/.test(password)) score += 25;
+
+    let color = "bg-red-500";
+    if (score >= 75) color = "bg-green-500";
+    else if (score >= 50) color = "bg-yellow-500";
+    else if (score >= 25) color = "bg-orange-500";
+
+    setPasswordStrength({ score, color });
+  };
 
   // Enviar datos al backend
   const handleSubmit = async (e) => {
@@ -174,6 +194,9 @@ const RegisterForm = () => {
           >
             {showPassword ? "Ocultar" : "Mostrar"} contraseña
           </button>
+          <div className="mt-2 w-full bg-gray-300 rounded-full h-2">
+            <div className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`} style={{ width: `${passwordStrength.score}%` }}></div>
+          </div>
           <ul className="text-sm text-gray-400 mt-2">
             <li>• Al menos 8 caracteres</li>
             <li>• Una letra mayúscula</li>
