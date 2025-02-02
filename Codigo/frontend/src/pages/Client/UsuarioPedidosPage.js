@@ -55,11 +55,11 @@ const UsuarioPedidosPage = () => {
   const getProgressValue = (estado) => {
     switch (estado) {
       case "Pendiente":
-        return { value: 25, color: "success" };
+        return { value: 25, color: "secondary" };
       case "Procesando":
-        return { value: 50, color: "success" };
+        return { value: 50, color: "secondary" };
       case "Enviado":
-        return { value: 75, color: "success" };
+        return { value: 75, color: "secondary" };
       case "Entregado":
         return { value: 100, color: "success" };
       default:
@@ -121,7 +121,11 @@ const UsuarioPedidosPage = () => {
             <CCard key={pedido.id} className="p-4 shadow-md bg-white rounded-lg">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">
-                  Pedido #{pedido.id} - {new Date(pedido.fechaPedido).toLocaleString()}
+                  Pedido realizado el {new Date(pedido.fechaPedido).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </h2>
                 <CButton color="primary" size="sm" onClick={() => handleToggleCollapse(pedido.id)}>
                   <FaChevronDown />
@@ -140,12 +144,13 @@ const UsuarioPedidosPage = () => {
 
                   <div className="flex justify-between items-center w-full mt-3 relative">
                     {estadosOrdenados.map((estado, index) => {
-                      const estadoActualizado = pedido?.historialEstados?.find((e) => e.nombre === estado);
+                      const estadoActualizado = pedido?.historialEstados?.find((e) => e.estado?.nombre === estado.nombre);
+                      
                       return (
                         <div key={estado.nombre} className="flex flex-col items-center">
                           <div
                             className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-xs font-bold ${
-                              estadosOrdenados.findIndex((e) => e.nombre === estadoNombre) >= index
+                              estadosOrdenados.findIndex((e) => e.nombre === pedido.estado.nombre) >= index
                                 ? "bg-gray-300"
                                 : "bg-gray-100"
                             }`}
@@ -154,9 +159,13 @@ const UsuarioPedidosPage = () => {
                           </div>
                           <p className="text-xs text-gray-700 mt-1">{estado.nombre}</p>
                           <p className="text-xs text-gray-500">
-                            Fecha Pedido: {pedido?.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString() : "--"}
+                            Método de Envío: {pedido?.metodoEnvio?.nombre || "No especificado"}
                           </p>
-                          {pedido?.estado !== "Pendiente" && (
+                          {estado.nombre === "Pendiente" ? (
+                            <p className="text-xs text-gray-500">
+                              Fecha Pedido: {pedido?.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString() : "--"}
+                            </p>
+                          ) : (
                             <p className="text-xs text-gray-500">
                               Fecha Actualización: {estadoActualizado?.fechaCambio ? new Date(estadoActualizado.fechaCambio).toLocaleDateString() : "--"}
                             </p>
