@@ -142,10 +142,11 @@ const UsuarioPedidosPage = () => {
                     className="mb-3"
                   />
 
+                  {/* 🔹 Línea de Estados */}
                   <div className="flex justify-between items-center w-full mt-3 relative">
                     {estadosOrdenados.map((estado, index) => {
                       const estadoActualizado = pedido?.historialEstados?.find((e) => e.estado?.nombre === estado.nombre);
-                      
+
                       return (
                         <div key={estado.nombre} className="flex flex-col items-center">
                           <div
@@ -158,16 +159,13 @@ const UsuarioPedidosPage = () => {
                             {estado.icon}
                           </div>
                           <p className="text-xs text-gray-700 mt-1">{estado.nombre}</p>
-                          <p className="text-xs text-gray-500">
-                            Método de Envío: {pedido?.metodoEnvio?.nombre || "No especificado"}
-                          </p>
                           {estado.nombre === "Pendiente" ? (
                             <p className="text-xs text-gray-500">
-                              Fecha Pedido: {pedido?.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString() : "--"}
+                              Fecha Pedido: {pedido?.fechaPedido ? new Date(pedido.fechaPedido).toLocaleDateString("es-ES", { day: "2-digit", month: "long" }) : "--"}
                             </p>
                           ) : (
                             <p className="text-xs text-gray-500">
-                              Fecha Actualización: {estadoActualizado?.fechaCambio ? new Date(estadoActualizado.fechaCambio).toLocaleDateString() : "--"}
+                              Fecha Actualización: {estadoActualizado?.fechaCambio ? new Date(estadoActualizado.fechaCambio).toLocaleDateString("es-ES", { day: "2-digit", month: "long" }) : "--"}
                             </p>
                           )}
                         </div>
@@ -177,6 +175,7 @@ const UsuarioPedidosPage = () => {
 
                   <hr className="my-4 border-black" />
 
+                  {/* 🔹 Sección de Productos */}
                   <div className="grid grid-cols-3 gap-4">
                     {pedido.productos.map((producto) => (
                       <div
@@ -196,11 +195,27 @@ const UsuarioPedidosPage = () => {
                           </div>
                         </div>
                         <p className="text-sm font-semibold text-right">
-                          {`$${(producto.cantidad * producto.precio_unitario).toFixed(2)}`}
+                          {`$${(producto.cantidad * producto.precio_unitario)}`}
                         </p>
                       </div>
                     ))}
                   </div>
+
+                  <hr className="my-4 border-black" />
+
+                  {/* 🔹 Nueva Sección con Método de Envío, Pago y Total */}
+                  <div className="flex flex-col space-y-2 text-sm text-gray-700">
+                    <p><strong>Método de Envío:</strong> {pedido?.metodoEnvio?.nombre || "No especificado"}</p>
+                    <p><strong>Método de Pago:</strong> {pedido?.metodoPago?.nombre || "No especificado"}</p>
+                  </div>
+
+                  <hr className="my-4 border-black" />
+
+                  {/* 🔹 Total al final */}
+                  <div className="text-lg font-bold text-right text-gray-900">
+                    Total: ${pedido.total}
+                  </div>
+
                 </CCardBody>
               </CCollapse>
             </CCard>
