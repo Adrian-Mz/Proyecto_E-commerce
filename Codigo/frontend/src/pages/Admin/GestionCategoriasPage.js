@@ -10,7 +10,7 @@ const GestionCategoriasPage = () => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 15;
 
   const [newCategoria, setNewCategoria] = useState({
     nombre: "",

@@ -10,8 +10,13 @@ import {
   CButton,
   CRow,
   CCol,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
 } from "@coreui/react";
-import { FaShoppingCart } from "react-icons/fa";
+import { FaShoppingCart, FaHandPointUp } from "react-icons/fa";
 import { ProductosService } from "../../api/api.productos";
 import { useCart } from "../../context/CartContext";
 import { toast } from "react-toastify";
@@ -22,6 +27,7 @@ const ProductoDetailPage = () => {
   const [productosRelacionados, setProductosRelacionados] = useState([]);
   const [productosVisibles, setProductosVisibles] = useState(4); // Cantidad de productos visibles
   const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(false);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -102,6 +108,7 @@ const ProductoDetailPage = () => {
         {/* Contenedor de detalles */}
         <div>
           <h1 className="text-3xl font-bold mb-4 text-black">{producto.nombre}</h1>
+          
           {/* Mostrar mensaje de "Producto Agotado" si el stock es 0 */}
           {producto.stock === 0 ? (
             <p className="text-lg font-bold text-red-600">Producto Agotado</p>
@@ -110,17 +117,24 @@ const ProductoDetailPage = () => {
               {/* Mostrar precios con IVA y descuentos si aplican */}
               {producto.promocion && producto.precioConPromocion < producto.precio ? (
                 <>
-                  <p className="text-sm text-gray-500 line-through">${parseFloat(producto.precio).toFixed(2)}  <span className="text-xs">(IVA Incluido)</span></p>
+                  <p className="text-sm text-gray-500 line-through">${parseFloat(producto.precio).toFixed(2)}  
+                    <span className="text-xs">(IVA Incluido)</span>
+                  </p>
                   <p className="text-red-600 font-semibold text-sm">{producto.promocion.descuento}% de descuento</p>
-                  <p className="text-2xl font-bold text-green-600">{`$${producto.precioConPromocion}`} <span className="text-xs">(IVA Incluido)</span></p>
+                  <p className="text-2xl font-bold text-green-600">{`$${producto.precioConPromocion}`} 
+                    <span className="text-xs">(IVA Incluido)</span>
+                  </p>
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-green-600">${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span></p>
+                  <p className="text-2xl font-bold text-green-600">${parseFloat(producto.precio).toFixed(2)} 
+                    <span className="text-xs">(IVA Incluido)</span>
+                  </p>
                 </>
               )}
             </>
           )}
+
           <p className="text-gray-700 mb-4">
             <strong>Marca:</strong> {producto.marca || "Sin especificar"}
           </p>
@@ -128,20 +142,59 @@ const ProductoDetailPage = () => {
             <strong>Stock:</strong> {producto.stock > 0 ? `${producto.stock} disponibles` : "Agotado"}
           </p>
           <p className="text-gray-700 mb-6">{producto.descripcion}</p>
-          <CButton
-            color="success"
-            className={`d-flex align-items-center ${producto.stock === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
-            onClick={() => agregarAlCarrito(producto)}
-            disabled={producto.stock === 0}
+          
+          <div className="w-40 flex flex-col gap-2">
+            {/* Botón para abrir el modal de especificaciones */}
+            <CButton 
+              color="primary" 
+              className="w-48 d-flex justify-center align-items-center py-2 text-base" 
+              onClick={() => setVisible(true)}
+            >
+              <FaHandPointUp className="me-2" />
+              Especificaciones
+            </CButton>
+
+            {/* Botón de agregar al carrito */}
+            <CButton
+              color="success"
+              className="w-48 d-flex justify-center align-items-center py-2 text-base"
+              onClick={() => agregarAlCarrito(producto)}
+              disabled={producto.stock === 0}
+            >
+              <FaShoppingCart className="me-2" />
+              Agregar al Carrito
+            </CButton>
+          </div>
+
+          {/* 🔹 Modal con especificaciones */}
+          <CModal
+            alignment="center"
+            scrollable
+            visible={visible}
+            onClose={() => setVisible(false)}
+            aria-labelledby="modal-especificaciones"
+            size="xl"
           >
-            <FaShoppingCart className="me-2" />
-            Agregar al Carrito
-          </CButton>
+            <CModalHeader>
+              <CModalTitle id="modal-especificaciones">Especificaciones del Producto</CModalTitle>
+            </CModalHeader>
+            <CModalBody>
+              {/* 🔹 Se mantiene el formato de saltos de línea */}
+              <p className="text-gray-700 whitespace-pre-line">
+                {producto.especificaciones}
+              </p>
+            </CModalBody>
+            <CModalFooter>
+              <CButton color="secondary" onClick={() => setVisible(false)}>
+                Cerrar
+              </CButton>
+            </CModalFooter>
+          </CModal>
         </div>
       </div>
 
       {/* Línea separadora */}
-      <hr className="my-6 border-gray-300" />
+      <hr className="my-6 border-gray-600" />
 
       {/* Productos relacionados */}
       <h2 className="text-2xl font-bold mb-4">Productos Relacionados</h2>
