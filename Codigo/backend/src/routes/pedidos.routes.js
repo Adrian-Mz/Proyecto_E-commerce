@@ -21,19 +21,10 @@ router.get('/:pedidoId?', verificarToken, async (req, res) => {
   try {
     const usuarioId = req.usuario.id;
     const pedidoId = req.params.pedidoId ? parseInt(req.params.pedidoId, 10) : null;
-    
-    const pedidos = await pedidosService.obtenerPedidos({ usuarioId, pedidoId });
-    res.status(200).json({ pedidos });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    const esAdmin = req.usuario.rol === 'Administrador'; // Verifica si es admin
 
-// Obtener todos los pedidos (solo para administradores)
-router.get('/', verificarToken, verificarRol(['Administrador']), async (req, res) => {
-  try {
-    const pedidos = await pedidosService.obtenerTodosLosPedidos();
-    res.status(200).json(pedidos);
+    const pedidos = await pedidosService.obtenerPedidos({ usuarioId, pedidoId, esAdmin });
+    res.status(200).json({ pedidos });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

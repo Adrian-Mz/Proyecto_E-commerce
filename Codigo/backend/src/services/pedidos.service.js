@@ -27,12 +27,13 @@ export const pedidosService = {
 // Obtener pedidos según el contexto (usuario autenticado o administrador)
 async obtenerPedidos({ usuarioId = null, pedidoId = null, esAdmin = false }) {
   let pedidos;
+
   if (pedidoId) {
     pedidos = await pedidosData.getPedidoById(pedidoId, usuarioId);
+  } else if (esAdmin) {
+    pedidos = await pedidosData.getAllPedidos(); // Aquí se cargan todos los pedidos
   } else if (usuarioId) {
     pedidos = await pedidosData.getPedidosByUsuarioId(usuarioId);
-  } else if (esAdmin) {
-    pedidos = await pedidosData.getAllPedidos();
   } else {
     throw new Error('Parámetros incorrectos para obtener pedidos.');
   }
