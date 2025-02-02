@@ -91,11 +91,11 @@ const ProductoDetailPage = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Contenedor de imagen */}
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center w-4/5 h-96 bg-white shadow-lg rounded-lg">
           <img
             src={producto.imagen || "https://via.placeholder.com/500"}
             alt={producto.nombre}
-            className="w-full max-w-lg rounded-lg shadow-lg"
+            className="w-64 max-w-md rounded-lg"
           />
         </div>
 
@@ -110,13 +110,13 @@ const ProductoDetailPage = () => {
               {/* Mostrar precios con IVA y descuentos si aplican */}
               {producto.promocion && producto.precioConPromocion < producto.precio ? (
                 <>
-                  <p className="text-sm text-gray-500 line-through">{`$${producto.precio}`} <span className="text-xs">(IVA Incluido)</span></p>
+                  <p className="text-sm text-gray-500 line-through">${parseFloat(producto.precio).toFixed(2)}  <span className="text-xs">(IVA Incluido)</span></p>
                   <p className="text-red-600 font-semibold text-sm">{producto.promocion.descuento}% de descuento</p>
                   <p className="text-2xl font-bold text-green-600">{`$${producto.precioConPromocion}`} <span className="text-xs">(IVA Incluido)</span></p>
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-green-600">{`$${producto.precio}`} <span className="text-xs">(IVA Incluido)</span></p>
+                  <p className="text-2xl font-bold text-green-600">${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span></p>
                 </>
               )}
             </>
@@ -167,13 +167,21 @@ const ProductoDetailPage = () => {
                   <>
                     {relacionado.promocion && relacionado.precioConPromocion < relacionado.precio ? (
                       <>
-                        <CCardText className="text-sm text-gray-500 line-through">{`$${relacionado.precio}`} <span className="text-xs">(IVA Incluido)</span></CCardText>
-                        <CCardText className="text-red-600 font-semibold text-sm">{relacionado.promocion.descuento}% de descuento</CCardText>
-                        <CCardText className="text-lg font-bold text-green-600">{`$${relacionado.precioConPromocion}`} <span className="text-xs">(IVA Incluido)</span></CCardText>
+                        <CCardText className="text-sm text-gray-500 line-through">
+                          {`$${parseFloat(relacionado.precio).toFixed(2)}`}<span className="text-xs">(IVA Incluido)</span>
+                        </CCardText>
+                        <CCardText className="text-red-600 font-semibold text-sm">
+                          {relacionado.promocion.descuento}% de descuento
+                        </CCardText>
+                        <CCardText className="text-lg font-bold text-green-600">
+                          {`$${relacionado.precioConPromocion}`} <span className="text-xs">(IVA Incluido)</span>
+                        </CCardText>
                       </>
                     ) : (
                       <>
-                        <CCardText className="text-lg font-bold text-green-600">{`$${relacionado.precio}`} <span className="text-xs">(IVA Incluido)</span></CCardText>
+                        <CCardText className="text-lg font-bold text-green-600">
+                          {`$${parseFloat(relacionado.precio).toFixed(2)}`}<span className="text-xs"> (IVA Incluido)</span>
+                        </CCardText>
                       </>
                     )}
                   </>

@@ -171,7 +171,7 @@ const ProductosPage = () => {
                           {producto.precioConPromocion && producto.precioConPromocion < producto.precio ? (
                             <>
                               <CCardText className="text-sm text-gray-500 line-through">
-                                ${producto.precio} <span className="text-xs">(IVA Incluido)</span>
+                                ${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span>
                               </CCardText>
                               <CCardText className="text-red-600 font-semibold text-sm">
                                 {producto.promocion?.descuento}% de descuento
@@ -183,7 +183,7 @@ const ProductosPage = () => {
                           ) : (
                             <>
                               <CCardText className="text-lg font-bold text-gray-800">
-                                ${producto.precio} <span className="text-xs">(IVA Incluido)</span>
+                              ${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span>
                               </CCardText>
                             </>
                           )}
