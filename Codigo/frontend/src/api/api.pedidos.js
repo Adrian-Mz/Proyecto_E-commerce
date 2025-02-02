@@ -1,10 +1,11 @@
 import api from './api.config';
 
 export const PedidosAPI = {
-    // Obtener todos los pedidos
-  getPedidos: async () => {
+  // Obtener pedidos según el contexto (usuario autenticado o administrador)
+  getPedidos: async (pedidoId = null) => {
     try {
-      const response = await api.get('/pedidos');
+      const url = pedidoId ? `/pedidos/${pedidoId}` : `/pedidos`;
+      const response = await api.get(url);
       return response.data;
     } catch (error) {
       console.error('Error al obtener los pedidos:', error.response?.data || error.message);
@@ -12,17 +13,7 @@ export const PedidosAPI = {
     }
   },
 
-  getHistorialPedidos: async () => {
-    try {
-      const response = await api.get("/pedidos/historial");
-      return response.data;
-    } catch (error) {
-      console.error("Error al obtener el historial de pedidos:", error.response?.data || error.message);
-      throw error;
-    }
-  },
-  
-  // Obtener un pedido específico del usuario autenticado
+  // Obtener un pedido específico
   getPedido: async (pedidoId) => {
     try {
       const response = await api.get(`/pedidos/${pedidoId}`);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { PedidosAPI } from "../../api/api.pedidos";
 import { EstadosAPI } from "../../api/api.estados";
 import { CCollapse, CButton, CCard, CCardBody, CProgress } from "@coreui/react";
-import { FaChevronDown, FaBoxOpen, FaCog, FaShippingFast, FaCheckCircle } from "react-icons/fa"; // Importar iconos
+import { FaChevronDown, FaBoxOpen, FaCog, FaShippingFast, FaCheckCircle } from "react-icons/fa"; 
 import { toast } from "react-toastify";
 
 const UsuarioPedidosPage = () => {
@@ -17,7 +17,7 @@ const UsuarioPedidosPage = () => {
     const fetchPedidosAndEstados = async () => {
       try {
         const [pedidosResponse, estadosResponse] = await Promise.all([
-          PedidosAPI.getHistorialPedidos(),
+          PedidosAPI.getPedidos(), // Ahora usamos esta función para obtener pedidos
           EstadosAPI.getEstados(),
         ]);
 
@@ -28,8 +28,8 @@ const UsuarioPedidosPage = () => {
         }, {});
         setEstados(estadosMap);
       } catch (error) {
-        console.error("Error al cargar el historial de pedidos:", error);
-        toast.error("Error al cargar el historial de pedidos.");
+        console.error("Error al cargar los pedidos:", error);
+        toast.error("Error al cargar los pedidos.");
       } finally {
         setIsLoading(false);
       }
@@ -138,7 +138,6 @@ const UsuarioPedidosPage = () => {
                     className="mb-3"
                   />
 
-                  {/* 🔹 Línea de Estados con Iconos */}
                   <div className="flex justify-between items-center w-full mt-3 relative">
                     {estadosOrdenados.map((estado, index) => {
                       const estadoActualizado = pedido?.historialEstados?.find((e) => e.nombre === estado);
@@ -159,7 +158,7 @@ const UsuarioPedidosPage = () => {
                           </p>
                           {pedido?.estado !== "Pendiente" && (
                             <p className="text-xs text-gray-500">
-                              Fecha Actualización: {estadoActualizado?.fechaActualizacion ? new Date(estadoActualizado.fechaActualizacion).toLocaleDateString() : "--"}
+                              Fecha Actualización: {estadoActualizado?.fechaCambio ? new Date(estadoActualizado.fechaCambio).toLocaleDateString() : "--"}
                             </p>
                           )}
                         </div>
@@ -169,7 +168,6 @@ const UsuarioPedidosPage = () => {
 
                   <hr className="my-4 border-black" />
 
-                  {/* 📌 Sección de Productos en columnas */}
                   <div className="grid grid-cols-3 gap-4">
                     {pedido.productos.map((producto) => (
                       <div

@@ -22,7 +22,14 @@ const GestionPedidosPage = () => {
     const fetchPedidos = async () => {
       try {
         const pedidosResponse = await PedidosAPI.getPedidos();
-        setPedidos(pedidosResponse || []);
+        
+        // Agregar historial de estados a cada pedido
+        const pedidosConHistorial = pedidosResponse.pedidos.map((pedido) => ({
+          ...pedido,
+          historialEstados: pedido.historialEstados || [],
+        }));
+
+        setPedidos(pedidosConHistorial);
       } catch (error) {
         console.error("Error al cargar pedidos:", error);
         toast.error("Error al cargar los pedidos.");
@@ -32,21 +39,20 @@ const GestionPedidosPage = () => {
     };
 
     const fetchEstados = async () => {
-        try {
+      try {
         const estadosResponse = await EstadosAPI.getEstados();
         
         // Filtrar los estados que solo queremos mostrar
         const estadosFiltrados = estadosResponse.filter((estado) =>
-            ["Pendiente", "Procesando", "Enviado", "Entregado"].includes(estado.nombre)
+          ["Pendiente", "Procesando", "Enviado", "Entregado"].includes(estado.nombre)
         );
-        
+
         setEstados(estadosFiltrados);
-        } catch (error) {
+      } catch (error) {
         console.error("Error al cargar estados:", error);
         toast.error("Error al cargar los estados.");
-        }
+      }
     };
-    
 
     fetchPedidos();
     fetchEstados();
@@ -57,11 +63,18 @@ const GestionPedidosPage = () => {
       if (selectedPedido && nuevoEstadoId) {
         await EstadosAPI.updateEstadoPedido(selectedPedido.id, nuevoEstadoId);
 
-        // Actualizar el estado local del pedido
+        // Actualizar el estado local del pedido y su historial
         setPedidos((prevPedidos) =>
           prevPedidos.map((pedido) =>
             pedido.id === selectedPedido.id
-              ? { ...pedido, estadoId: nuevoEstadoId }
+              ? {
+                  ...pedido,
+                  estadoId: nuevoEstadoId,
+                  historialEstados: [
+                    ...pedido.historialEstados,
+                    { estadoId: nuevoEstadoId, fechaCambio: new Date().toISOString() },
+                  ],
+                }
               : pedido
           )
         );
@@ -73,7 +86,7 @@ const GestionPedidosPage = () => {
       }
     } catch (error) {
       console.error("Error al actualizar el estado del pedido:", error);
-      toast.error(error);
+      toast.error("Error al actualizar el estado.");
     }
   };
 
@@ -125,7 +138,7 @@ const GestionPedidosPage = () => {
           { key: "direccionEnvio", label: "Dirección de Envío" },
           { key: "total", label: "Total" },
           { key: "estado", label: "Estado" },
-          { key: "productos", label: "Productos" },
+          { key: "historial", label: "Historial de Estados" },
           { key: "acciones", label: "Acciones" },
         ]}
         data={paginatedData.map((pedido) => ({
@@ -133,11 +146,12 @@ const GestionPedidosPage = () => {
           usuario: `${pedido.usuario?.nombre || "N/A"} ${pedido.usuario?.apellido || "N/A"}`,
           correo: pedido.usuario?.correo || "N/A",
           estado: estados.find((estado) => estado.id === pedido.estadoId)?.nombre || "Desconocido",
-          productos: (
+          historial: (
             <ul className="list-disc ml-4">
-              {pedido.productos.map((producto) => (
-                <li key={producto.id}>
-                  {producto.nombre} (x{producto.cantidad}) - ${producto.precio_unitario}
+              {pedido.historialEstados.map((historial) => (
+                <li key={historial.estadoId}>
+                  {estados.find((e) => e.id === historial.estadoId)?.nombre || "Desconocido"} -{" "}
+                  {new Date(historial.fechaCambio).toLocaleString()}
                 </li>
               ))}
             </ul>
@@ -150,7 +164,7 @@ const GestionPedidosPage = () => {
               }}
               className="text-blue-500 hover:text-blue-700"
             >
-                <FaExchangeAlt size={24} className="" />
+              <FaExchangeAlt size={24} className="" />
             </button>
           ),
         }))}
