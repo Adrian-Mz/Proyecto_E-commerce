@@ -20,6 +20,17 @@ export const pedidosData = {
             correo: true,
           },
         },
+        historialEstados: {
+          include: {
+            estado: {
+              select: {
+                nombre: true,
+                descripcion: true,
+              },
+            },
+          },
+          orderBy: { fechaCambio: 'asc' },
+        },
       },
     });
   },
@@ -34,6 +45,17 @@ export const pedidosData = {
         metodoPago: true,
         metodoEnvio: true,
         estado: true,
+        historialEstados: {
+          include: {
+            estado: {
+              select: {
+                nombre: true,
+                descripcion: true,
+              },
+            },
+          },
+          orderBy: { fechaCambio: 'asc' },
+        },
       },
     });
   },
@@ -64,24 +86,21 @@ export const pedidosData = {
             costo: true,
           },
         },
-      },
-    });
-  },  
-  
-  async getPedidosByUsuarioId(usuarioId) {
-    return prisma.pedidos.findMany({
-      where: { usuarioId },
-      include: {
-        productos: {
-          include: { producto: true },
+        historialEstados: {
+          include: {
+            estado: {
+              select: {
+                nombre: true,
+                descripcion: true,
+              },
+            },
+          },
+          orderBy: { fechaCambio: 'asc' },
         },
-        metodoPago: true,
-        metodoEnvio: true,
-        estado: true,
       },
     });
-  },  
-  
+  },
+
   async createPedido(usuarioId, direccionEnvio, metodoPagoId, metodoEnvioId, productos, total) {
     return prisma.pedidos.create({
       data: {
@@ -99,12 +118,20 @@ export const pedidosData = {
             precio_unitario,
           })),
         },
+        historialEstados: {
+          create: {
+            estadoId: 1, // Estado inicial "Pendiente"
+            fechaCambio: new Date(),
+          },
+        },
       },
       include: {
         productos: true,
       },
     });
-  },  
+  },
+
+    
 
   async getMetodosPago() {
     return prisma.metodo_pago.findMany();
@@ -114,15 +141,27 @@ export const pedidosData = {
     return prisma.metodo_envio.findMany();
   },
 
-  // **Nuevo método: Actualizar estado del pedido**
+  // Actualizar estado del 
   async actualizarEstadoPedido(pedidoId, nuevoEstadoId) {
-    return prisma.pedidos.update({
-      where: { id: pedidoId },
-      data: { estadoId: nuevoEstadoId, fechaActualizacion: new Date() },
-    });
+    return prisma.$transaction([
+      // Actualizar estado del pedido
+      prisma.pedidos.update({
+        where: { id: pedidoId },
+        data: { estadoId: nuevoEstadoId, fechaActualizacion: new Date() },
+      }),
+
+      // Registrar el cambio en historial_estado_pedidos
+      prisma.historial_estado_pedidos.create({
+        data: {
+          pedidoId,
+          estadoId: nuevoEstadoId,
+          fechaCambio: new Date(),
+        },
+      }),
+    ]);
   },
 
-  // **Nuevo método: Verificar si un pedido está en estado "Entregado"**
+  // Verificar si un pedido está en estado "Entregado"
   async verificarEstadoEntregado(pedidoId) {
     const pedido = await prisma.pedidos.findUnique({
       where: { id: pedidoId },
@@ -149,6 +188,7 @@ export const pedidosData = {
     });
   },
 
+  // Historial de cambios de estado/pedidos
   async getHistorialEstadosPedido(pedidoId) {
     return prisma.historial_estado_pedidos.findMany({
       where: { pedidoId },
@@ -160,8 +200,8 @@ export const pedidosData = {
           },
         },
       },
-      orderBy: { fechaCambio: 'asc' }, // Ordenar por fecha de cambio ascendente
+      orderBy: { fechaCambio: 'asc' },
     });
-  }  
+  },  
 
 };
