@@ -27,6 +27,7 @@ const GestionProductosPage = () => {
     garantia: "",
     categoriaId: "",
     promocionId: "",
+    ivaPorcentaje: "",
   });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -69,6 +70,7 @@ const GestionProductosPage = () => {
       garantia: "",
       categoriaId: "",
       promocionId: "",
+      ivaPorcentaje: "",
     });
   };
 
@@ -138,6 +140,7 @@ const GestionProductosPage = () => {
           stock: parseInt(selectedProduct.stock, 10),
           categoriaId: parseInt(selectedProduct.categoriaId, 10),
           promocionId: parseInt(selectedProduct.promocionId, 10),
+          ivaPorcentaje: parseInt(selectedProduct.ivaPorcentaje, 10),
         };
 
         const updatedProduct = await ProductosService.updateProducto(
@@ -241,6 +244,7 @@ const GestionProductosPage = () => {
           { key: "stock", label: "Stock" },
           { key: "categoria", label: "Categoría" },
           { key: "promocion", label: "Promoción" },
+          { key: "iva", label: "IVA" },
           { key: "acciones", label: "Acciones" },
         ]}
         data={paginatedData.map((item) => ({
@@ -253,6 +257,7 @@ const GestionProductosPage = () => {
           promocion:
             promociones.find((promocion) => promocion.id === item.promocionId)?.nombre ||
             "Sin promoción",
+          iva: item.ivaPorcentaje + "%",
           acciones: (
             <div className="flex space-x-2">
               <button
@@ -406,6 +411,17 @@ const renderProductInputs = (product, setProduct, categorias, promociones, marca
       <textarea
         value={product?.especificaciones || ""}
         onChange={(e) => setProduct((prev) => ({ ...prev, especificaciones: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+    <div>
+      <label>IVA (%):</label>
+      <input
+        type="number"
+        min="0"
+        max="100"
+        value={product?.ivaPorcentaje || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, ivaPorcentaje: e.target.value }))}
         className="border p-2 rounded w-full"
       />
     </div>

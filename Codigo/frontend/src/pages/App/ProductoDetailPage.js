@@ -115,23 +115,28 @@ const ProductoDetailPage = () => {
           ) : (
             <>
               {/* Mostrar precios con IVA y descuentos si aplican */}
-              {producto.promocion && producto.precioConPromocion < producto.precio ? (
-                <>
-                  <p className="text-sm text-gray-500 line-through">${parseFloat(producto.precio).toFixed(2)}  
+              {/* Mostrar precios con IVA y descuentos si aplican */}
+                {producto.promocion && producto.promocion.descuento > 0 ? (
+                  <>
+                    <p className="text-sm text-gray-500 line-through">
+                      ${parseFloat(producto.precio).toFixed(2)}  
+                      <span className="text-xs">(IVA Incluido)</span>
+                    </p>
+                    <p className="text-red-600 font-semibold text-sm">
+                      {producto.promocion.descuento}% de descuento
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${parseFloat(producto.precio - (producto.precio * producto.promocion.descuento) / 100).toFixed(2)} 
+                      <span className="text-xs">(IVA Incluido)</span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-2xl font-bold text-green-600">
+                    ${parseFloat(producto.precio).toFixed(2)} 
                     <span className="text-xs">(IVA Incluido)</span>
                   </p>
-                  <p className="text-red-600 font-semibold text-sm">{producto.promocion.descuento}% de descuento</p>
-                  <p className="text-2xl font-bold text-green-600">{`$${producto.precioConPromocion}`} 
-                    <span className="text-xs">(IVA Incluido)</span>
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-2xl font-bold text-green-600">${parseFloat(producto.precio).toFixed(2)} 
-                    <span className="text-xs">(IVA Incluido)</span>
-                  </p>
-                </>
-              )}
+                )}
+
             </>
           )}
 

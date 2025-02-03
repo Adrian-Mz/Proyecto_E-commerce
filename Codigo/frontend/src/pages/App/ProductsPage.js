@@ -161,35 +161,33 @@ const ProductosPage = () => {
                   <CCardBody>
                     <CCardTitle className="font-bold">{producto.nombre}</CCardTitle>
                     {/* Mostrar mensaje de "Producto Agotado" si no hay stock */}
-                      {producto.stock === 0 ? (
-                        <CCardText className="text-sm font-bold text-red-600">
-                          Producto Agotado
-                        </CCardText>
-                      ) : (
-                        <>
-                          {/* Mostrar precios con IVA y descuentos si aplican */}
-                          {producto.precioConPromocion && producto.precioConPromocion < producto.precio ? (
-                            <>
-                              <CCardText className="text-sm text-gray-500 line-through">
-                                ${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span>
-                              </CCardText>
-                              <CCardText className="text-red-600 font-semibold text-sm">
-                                {producto.promocion?.descuento}% de descuento
-                              </CCardText>
-                              <CCardText className="text-lg font-bold text-green-600">
-                                ${producto.precioConPromocion} <span className="text-xs">(IVA Incluido)</span>
-                              </CCardText>
-                            </>
-                          ) : (
-                            <>
-                              <CCardText className="text-lg font-bold text-gray-800">
+                    {producto.stock === 0 ? (
+                      <CCardText className="text-sm font-bold text-red-600">
+                        Producto Agotado
+                      </CCardText>
+                    ) : (
+                      <>
+                        {/* Verificamos correctamente si el producto tiene promoción y recalculamos el precio */}
+                        {producto.promocion && producto.promocion.descuento > 0 ? (
+                          <>
+                            <CCardText className="text-sm text-gray-500 line-through">
                               ${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span>
-                              </CCardText>
-                            </>
-                          )}
-                        </>
-                      )}
-
+                            </CCardText>
+                            <CCardText className="text-red-600 font-semibold text-sm">
+                              {producto.promocion.descuento}% de descuento
+                            </CCardText>
+                            <CCardText className="text-lg font-bold text-green-600">
+                              ${parseFloat(producto.precio - (producto.precio * producto.promocion.descuento) / 100).toFixed(2)}
+                              <span className="text-xs">(IVA Incluido)</span>
+                            </CCardText>
+                          </>
+                        ) : (
+                          <CCardText className="text-lg font-bold text-gray-800">
+                            ${parseFloat(producto.precio).toFixed(2)} <span className="text-xs">(IVA Incluido)</span>
+                          </CCardText>
+                        )}
+                      </>
+                    )}
                   </CCardBody>
 
                   <CCardFooter className="flex justify-between items-center">
