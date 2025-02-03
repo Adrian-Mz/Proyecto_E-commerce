@@ -10,12 +10,16 @@ export const promocionesData = {
       include: {
         categorias: {
           include: {
-            categoria: true, // Incluye detalles de las categorías asociadas
+            categoria: {
+              include: {
+                productos: true, // Incluir productos dentro de las categorías
+              },
+            },
           },
         },
       },
     });
-  },
+  },  
 
   // Obtener todas las promociones
   async getAllPromociones() {
@@ -85,10 +89,9 @@ export const promocionesData = {
       // Si no hay categorías, asignar los productos a la promoción "Sin promoción" (ID 6)
       await prisma.productos.updateMany({
         where: { promocionId },
-        data: { promocionId: 6 }, // ID 6 para "Sin promoción"
+        data: { promocionId: 6 },
       });
   
-      // Eliminar las relaciones con categorías
       await prisma.categoria_promocion.deleteMany({
         where: { promocionId },
       });
@@ -96,12 +99,12 @@ export const promocionesData = {
       return;
     }
   
-    // Eliminar las relaciones existentes
+    // Eliminar relaciones previas
     await prisma.categoria_promocion.deleteMany({
       where: { promocionId },
     });
   
-    // Crear nuevas relaciones para las categorías
+    // Crear nuevas relaciones
     await prisma.categoria_promocion.createMany({
       data: categorias.map((categoriaId) => ({
         promocionId,
@@ -116,21 +119,23 @@ export const promocionesData = {
       select: { id: true },
     }).then((productos) => productos.map((p) => p.id));
   
-    // Actualizar los productos con la promoción
-    await prisma.productos.updateMany({
-      where: { id: { in: productosIds } },
-      data: { promocionId },
-    });
+    if (productosIds.length > 0) {
+      // Actualizar los productos con la promoción
+      await prisma.productos.updateMany({
+        where: { id: { in: productosIds } },
+        data: { promocionId },
+      });
+    }
   
-    // Eliminar la promoción de productos que ya no están en las categorías asociadas
+    // Eliminar promoción de productos que ya no están en las categorías asociadas
     await prisma.productos.updateMany({
       where: {
         promocionId,
         categoriaId: { notIn: categorias },
       },
-      data: { promocionId: 6 }, // Asignar a "Sin promoción" (ID 6)
+      data: { promocionId: 6 },
     });
-  },  
+  },    
 
   // Eliminar una promoción
   async deletePromocion(promocionId) {
@@ -233,6 +238,37 @@ export const promocionesData = {
         }
       });
     }
+  },
+
+  async agregarCategoriasAPromocion(promocionId, categorias) {
+    if (!Array.isArray(categorias) || categorias.length === 0) {
+      throw new Error('Debe proporcionar una lista de categorías válida.');
+    }
+  
+    // Crear relaciones de categorías con la promoción
+    await prisma.categoria_promocion.createMany({
+      data: categorias.map((categoriaId) => ({
+        promocionId,
+        categoriaId,
+      })),
+      skipDuplicates: true,
+    });
+  
+    // Obtener productos de las categorías y asignarles la promoción
+    const productosIds = await prisma.productos.findMany({
+      where: { categoriaId: { in: categorias } },
+      select: { id: true },
+    }).then((productos) => productos.map((p) => p.id));
+  
+    if (productosIds.length > 0) {
+      await prisma.productos.updateMany({
+        where: { id: { in: productosIds } },
+        data: { promocionId },
+      });
+    }
+  
+    return { mensaje: "Promoción asignada correctamente a las categorías y productos." };
   }
+  
   
 };

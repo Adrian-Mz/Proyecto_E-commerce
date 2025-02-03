@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { estadoData } from "../data/estado.data.js";
 import { enviarCorreo } from "../utils/emailService.js"; // Servicio de envío de correos
+import { auditoriaService } from "../services/auditoria.service.js"
 
 const prisma = new PrismaClient();
 
@@ -11,13 +12,17 @@ export const estadoService = {
   },
 
   // Actualizar el estado del pedido
-  async actualizarEstadoPedido(pedidoId, nuevoEstadoId) {
+  async actualizarEstadoPedido(pedidoId, nuevoEstadoId, usuarioId) {
+    if (!usuarioId) {
+      throw new Error("El usuarioId es obligatorio para registrar auditoría.");
+    }
+
     // Verificar si el estado existe
     const estado = await estadoData.getEstadoById(nuevoEstadoId);
     if (!estado) {
       throw new Error("El estado proporcionado no es válido.");
     }
-  
+
     // Obtener el pedido actual
     const pedidoActual = await prisma.pedidos.findUnique({
       where: { id: pedidoId },
@@ -26,11 +31,11 @@ export const estadoService = {
         usuario: true, // Incluye datos del usuario
       },
     });
-  
+
     if (!pedidoActual) {
       throw new Error(`No se encontró un pedido con ID ${pedidoId}.`);
     }
-  
+
     // Validar flujo lógico de estados
     const estadosValidos = {
       1: [2], // Pendiente → Procesando
@@ -38,23 +43,20 @@ export const estadoService = {
       3: [4], // Enviado → Entregado
       4: [], // Entregado (estado final)
     };
-  
+
     if (!estadosValidos[pedidoActual.estadoId]?.includes(nuevoEstadoId)) {
       throw new Error(
         `No se puede cambiar el estado de '${pedidoActual.estado.nombre}' a '${estado.nombre}'.`
       );
     }
-  
-    // Actualizar el estado del pedido y registrar en historial de estado
+
+    // Actualizar el estado del pedido
     const pedidoActualizado = await prisma.pedidos.update({
       where: { id: pedidoId },
       data: { estadoId: nuevoEstadoId, fechaActualizacion: new Date() },
-      include: {
-        estado: true,
-        usuario: true,
-      },
+      include: { estado: true, usuario: true },
     });
-  
+
     // Registrar el cambio en historial_estado_pedidos
     await prisma.historial_estado_pedidos.create({
       data: {
@@ -63,15 +65,24 @@ export const estadoService = {
         fechaCambio: new Date(),
       },
     });
-  
+
+    // ✅ Registrar Auditoría
+    await auditoriaService.registrarEvento(
+      usuarioId,
+      "pedidos",
+      "ACTUALIZAR_ESTADO",
+      { pedidoId, estadoAnterior: pedidoActual.estado.nombre, estadoNuevo: estado.nombre },
+      `Pedido #${pedidoId} cambió de estado '${pedidoActual.estado.nombre}' a '${estado.nombre}'.`
+    );
+
     // Enviar correo al cliente sobre el cambio de estado
     await this.enviarNotificacionEstado(pedidoActualizado);
-  
+
     return {
       mensaje: "Estado actualizado correctamente.",
       pedido: pedidoActualizado,
     };
-  },  
+  },
 
   // Enviar notificación por correo al cliente
   async enviarNotificacionEstado(pedido) {

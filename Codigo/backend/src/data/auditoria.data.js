@@ -3,33 +3,34 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const auditoriaData = {
-  // Crear un registro en la tabla de auditoría
-  async crearRegistro({ usuarioId, tabla_afectada, accion, registro, descripcion_cambio }) {
-    return await prisma.auditoria.create({
-      data: {
-        usuarioId,
-        tabla_afectada,
-        accion,
-        registro,
-        descripcion_cambio,
-        fecha_hora: new Date(),
-      },
-    });
+  // Registrar un evento en la auditoría
+  async registrarEvento(usuarioId, tablaAfectada, accion, registro, descripcionCambio = null) {
+    try {
+      return await prisma.auditoria.create({
+        data: {
+          usuarioId,
+          tabla_afectada: tablaAfectada,
+          accion,
+          registro: JSON.stringify(registro), // Guardar como JSON
+          descripcion_cambio: descripcionCambio,
+          fecha_hora: new Date(),
+        },
+      });
+    } catch (error) {
+      console.error("Error en capa de datos de auditoría:", error);
+      throw new Error("Error al registrar auditoría");
+    }
   },
 
-  // Obtener todos los registros de auditoría
-  async obtenerRegistros() {
+  // Obtener todos los eventos de auditoría
+  async obtenerEventos() {
     return await prisma.auditoria.findMany({
-      include: { usuario: true }, // Incluir datos del usuario asociado
-      orderBy: { fecha_hora: "desc" }, // Ordenar por la fecha más reciente
-    });
-  },
-
-  // Obtener un registro específico por ID
-  async obtenerRegistroPorId(id) {
-    return await prisma.auditoria.findUnique({
-      where: { id },
-      include: { usuario: true },
+      orderBy: { fecha_hora: "desc" },
+      include: {
+        usuario: {
+          select: { id: true, nombre: true, apellido: true, correo: true },
+        },
+      },
     });
   },
 };

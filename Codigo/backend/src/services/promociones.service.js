@@ -4,18 +4,18 @@ export const promocionesService = {
   // Obtener una promoción por ID
   async obtenerPromocionPorId(promocionId) {
     const promocion = await promocionesData.getPromocionById(promocionId);
-
+  
     if (!promocion) {
       throw new Error(`No se encontró la promoción con ID ${promocionId}.`);
     }
-
-    // Formatear las categorías asociadas para que sean claras
+  
     const categorias = promocion.categorias.map((relacion) => ({
       id: relacion.categoria.id,
       nombre: relacion.categoria.nombre,
       descripcion: relacion.categoria.descripcion,
+      productos: relacion.categoria.productos, // Agregar productos a la respuesta
     }));
-
+  
     return {
       id: promocion.id,
       nombre: promocion.nombre,
@@ -30,20 +30,28 @@ export const promocionesService = {
   // Obtener todas las promociones
   async obtenerPromociones() {
     const promociones = await promocionesData.getAllPromociones();
-    return promociones.map((promocion) => ({
-      id: promocion.id,
-      nombre: promocion.nombre,
-      descripcion: promocion.descripcion,
-      descuento: promocion.descuento,
-      fechaInicio: promocion.fechaInicio,
-      fechaFin: promocion.fechaFin,
-      categorias: promocion.categorias.map((relacion) => ({
-        id: relacion.categoria.id,
-        nombre: relacion.categoria.nombre,
-        descripcion: relacion.categoria.descripcion,
-      })),
-    }));
-  },
+    const ahora = new Date();
+    
+    return promociones
+      .filter((promocion) =>
+        (!promocion.fechaInicio || new Date(promocion.fechaInicio) <= ahora) &&
+        (!promocion.fechaFin || new Date(promocion.fechaFin) >= ahora)
+      )
+      .map((promocion) => ({
+        id: promocion.id,
+        nombre: promocion.nombre,
+        descripcion: promocion.descripcion,
+        descuento: promocion.descuento,
+        fechaInicio: promocion.fechaInicio,
+        fechaFin: promocion.fechaFin,
+        categorias: promocion.categorias.map((relacion) => ({
+          id: relacion.categoria.id,
+          nombre: relacion.categoria.nombre,
+          descripcion: relacion.categoria.descripcion,
+          productos: relacion.categoria.productos, // Agregar productos a la respuesta
+        })),
+      }));
+  },  
 
   // Crear una nueva promoción
   async crearPromocion(datosPromocion) {
@@ -143,6 +151,29 @@ export const promocionesService = {
     }
     return await promocionesData.getPromocionesByCategoria(categoriaId);
   },
+
+  async asignarPromocionPorCategoria(categoriaId, promocionId) {
+    if (!categoriaId || !promocionId) {
+      throw new Error("Se requiere categoría y promoción.");
+    }
+  
+    // Verificar si la promoción existe
+    const promocion = await promocionesData.getPromocionById(promocionId);
+    if (!promocion) {
+      throw new Error(`La promoción con ID ${promocionId} no existe.`);
+    }
+  
+    // Verificar si la categoría existe
+    const categoria = await promocionesData.getCategoriaById(categoriaId);
+    if (!categoria) {
+      throw new Error(`La categoría con ID ${categoriaId} no existe.`);
+    }
+  
+    // Asignar la promoción a la categoría y actualizar productos
+    await promocionesData.agregarCategoriasAPromocion(promocionId, [categoriaId]);
+  
+    return { mensaje: `Promoción ${promocionId} asignada a la categoría ${categoriaId}` };
+  },  
 
   // Verificar si la promoción está activa
   esPromocionActiva(fechaInicio, fechaFin) {

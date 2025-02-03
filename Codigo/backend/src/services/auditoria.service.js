@@ -1,23 +1,21 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { auditoriaData } from "../data/auditoria.data.js";
 
 export const auditoriaService = {
-  async registrarAccion({ usuarioId, tabla_afectada, accion, registro, descripcion_cambio }) {
-    return await prisma.auditoria.create({
-      data: {
-        usuarioId,
-        tabla_afectada,
-        accion,
-        registro,
-        descripcion_cambio,
-        fecha_hora: new Date(),
-      },
-    });
+  async registrarEvento(usuarioId, tablaAfectada, accion, registro, descripcionCambio = null) {
+    try {
+      return await auditoriaData.registrarEvento(usuarioId, tablaAfectada, accion, registro, descripcionCambio);
+    } catch (error) {
+      console.error("Error en el servicio de auditoría:", error);
+      throw new Error("No se pudo registrar la auditoría");
+    }
   },
-  async obtenerRegistros() {
-    return await prisma.auditoria.findMany({
-      include: { usuario: true }, // Incluir datos del usuario asociado
-    });
+
+  async obtenerEventos() {
+    try {
+      return await auditoriaData.obtenerEventos();
+    } catch (error) {
+      console.error("Error al obtener eventos de auditoría:", error);
+      throw new Error("No se pudieron obtener los registros de auditoría");
+    }
   },
 };

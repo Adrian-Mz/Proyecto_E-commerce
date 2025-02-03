@@ -3,7 +3,6 @@ import { UsuariosService } from '../services/usuarios.service.js';
 import { validarUsuario, validarActualizacionPerfil } from '../validations/usuarios.validation.js';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
-import { registrarAccion } from '../middlewares/auditoria.middleware.js';
 import { handleValidation } from '../middlewares/handleValidation.js';
 
 const router = express.Router();
@@ -129,7 +128,6 @@ router.delete(
   '/:id',
   verificarToken,
   verificarRol(['Administrador']),
-  registrarAccion('usuarios', 'eliminación'), // Registra la acción en la auditoría
   async (req, res, next) => {
     try {
       const id = parseInt(req.params.id, 10);

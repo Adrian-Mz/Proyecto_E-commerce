@@ -4,7 +4,6 @@ import { validarProductoActualizar } from '../validations/productos.validation.j
 import { handleValidation } from '../middlewares/handleValidation.js';
 import { verificarToken } from '../middlewares/auth.middleware.js';
 import { verificarRol } from '../middlewares/roles.middleware.js';
-import { registrarAccion } from '../middlewares/auditoria.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
 
 
@@ -117,7 +116,6 @@ router.put(
   verificarRol(['Administrador']),
   validarProductoActualizar,
   handleValidation,
-  registrarAccion('productos', 'actualización'),
   async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
@@ -139,7 +137,6 @@ router.delete(
   '/:id',
   verificarToken,
   verificarRol(['Administrador']),
-  registrarAccion('productos', 'eliminación'),
   async (req, res) => {
     try {
       const id = parseInt(req.params.id);

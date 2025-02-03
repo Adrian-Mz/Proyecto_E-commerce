@@ -1,16 +1,15 @@
 import express from "express";
 import { auditoriaService } from "../services/auditoria.service.js";
-import { verifyRole } from "../middlewares/roles.middleware.js";
 
 const router = express.Router();
 
-// Obtener registros de auditoría (solo administradores)
-router.get("/", verifyRole("Administrador"), async (req, res) => {
+// Obtener todos los eventos de auditoría
+router.get("/", async (req, res) => {
   try {
-    const registros = await auditoriaService.obtenerRegistros();
-    res.status(200).json(registros);
+    const auditoria = await auditoriaService.obtenerEventos();
+    res.status(200).json(auditoria);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Error al obtener auditoría" });
   }
 });
 

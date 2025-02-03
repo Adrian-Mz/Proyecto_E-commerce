@@ -40,6 +40,22 @@ router.post('/',
   }
 });
 
+// Asignar una promoción a todos los productos de una categoría
+router.post("/asignar-categoria", async (req, res, next) => {
+  try {
+    const { categoriaId, promocionId } = req.body;
+
+    if (!categoriaId || !promocionId) {
+      return res.status(400).json({ error: "Se requiere categoría y promoción." });
+    }
+
+    const resultado = await promocionesService.asignarPromocionPorCategoria(categoriaId, promocionId);
+    res.status(200).json(resultado);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Actualizar una promoción existente
 router.put('/:promocionId', 
   validarActualizarPromocion,
@@ -65,28 +81,7 @@ router.delete('/:promocionId', async (req, res) => {
   }
 });
 
-// Asignar una promoción a todos los productos de una categoría
-router.post(
-  "/asignar-categoria",
-  async (req, res, next) => {
-    try {
-      const { categoriaId, promocionId } = req.body;
 
-      if (!categoriaId || !promocionId) {
-        return res
-          .status(400)
-          .json({ error: "Se requiere categoría y promoción." });
-      }
 
-      const resultado = await promocionesService.asignarPromocionPorCategoria(
-        categoriaId,
-        promocionId
-      );
-
-      res.status(200).json(resultado);
-    } catch (error) {
-      next(error);
-    }
-});
 
 export default router;
