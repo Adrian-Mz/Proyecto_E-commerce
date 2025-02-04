@@ -29,7 +29,7 @@ const GestionProductosPage = () => {
     especificaciones: "",
     imagen: null,
     marca: "",
-    precio: "",
+    precioBase: "",
     stock: "",
     garantia: "",
     categoriaId: "",
@@ -47,13 +47,8 @@ const GestionProductosPage = () => {
         const productosResponse = await ProductosService.getProductos();
         const categoriasResponse = await CategoriasService.getCategorias();
         const promocionesResponse = await PromocionesService.getPromociones();
-        const productosProcesados = productosResponse.productos.map(producto => ({
-          ...producto,
-          precio: parseFloat(producto.precio).toFixed(2), // ✅ No modificar el precio
-          ivaPorcentaje: parseInt(producto.ivaPorcentaje, 10) || 0 // ✅ Asegurar que es número
-        }));
 
-        setData(productosProcesados);
+        setData(productosResponse.productos || []);
         setCategorias(categoriasResponse || []);
         setPromociones(promocionesResponse || []);
       } catch (error) {
@@ -77,7 +72,7 @@ const GestionProductosPage = () => {
       especificaciones: "",
       imagen: "",
       marca: "",
-      precio: "",
+      precioBase: "",
       stock: "",
       garantia: "",
       categoriaId: "",
@@ -109,17 +104,25 @@ const GestionProductosPage = () => {
     try {
       const formData = new FormData();
   
+      // Asegúrate de que la imagen es un archivo
       Object.entries(newProduct).forEach(([key, value]) => {
         if (key === "imagen" && value instanceof File) {
-          formData.append(key, value); // ✅ Asegurar que la imagen se envía correctamente
+          formData.append(key, value); // Añade la imagen como archivo
+          console.log("Archivo seleccionado:", newProduct.imagen);
         } else {
-          formData.append(key, value || "");
+          formData.append(key, value || ""); // Otros campos como texto
         }
       });
   
+      // Debug: Verificar que la imagen y los campos están correctamente configurados
+      for (const pair of formData.entries()) {
+        console.log(`${pair[0]}:`, pair[1]); // Verifica que `imagen` sea un `File`
+      }
+  
+      // Enviar la solicitud con FormData
       const createdProduct = await ProductosService.createProducto(formData);
   
-      // 🔄 Agregar solo el nuevo producto sin recargar
+      // Actualiza los datos
       setData((prevData) => [...prevData, createdProduct]);
       clearNewProduct();
       setIsAddModalOpen(false);
@@ -128,61 +131,53 @@ const GestionProductosPage = () => {
       console.error("Error al añadir producto:", error.response?.data || error.message);
       toast.error("Error al añadir producto. Verifica los datos.");
     }
-  };
-  
+  };   
 
   const handleEditProduct = async () => {
     try {
       if (selectedProduct) {
         const updatedData = {
-          descripcion: selectedProduct.descripcion || "",
-          garantia: selectedProduct.garantia || "",
-          especificaciones: selectedProduct.especificaciones || "",
-          imagen: selectedProduct.imagen || "",
-          marca: selectedProduct.marca || "",
-          nombre: selectedProduct.nombre || "",
-          precio: parseFloat(selectedProduct.precio), // ✅ Enviar el precio sin modificación
+          descripcion: selectedProduct.descripcion,
+          garantia: selectedProduct.garantia,
+          especificaciones: selectedProduct.especificaciones,
+          imagen: selectedProduct.imagen,
+          marca: selectedProduct.marca,
+          nombre: selectedProduct.nombre,
+          precioBase: parseFloat(selectedProduct.precioBase), // ✅ Enviar precio sin IVA
           stock: parseInt(selectedProduct.stock, 10),
-          categoriaId: selectedProduct.categoriaId ? parseInt(selectedProduct.categoriaId, 10) : null,
+          categoriaId: parseInt(selectedProduct.categoriaId, 10),
           promocionId: selectedProduct.promocionId ? parseInt(selectedProduct.promocionId, 10) : null,
-          ivaPorcentaje: parseFloat(selectedProduct.ivaPorcentaje), // ✅ Enviar solo el valor, sin cálculos adicionales
+          ivaPorcentaje: parseFloat(selectedProduct.ivaPorcentaje),
         };
-  
-        const updatedProduct = await ProductosService.updateProducto(selectedProduct.id, updatedData);
-  
-        // 🔄 Actualizar solo el producto modificado en la lista sin recargar
-        setData((prevData) =>
-          prevData.map((item) => (item.id === updatedProduct.id ? updatedProduct : item))
-        );
-  
+
+        console.log("➡️ Enviando datos al backend:", updatedData);
+
+        await ProductosService.updateProducto(selectedProduct.id, updatedData);
+
+        const productosActualizados = await ProductosService.getProductos();
+        console.log("📌 Lista actualizada de productos desde API:", productosActualizados.productos);
+
+        setData(productosActualizados.productos || []);
+
         setSelectedProduct(null);
         setIsEditModalOpen(false);
         toast.success("Producto editado correctamente");
       }
     } catch (error) {
-      console.error("Error al editar producto:", error.response?.data || error.message);
+      console.error("❌ Error al editar producto:", error.response?.data || error.message);
       toast.error("Error al editar producto");
     }
   };
-  
 
-  const handleDelete = async (id) => {
+    const handleDelete = async (id) => {
     try {
       await ProductosService.deleteProducto(id);
-  
-      // Volver a obtener los productos sin recargar la página
-      const productosResponse = await ProductosService.getProductos();
-      const productosProcesados = productosResponse.productos.map(producto => ({
-        ...producto,
-        precio: parseFloat(producto.precio).toFixed(2),
-        ivaPorcentaje: parseInt(producto.ivaPorcentaje, 10) || 0,
-      }));
-  
-      setData(productosProcesados);
+      setData((prevData) => prevData.filter((item) => item.id !== id));
       toast.success("Producto eliminado correctamente");
     } catch (error) {
       console.error("Error al eliminar producto:", error);
   
+      // Manejar errores específicos del backend
       const backendErrors = error.response?.data?.errors || [];
       const generalError = error.response?.data?.error || "Ocurrió un error al eliminar el producto.";
   
@@ -194,8 +189,7 @@ const GestionProductosPage = () => {
         toast.error(generalError, { position: "top-right" });
       }
     }
-  };
-    
+  };  
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -205,19 +199,14 @@ const GestionProductosPage = () => {
     }
   };
 
-  const filteredData = data
-  .filter((producto) => {
-    const nombre = producto.nombre ? producto.nombre.toLowerCase() : "";
-    const descripcion = producto.descripcion ? producto.descripcion.toLowerCase() : "";
-
-    return (
-      nombre.includes(searchTerm.toLowerCase()) ||
-      descripcion.includes(searchTerm.toLowerCase())
-    );
-  })
-  .filter((producto) => !selectedCategoria || (producto.categoriaId && producto.categoriaId.toString() === selectedCategoria))
-  .filter((producto) => !selectedMarca || (producto.marca && producto.marca === selectedMarca))
-  .filter((producto) => !selectedPromocion || (producto.promocionId && producto.promocionId.toString() === selectedPromocion));
+  const filteredData = (data || [])
+  .filter((producto) =>
+    (producto.nombre?.toLowerCase().includes(searchTerm?.toLowerCase() || "") || 
+     producto.descripcion?.toLowerCase().includes(searchTerm?.toLowerCase() || ""))
+  )
+  .filter((producto) => !selectedCategoria || producto.categoriaId.toString() === selectedCategoria)
+  .filter((producto) => !selectedMarca || producto.marca === selectedMarca)
+  .filter((producto) => !selectedPromocion || producto.promocionId.toString() === selectedPromocion);
 
   // Ordenar por precio
   if (sortOrderPrecio) {
@@ -293,7 +282,7 @@ const GestionProductosPage = () => {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-2 mb-4">
         {/* Filtro por categoría */}
         <select
           className="border p-2 rounded text-gray-700"
@@ -335,8 +324,6 @@ const GestionProductosPage = () => {
             </option>
           ))}
         </select>
-      </div>
-      <div className="flex gap-4 mb-4">
         <select
           className="border p-2 rounded text-gray-700"
           value={sortOrderPrecio}
@@ -364,7 +351,8 @@ const GestionProductosPage = () => {
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
           { key: "marca", label: "Marca" },
-          { key: "precio", label: "Precio" },
+          { key: "precioBase", label: "Precio Base" }, // Nuevo campo sin IVA
+          { key: "precio", label: "Precio (con IVA)" }, // Precio con IVA ya calculado
           { key: "stock", label: "Stock" },
           { key: "categoria", label: "Categoría" },
           { key: "promocion", label: "Promoción" },
@@ -374,14 +362,13 @@ const GestionProductosPage = () => {
         data={paginatedData.map((item) => ({
           ...item,
           descripcion: item.descripcion
-          ? item.descripcion.split(" ").slice(0, 10).join(" ") + (item.descripcion.split(" ").length > 10 ? "..." : "")
-          : "", // Limita a 10 palabras y añade "..." si es necesario
-          precio: parseFloat(item.precio).toFixed(2),
-          iva: `${item.ivaPorcentaje}%`,
+            ? item.descripcion.split(" ").slice(0, 10).join(" ") + (item.descripcion.split(" ").length > 10 ? "..." : "")
+            : "",
+          precioBase: parseFloat(item.precioBase).toFixed(2), // ✅ Precio sin IVA
+          precio: parseFloat(item.precio).toFixed(2), // ✅ Precio con IVA almacenado en la BD
           categoria: categorias.find((categoria) => categoria.id === item.categoriaId)?.nombre,
-          promocion:
-            promociones.find((promocion) => promocion.id === item.promocionId)?.nombre ||
-            "Sin promoción",
+          promocion: promociones.find((promocion) => promocion.id === item.promocionId)?.nombre || "Sin promoción",
+          iva: item.ivaPorcentaje + "%",
           acciones: (
             <div className="flex space-x-2">
               <button
@@ -403,6 +390,7 @@ const GestionProductosPage = () => {
           ),
         }))}
       />
+
       <ModalComponent
         title="Añadir Producto"
         visible={isAddModalOpen}
@@ -468,11 +456,11 @@ const renderProductInputs = (product, setProduct, categorias, promociones, marca
       </select>
     </div>
     <div>
-      <label>Precio:</label>
+      <label>Precio Base (sin IVA):</label> {/* ✅ Cambiado para reflejar precio sin IVA */}
       <input
         type="number"
-        value={product?.precio || ""}
-        onChange={(e) => setProduct((prev) => ({ ...prev, precio: e.target.value }))}
+        value={product?.precioBase || ""}
+        onChange={(e) => setProduct((prev) => ({ ...prev, precioBase: e.target.value }))}
         className="border p-2 rounded w-full"
       />
     </div>
@@ -563,8 +551,8 @@ const renderProductInputs = (product, setProduct, categorias, promociones, marca
         className="border p-2 rounded w-full"
       />
     </div>
-
   </div>
 );
+
 
 export default GestionProductosPage;
