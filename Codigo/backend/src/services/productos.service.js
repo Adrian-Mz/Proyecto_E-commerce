@@ -3,6 +3,7 @@ import { subirImagenCloudinary } from '../utils/cloudinary.js';
 import { buscarProductosMercadoLibre } from '../utils/mercadoLibre.js';
 import {pedidosData} from '../data/pedidos.data.js';
 import {carritoData} from '../data/carrito.data.js';
+import { auditoriaService } from '../services/auditoria.service.js';
 
 export const ProductosService = {
   // Obtener todos los productos
@@ -24,8 +25,8 @@ export const ProductosService = {
         orderDirection: validOrderDirection,
       });
 
-      // **Productos con promocines activas** 
-      // ** Calcular el precio con promoción para cada producto**
+      // Productos con promocines activas
+      // Calcular el precio con promoción para cada producto
       const productosConPromocion = productos.map((producto) => {
         let precioConPromocion = producto.precio;
         let mensajePromocion = "Producto sin promoción";
@@ -103,57 +104,28 @@ export const ProductosService = {
     );
   },
 
-  async createProducto(data) {
+  // Crear un nuevo producto con auditoría
+  async createProducto(data, usuarioId) {
     try {
       console.log("Datos recibidos:", data);
-  
-      // Validar datos básicos
+
       if (!data || !data.nombre || !data.descripcion) {
         throw new Error("El nombre y la descripción son obligatorios");
       }
-  
-      // Convertir valores numéricos
+
       data.precio = parseFloat(data.precio);
       data.stock = parseInt(data.stock, 10);
       data.categoriaId = parseInt(data.categoriaId, 10);
       data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
-      data.ivaPorcentaje = data.ivaPorcentaje ? parseFloat(data.ivaPorcentaje): 0;
-  
-      console.log("Validaciones iniciales:", {
-        precio: data.precio,
-        stock: data.stock,
-        categoriaId: data.categoriaId,
-        promocionId: data.promocionId,
-        ivaPorcentaje: data.ivaPorcentaje
-      });
-  
-      if (isNaN(data.precio) || isNaN(data.stock) || isNaN(data.categoriaId) || isNaN(data.ivaPorcentaje)) {
-        throw new Error("El precio, stock y categoría deben ser valores numéricos");
-      }
+      data.ivaPorcentaje = data.ivaPorcentaje ? parseFloat(data.ivaPorcentaje) : 0;
 
-      // Calcular el precio con IVA dinámico
       const precioConIVA = data.precio + (data.precio * (data.ivaPorcentaje / 100));
-      data.precio = parseFloat(precioConIVA.toFixed(2)); // Mantener como número
+      data.precio = parseFloat(precioConIVA.toFixed(2));
 
-      console.log("Precio con IVA calculado:", data.precio);
-  
-      // Validar que promoción (si se proporciona) sea un número válido
-      if (data.promocionId && isNaN(data.promocionId)) {
-        throw new Error("La promoción debe ser un valor numérico");
-      }
-  
-      // Limpiar campos adicionales
-      if (data.garantia) {
-        data.garantia = data.garantia.trim();
-      }
-  
-      // Procesar la imagen
       let imageUrl;
       if (data.imagenLocalPath) {
-        console.log("Procesando imagen local...");
         imageUrl = await subirImagenCloudinary(data.imagenLocalPath, "productos");
       } else {
-        console.log("Buscando imagen en Mercado Libre...");
         const productoML = await buscarProductosMercadoLibre(data.nombre);
         if (productoML) {
           imageUrl = productoML.imagen;
@@ -162,14 +134,19 @@ export const ProductosService = {
         }
       }
       data.imagen = imageUrl;
-  
-      console.log("Imagen procesada:", imageUrl);
-  
-      // Enviar los datos procesados a ProductosData
-      return await ProductosData.createProducto(data);
+
+      const nuevoProducto = await ProductosData.createProducto(data);
+
+      await auditoriaService.registrarEvento(
+        usuarioId,
+        "productos",
+        "CREAR",
+        nuevoProducto
+      );
+
+      return nuevoProducto;
     } catch (error) {
-      console.error(`Error al crear producto: ${error.message}`);
-      throw new Error(`Datos incompletos o inválidos para crear el producto: ${error.message}`);
+      throw new Error(`Error al crear producto: ${error.message}`);
     }
   },     
 
@@ -187,46 +164,67 @@ export const ProductosService = {
             throw new Error('Producto no encontrado');
         }
 
-        // Si se cambia el IVA, recalcular el precio
-        if (data.ivaPorcentaje !== undefined) {
-            const precioBase = productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA actual
-            data.precio = precioBase * (1 + (data.ivaPorcentaje / 100)); // Aplicar nuevo IVA
-            data.precio = parseFloat(data.precio.toFixed(2));
+        let precioFinal = parseFloat(productoActual.precio); // Mantiene el precio actual si no se cambia
+        let ivaFinal = productoActual.ivaPorcentaje; // Mantiene el IVA actual si no se cambia
+
+        // Si se actualiza solo el precio, recalcularlo con el IVA actual
+        if (data.precio !== undefined && data.ivaPorcentaje === undefined) {
+            precioFinal = parseFloat(data.precio) * (1 + (ivaFinal / 100));
         }
 
-        return await ProductosData.updateProducto(id, data);
+        // Si se actualiza el IVA, recalcular el precio con el nuevo IVA
+        if (data.ivaPorcentaje !== undefined) {
+            ivaFinal = parseFloat(data.ivaPorcentaje);
+            const precioBase = data.precio !== undefined ? parseFloat(data.precio) : productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA anterior
+            precioFinal = precioBase * (1 + (ivaFinal / 100)); // Aplicar nuevo IVA
+        }
+
+        precioFinal = parseFloat(precioFinal.toFixed(2));
+
+        // Construir objeto de actualización
+        const dataActualizada = {
+            ...data,
+            precio: precioFinal,
+            ivaPorcentaje: ivaFinal
+        };
+
+        // Guardar cambios en la base de datos
+        return await ProductosData.updateProducto(id, dataActualizada);
     } catch (error) {
         throw new Error(`Error al actualizar el producto: ${error.message}`);
     }
   },
 
-  // Eliminar un producto por ID
-  async deleteProducto(id) {
+  // Eliminar un producto con auditoría
+  async deleteProducto(id, usuarioId) {
     try {
-      // Validar que el ID sea válido
       validarId(id);
+      const productoEliminado = await ProductosData.getProductoById(id);
+      if (!productoEliminado) {
+        throw new Error("Producto no encontrado");
+      }
 
-      // Verificar si el producto está relacionado con algún pedido
       const pedidosRelacionados = await pedidosData.getPedidosByProductoId(id);
       if (pedidosRelacionados.length > 0) {
-        throw new Error(
-          `No se puede eliminar el producto. Está asociado a ${pedidosRelacionados.length} pedido(s).`
-        );
+        throw new Error(`No se puede eliminar el producto. Está en ${pedidosRelacionados.length} pedido(s).`);
       }
 
-      // Verificar si el producto está relacionado con algún carrito
       const carritosRelacionados = await carritoData.getCarritosByProductoId(id);
       if (carritosRelacionados.length > 0) {
-        throw new Error(
-          `No se puede eliminar el producto. Está agregado en ${carritosRelacionados.length} carrito(s).`
-        );
+        throw new Error(`No se puede eliminar el producto. Está en ${carritosRelacionados.length} carrito(s).`);
       }
 
-      // Si no hay relaciones, eliminar el producto
       await ProductosData.deleteProducto(id);
-      return { message: 'Producto eliminado exitosamente' };
+
+      await auditoriaService.registrarEvento(
+        usuarioId,
+        "productos",
+        "ELIMINAR",
+        productoEliminado
+      );
+
+      return { message: "Producto eliminado exitosamente" };
     } catch (error) {
-      // Manejar errores y lanzar una excepción
       throw new Error(`Error al eliminar el producto: ${error.message}`);
     }
   },
