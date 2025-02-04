@@ -14,7 +14,14 @@ const GestionProductosPage = () => {
   const [promociones, setPromociones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 7;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoria, setSelectedCategoria] = useState("");
+  const [selectedMarca, setSelectedMarca] = useState("");
+  const [selectedPromocion, setSelectedPromocion] = useState("");
+  const [sortOrderPrecio, setSortOrderPrecio] = useState(""); // Estado para ordenar el precio
+  const [sortOrderStock, setSortOrderStock] = useState("");  // "asc" para ascendente, "desc" para descendente
+
 
   const [newProduct, setNewProduct] = useState({
     nombre: "",
@@ -193,12 +200,36 @@ const GestionProductosPage = () => {
     }
   };
 
-  const paginatedData = data.slice(
+  const filteredData = data
+  .filter((producto) =>
+    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  .filter((producto) => !selectedCategoria || producto.categoriaId.toString() === selectedCategoria)
+  .filter((producto) => !selectedMarca || producto.marca === selectedMarca)
+  .filter((producto) => !selectedPromocion || producto.promocionId.toString() === selectedPromocion);
+
+  // Ordenar por precio
+  if (sortOrderPrecio) {
+    filteredData.sort((a, b) => {
+      return sortOrderPrecio === "asc" ? a.precio - b.precio : b.precio - a.precio;
+    });
+  }
+
+  // Ordenar por stock
+  if (sortOrderStock) {
+    filteredData.sort((a, b) => {
+      return sortOrderStock === "asc" ? a.stock - b.stock : b.stock - a.stock;
+    });
+  }
+
+  const paginatedData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
 
   if (isLoading) {
     return <div className="text-center">Cargando datos...</div>;
@@ -207,7 +238,20 @@ const GestionProductosPage = () => {
   return (
     <div className="p-6 bg-gray-100">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Productos</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Gestión de Productos</h1>
+
+        {/* Barra de búsqueda */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border p-2 rounded pl-10 w-64 text-gray-700"
+          />
+        </div>
+
+        {/* Botón para añadir */}
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           onClick={() => {
@@ -217,31 +261,101 @@ const GestionProductosPage = () => {
         >
           Añadir
         </button>
+
+        {/* Paginación */}
         <div className="flex items-center space-x-2">
           <button
-            className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            className="px-1 py-1 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
             onClick={() => handlePageChange("prev")}
             disabled={currentPage === 1}
           >
             &lt;
           </button>
-          <span className="text-gray-700">{`Página ${currentPage} de ${totalPages}`}</span>
+          <span className="text-gray-700">{`${currentPage} de ${totalPages || 1}`}</span>
           <button
-            className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            className="px-1 py-1 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
             onClick={() => handlePageChange("next")}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || totalPages === 0}
           >
             &gt;
           </button>
         </div>
       </div>
+
+      {/* Filtros */}
+      <div className="flex gap-4 mb-4">
+        {/* Filtro por categoría */}
+        <select
+          className="border p-2 rounded text-gray-700"
+          value={selectedCategoria}
+          onChange={(e) => setSelectedCategoria(e.target.value)}
+        >
+          <option value="">Todas las categorías</option>
+          {categorias.map((categoria) => (
+            <option key={categoria.id} value={categoria.id}>
+              {categoria.nombre}
+            </option>
+          ))}
+        </select>
+
+        {/* Filtro por marca */}
+        <select
+          className="border p-2 rounded text-gray-700"
+          value={selectedMarca}
+          onChange={(e) => setSelectedMarca(e.target.value)}
+        >
+          <option value="">Todas las marcas</option>
+          {["Intel", "AMD", "Nvidia", "Corsair", "Kingston", "Seagate"].map((marca) => (
+            <option key={marca} value={marca}>
+              {marca}
+            </option>
+          ))}
+        </select>
+
+        {/* Filtro por promoción */}
+        <select
+          className="border p-2 rounded text-gray-700"
+          value={selectedPromocion}
+          onChange={(e) => setSelectedPromocion(e.target.value)}
+        >
+          <option value="">Todas las promociones</option>
+          {promociones.map((promo) => (
+            <option key={promo.id} value={promo.id}>
+              {promo.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex gap-4 mb-4">
+        <select
+          className="border p-2 rounded text-gray-700"
+          value={sortOrderPrecio}
+          onChange={(e) => setSortOrderPrecio(e.target.value)}
+        >
+          <option value="">Ordenar Precio</option>
+          <option value="asc">Menor a Mayor</option>
+          <option value="desc">Mayor a Menor</option>
+        </select>
+
+        {/* Select para ordenar por stock */}
+        <select
+          className="border p-2 rounded text-gray-700"
+          value={sortOrderStock}
+          onChange={(e) => setSortOrderStock(e.target.value)}
+        >
+          <option value="">Ordenar Stock</option>
+          <option value="asc">Menor a Mayor</option>
+          <option value="desc">Mayor a Menor</option>
+        </select>
+      </div>
+
       <TableComponent
         columns={[
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
           { key: "marca", label: "Marca" },
-          { key: "precio", label: "Precio" },
-          { key: "stock", label: "Stock" },
+          {key: "precio", label: "Precio"},
+          {key: "stock", label: "Stock"},
           { key: "categoria", label: "Categoría" },
           { key: "promocion", label: "Promoción" },
           { key: "iva", label: "IVA" },
