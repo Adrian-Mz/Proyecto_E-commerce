@@ -1,4 +1,6 @@
 import { promocionesData } from '../data/promociones.data.js';
+import { auditoriaService } from '../services/auditoria.service.js';
+
 
 export const promocionesService = {
   // Obtener una promoción por ID
@@ -54,14 +56,13 @@ export const promocionesService = {
   },  
 
   // Crear una nueva promoción
-  async crearPromocion(datosPromocion) {
+  async crearPromocion(datosPromocion, usuarioId) {
     const { nombre, descripcion, descuento, fechaInicio, fechaFin, categorias } = datosPromocion;
 
     if (!nombre || !descripcion || !descuento) {
       throw new Error('Todos los campos obligatorios deben ser completados.');
     }
 
-    // Asegúrate de que categorias sea un arreglo o establece un valor vacío
     const categoriasValidas = Array.isArray(categorias) ? categorias : [];
 
     if (categoriasValidas.length > 0) {
@@ -79,7 +80,7 @@ export const promocionesService = {
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
 
-    return await promocionesData.createPromocion({
+    const nuevaPromocion = await promocionesData.createPromocion({
       nombre,
       descripcion,
       descuento,
@@ -87,15 +88,25 @@ export const promocionesService = {
       fechaFin: fechaFinISO,
       categorias: categoriasValidas,
     });
+
+    // Registrar Auditoría
+    await auditoriaService.registrarEvento(
+      usuarioId,
+      "promociones",
+      "CREAR",
+      nuevaPromocion
+    );
+
+    return nuevaPromocion;
   },
 
   // Actualizar una promoción existente
-  async actualizarPromocion(promocionId, datosPromocion) {
+  async actualizarPromocion(promocionId, datosPromocion, usuarioId) {
     const promocionActual = await promocionesData.getPromocionById(promocionId);
     if (!promocionActual) {
       throw new Error(`La promoción con ID ${promocionId} no existe.`);
     }
-  
+
     const {
       nombre = promocionActual.nombre,
       descripcion = promocionActual.descripcion,
@@ -104,10 +115,10 @@ export const promocionesService = {
       fechaFin = promocionActual.fechaFin,
       categorias = [],
     } = datosPromocion;
-  
+
     if (categorias && categorias.length > 0) {
       const categoriasConConflictos = await promocionesData.getCategoriasConPromocionActiva(categorias, promocionId);
-  
+
       if (categoriasConConflictos.length > 0) {
         throw new Error(
           `No se puede actualizar la promoción. Las siguientes categorías ya tienen promociones activas: ${categoriasConConflictos
@@ -116,40 +127,50 @@ export const promocionesService = {
         );
       }
     }
-  
+
     const fechaInicioISO = fechaInicio ? new Date(fechaInicio).toISOString() : null;
     const fechaFinISO = fechaFin ? new Date(fechaFin).toISOString() : null;
-  
-    // Actualizar categorías y sincronizar productos asociados
+
     await promocionesData.actualizarCategoriasYProductos(promocionId, categorias);
-  
-    // Actualizar datos principales de la promoción
-    return await promocionesData.updatePromocion(promocionId, {
+
+    const promocionActualizada = await promocionesData.updatePromocion(promocionId, {
       nombre,
       descripcion,
       descuento,
       fechaInicio: fechaInicioISO,
       fechaFin: fechaFinISO,
     });
+
+    // Registrar Auditoría
+    await auditoriaService.registrarEvento(
+      usuarioId,
+      "promociones",
+      "ACTUALIZAR",
+      promocionActualizada,
+      `Antes: ${JSON.stringify(promocionActual)}`
+    );
+
+    return promocionActualizada;
   },  
 
   // Eliminar una promoción
-  async eliminarPromocion(promocionId) {
+  async eliminarPromocion(promocionId, usuarioId) {
     const promocion = await promocionesData.getPromocionById(promocionId);
     if (!promocion) {
       throw new Error(`No se encontró la promoción con ID ${promocionId}`);
     }
 
-    // Eliminar promoción y sincronizar productos afectados
-    return await promocionesData.deletePromocion(promocionId);
-  },
+    await promocionesData.deletePromocion(promocionId);
 
-  // Obtener promociones por categoría
-  async obtenerPromocionesPorCategoria(categoriaId) {
-    if (!categoriaId) {
-      throw new Error('El ID de la categoría es obligatorio.');
-    }
-    return await promocionesData.getPromocionesByCategoria(categoriaId);
+    // Registrar Auditoría
+    await auditoriaService.registrarEvento(
+      usuarioId,
+      "promociones",
+      "ELIMINAR",
+      promocion
+    );
+
+    return { mensaje: "Promoción eliminada exitosamente" };
   },
 
   async asignarPromocionPorCategoria(categoriaId, promocionId) {
