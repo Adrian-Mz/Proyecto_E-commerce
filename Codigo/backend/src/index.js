@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
+import { createServer } from "http";
+import { Server } from "socket.io";
+
 import usuariosRoutes from './routes/usuarios.routes.js';
 import productosRoutes from './routes/productos.routes.js';
 import carritoRoutes from './routes/carrito.routes.js';
@@ -15,30 +18,49 @@ import rolesRoutes from './routes/roles.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Permitir acceso desde cualquier frontend
+  },
+});
 
-// Configuración de middlewares
-app.use(cors()); // Habilita CORS para todas las solicitudes
+const connectedClients = new Map(); // 🔹 Almacenar clientes conectados
+
+// Gestión de conexiones WebSocket
+io.on("connection", (socket) => {
+  console.log("Cliente conectado:", socket.id);
+
+  // Registrar conexión de usuario
+  socket.on("registrarUsuario", (usuarioId) => {
+    connectedClients.set(usuarioId, socket);
+    console.log(`Usuario ${usuarioId} registrado en WebSockets`);
+  });
+
+  // Manejar desconexión de usuario
+  socket.on("disconnect", () => {
+    console.log("Cliente desconectado:", socket.id);
+    for (let [key, value] of connectedClients.entries()) {
+      if (value === socket) {
+        connectedClients.delete(key);
+        break;
+      }
+    }
+  });
+});
+
+app.use(cors());
 app.use(express.json());
 
-// Configuración de express-session
 app.use(
   session({
-    secret: 'mi_secreto', // Cambia esto por una clave secreta segura
+    secret: 'mi_secreto',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Cambia a true si usas HTTPS
+    cookie: { secure: false },
   })
 );
 
-// Middleware para inicializar el carrito temporal
-app.use((req, res, next) => {
-  if (!req.session.carrito) {
-    req.session.carrito = []; // Inicializa un carrito vacío
-  }
-  next();
-});
-
-// Agrupación de rutas
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/categorias', categoriaRoutes);
@@ -52,10 +74,8 @@ app.use('/api/promociones', promocionesRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/api/analysis', analysisRoutes);
 
-// Manejo global de errores (debe ir al final)
 app.use((err, req, res, next) => {
   console.error(err.stack);
-
   const statusCode = err.status || 500;
   res.status(statusCode).json({
     error: err.message || 'Ocurrió un error inesperado.',
@@ -63,6 +83,8 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
-app.listen(3200, () => {
+server.listen(3200, () => {
   console.log('Server is running on port', 3200);
 });
+
+export { io, connectedClients }; // 🔹 Exportar `connectedClients` para que pueda ser usado en otros archivos

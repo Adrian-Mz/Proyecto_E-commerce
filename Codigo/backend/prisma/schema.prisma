@@ -135,9 +135,22 @@ model usuarios {
   pedidos         pedidos[]
   carrito         carrito[]
   auditoria       auditoria[] //Relación Inversa con auditoría
+  notificaciones  notificaciones[]
 
   @@map("usuarios")
 }
+
+model notificaciones {
+  id            Int       @id @default(autoincrement())
+  usuarioId     Int
+  mensaje       String
+  tipo          String
+  leido         Boolean   @default(false)
+  fechaCreacion DateTime  @default(now())
+
+  usuario       usuarios  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
 
 model auditoria {
   id             Int      @id @default(autoincrement())

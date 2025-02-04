@@ -11,6 +11,7 @@ import { enviarCorreo } from '../utils/emailService.js';
 import { crearPagoStripe, confirmarPagoBackend } from '../utils/stripeservicios.js';
 import {generarFacturaPedido} from './factura.service.js'
 import {auditoriaService} from '../services/auditoria.service.js'
+import { notificacionesService } from '../services/notificaciones.service.js';
 
 // Obtener __dirname en módulos ESM
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -128,7 +129,7 @@ export const pedidosService = {
       const pedidoDetalles = await pedidosData.getPedidoById(pedidoId, usuarioId);
       const pdfPath = path.join(archivosDir, `pedido_${pedidoId}.pdf`);
 
-      // Generar factura con diseño similar a la imagen
+      // Generar factura
       await generarFacturaPedido(pedidoDetalles, pdfPath);
 
       console.log("PDF generado en:", pdfPath);
@@ -159,6 +160,20 @@ export const pedidosService = {
       pedido,
       `Pedido #${pedidoId} creado con total de $${total}.`
     );
+
+    // ✅ Enviar notificación a los administradores
+    const administradores = await prisma.usuarios.findMany({
+      where: { rol: { nombre: "Administrador" } },
+      select: { id: true },
+    });
+
+    for (const admin of administradores) {
+      await notificacionesService.crearNotificacion(
+        admin.id,
+        `Nuevo pedido #${pedidoId} creado.`,
+        "pedido_nuevo"
+      );
+    }
 
     return {
       mensaje: "Pedido y pago registrados con éxito. Carrito vaciado.",
@@ -285,14 +300,18 @@ export const pedidosService = {
     if (!estado) {
       throw new Error('El estado proporcionado no es válido.');
     }
-  
+
     // Iniciar una transacción para actualizar el pedido y registrar el historial
-    return await prisma.$transaction([
+    const [pedidoActualizado] = await prisma.$transaction([
       prisma.pedidos.update({
         where: { id: pedidoId },
         data: { 
           estadoId: nuevoEstadoId,
-          fechaActualizacion: new Date() // Actualizar la fecha de actualización
+          fechaActualizacion: new Date()
+        },
+        include: {
+          usuario: true,
+          estado: true,
         },
       }),
       prisma.historial_estado_pedidos.create({
@@ -302,6 +321,15 @@ export const pedidosService = {
         },
       }),
     ]);
+
+    // ✅ Enviar notificación al usuario sobre el cambio de estado
+    await notificacionesService.crearNotificacion(
+      pedidoActualizado.usuario.id,
+      `El estado de tu pedido #${pedidoId} cambió a ${pedidoActualizado.estado.nombre}.`,
+      "estado_actualizado"
+    );
+
+    return pedidoActualizado;
   },
 
   // Obtener estado del pedido por ID

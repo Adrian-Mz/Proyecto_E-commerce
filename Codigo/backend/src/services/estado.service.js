@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { estadoData } from "../data/estado.data.js";
-import { enviarCorreo } from "../utils/emailService.js"; // Servicio de envío de correos
-import { auditoriaService } from "../services/auditoria.service.js"
+import { enviarCorreo } from "../utils/emailService.js";
+import { auditoriaService } from "../services/auditoria.service.js";
+import { notificacionesService } from "../services/notificaciones.service.js"; // ✅ Importar notificaciones
 
 const prisma = new PrismaClient();
 
@@ -73,6 +74,13 @@ export const estadoService = {
       "ACTUALIZAR_ESTADO",
       { pedidoId, estadoAnterior: pedidoActual.estado.nombre, estadoNuevo: estado.nombre },
       `Pedido #${pedidoId} cambió de estado '${pedidoActual.estado.nombre}' a '${estado.nombre}'.`
+    );
+
+    // ✅ Enviar notificación en tiempo real al usuario
+    await notificacionesService.crearNotificacion(
+      pedidoActualizado.usuario.id,
+      `El estado de tu pedido #${pedidoId} ha cambiado a ${estado.nombre}.`,
+      "estado_actualizado"
     );
 
     // Enviar correo al cliente sobre el cambio de estado
