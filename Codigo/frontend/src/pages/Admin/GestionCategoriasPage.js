@@ -101,12 +101,13 @@ const GestionCategoriasPage = () => {
   };
 
   const filteredData = data.filter((categoria) => {
+    const nombre = categoria.nombre ? categoria.nombre.toLowerCase() : "";
+    const descripcion = categoria.descripcion ? categoria.descripcion.toLowerCase() : "";
+  
     return (
       (selectedNames.length === 0 || selectedNames.includes(categoria.nombre)) &&
-      categoria.descripcion.toLowerCase().includes(filters.descripcion.toLowerCase()) &&
-      (searchTerm === "" ||
-        categoria.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        categoria.descripcion.toLowerCase().includes(searchTerm.toLowerCase()))
+      descripcion.includes(filters.descripcion.toLowerCase()) &&
+      (searchTerm === "" || nombre.includes(searchTerm.toLowerCase()) || descripcion.includes(searchTerm.toLowerCase()))
     );
   });
   
@@ -226,6 +227,7 @@ const GestionCategoriasPage = () => {
         ]}
         data={paginatedData.map((categoria) => ({
           ...categoria,
+          descripcion: categoria.descripcion ? categoria.descripcion : "Sin descripción", // ✅ Evita valores undefined
           acciones: (
             <div className="flex space-x-2">
               <button
