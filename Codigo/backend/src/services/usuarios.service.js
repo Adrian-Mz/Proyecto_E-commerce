@@ -2,46 +2,41 @@ import { UsuariosData } from '../data/usuarios.data.js';
 import { enviarCorreo } from '../utils/emailService.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { auditoriaService } from '../services/auditoria.service.js'; // Importar servicio de auditoría
 
 export const UsuariosService = {
-  // Recupera todos los usuarios desde la base de datos
   async getAllUsuarios() {
     return await UsuariosData.getAllUsuarios();
   },
 
-  // Obtiene un usuario específico por su ID
   async getUsuarioById(id) {
     if (!Number.isInteger(id)) {
       throw new Error('El ID debe ser un número válido.');
     }
-  
-    // Delegar la consulta a UsuariosData
+
     const usuario = await UsuariosData.getUsuarioById(id);
     return usuario;
-  },  
+  },
 
-  async createUsuario(data) {
+  async createUsuario(data, usuarioId) {
     const { nombre, correo, apellido, password, direccion, telefono, pais, fechaNacimiento } = data;
-  
+
     if (!nombre || !correo || !password) {
       throw new Error('Todos los campos obligatorios deben ser proporcionados.');
     }
-  
+
     const usuarioExistente = await UsuariosData.getUsuarioByCorreo(correo);
     if (usuarioExistente) {
       throw new Error('El correo ya está registrado.');
     }
-  
-    // Encriptar la contraseña
+
     const hashedPassword = await bcrypt.hash(password, 10);
-  
-    // Obtener el rol por defecto (usuario)
-    const rolUsuario = await UsuariosData.getRolPorId(2); // Nuevo método en UsuariosData
+
+    const rolUsuario = await UsuariosData.getRolPorId(2);
     if (!rolUsuario) {
       throw new Error('El rol por defecto no está configurado en la base de datos.');
     }
-  
-    // Preparar los datos del usuario
+
     const nuevoUsuarioData = {
       nombre,
       apellido,
@@ -51,35 +46,33 @@ export const UsuariosService = {
       telefono,
       pais,
       fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
-      rolId: rolUsuario.id, // Asignar el rol automáticamente
+      rolId: rolUsuario.id,
     };
-  
-    // Crear el usuario
+
     const usuarioCreado = await UsuariosData.createUsuario(nuevoUsuarioData);
-  
-    // Crear el mensaje de bienvenida
+
+    // Registrar auditoría
+    await auditoriaService.registrarEvento(usuarioId, "usuarios", "CREAR", usuarioCreado);
+
     const mensaje = `
       <h1>Bienvenido a Tu App</h1>
       <p>Hola ${nombre},</p>
-      <p>Gracias por registrarte en nuestra plataforma. Ya puedes iniciar sesión con tu correo electrónico y disfrutar de nuestros servicios.</p>
-      <p>Saludos cordiales,</p>
+      <p>Gracias por registrarte en nuestra plataforma. Ya puedes iniciar sesión con tu correo electrónico.</p>
+      <p>Saludos,</p>
       <p>El equipo de Tu App</p>
     `;
-  
-    // Enviar notificación por correo
+
     try {
       await enviarCorreo(correo, '¡Bienvenido a Tu App!', mensaje);
       console.log(`Correo de bienvenida enviado a ${correo}`);
     } catch (error) {
       console.error(`Error al enviar el correo de bienvenida a ${correo}:`, error.message);
-      // El registro del usuario ya está completo, así que no lanzamos un error aquí.
     }
-  
-    return usuarioCreado;
-  },  
 
-  // Actualiza los datos de un usuario existente
-  async updateUsuario(id, data) {
+    return usuarioCreado;
+  },
+
+  async updateUsuario(id, data, usuarioId) {
     if (!Number.isInteger(id)) {
       throw new Error('El ID debe ser un número válido.');
     }
@@ -89,7 +82,6 @@ export const UsuariosService = {
       throw new Error('Usuario no encontrado.');
     }
 
-    // Validación nativa para fecha de nacimiento
     if (data.fechaNacimiento) {
       const fecha = new Date(data.fechaNacimiento);
       if (isNaN(fecha.getTime())) {
@@ -98,11 +90,24 @@ export const UsuariosService = {
       data.fechaNacimiento = fecha;
     }
 
-    return await UsuariosData.updateUsuario(id, data);
+    const usuarioActualizado = await UsuariosData.updateUsuario(id, data);
+
+    // Registrar auditoría solo de los datos que cambiaron
+    const cambios = Object.keys(data).reduce((acc, key) => {
+      if (usuario[key] !== data[key]) {
+        acc[key] = { antes: usuario[key], despues: data[key] };
+      }
+      return acc;
+    }, {});
+
+    if (Object.keys(cambios).length > 0) {
+      await auditoriaService.registrarEvento(usuarioId, "usuarios", "ACTUALIZAR", cambios);
+    }
+
+    return usuarioActualizado;
   },
 
-  // Elimina un usuario existente de la base de datos
-  async deleteUsuario(id) {
+  async deleteUsuario(id, usuarioId) {
     if (!Number.isInteger(id)) {
       throw new Error('El ID debe ser un número válido.');
     }
@@ -112,44 +117,52 @@ export const UsuariosService = {
       throw new Error('Usuario no encontrado.');
     }
 
-    return await UsuariosData.deleteUsuario(id);
+    await UsuariosData.deleteUsuario(id);
+
+    // Registrar auditoría
+    await auditoriaService.registrarEvento(usuarioId, "usuarios", "ELIMINAR", usuario);
+
+    return { mensaje: 'Usuario eliminado exitosamente.' };
   },
 
-  // Realiza el inicio de sesión validando credenciales
   async loginUsuario({ correo, password }) {
     if (!correo || !password) {
       throw new Error('El correo y la contraseña son obligatorios.');
     }
 
-    // Obtener usuario junto con el rol
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
       throw new Error('Usuario no encontrado.');
     }
 
-    // Validar la contraseña
     const isPasswordValid = await bcrypt.compare(password, usuario.password);
     if (!isPasswordValid) {
       throw new Error('Credenciales incorrectas.');
     }
 
-    // Generar el token JWT
     const token = jwt.sign(
       {
         id: Number(usuario.id),
         nombre: usuario.nombre,
         correo: usuario.correo,
-        rol: usuario.rol.nombre, // Asegúrate de incluir el rol en la consulta de `getUsuarioByCorreo`
+        rol: usuario.rol.nombre,
       },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' } // Token válido por 1 hora
+      { expiresIn: '1h' }
     );
 
     const { password: _, ...usuarioSinPassword } = usuario;
-    return {...usuarioSinPassword, token};
+    
+    // **Registrar auditoría del inicio de sesión**
+    await auditoriaService.registrarEvento(usuario.id, "usuarios", "LOGIN", {
+      usuarioId: usuario.id,
+      correo: usuario.correo,
+      fechaHora: new Date()
+    });
+
+    return { ...usuarioSinPassword, token };
   },
 
-  // Genera una nueva contraseña temporal y la actualiza
   async recuperarPassword(correo) {
     console.log('Correo recibido para recuperar contraseña:', correo);
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
@@ -157,14 +170,11 @@ export const UsuariosService = {
       throw new Error('No existe un usuario registrado con ese correo.');
     }
 
-    // Generar nueva contraseña temporal
     const nuevaPassword = this.generarPasswordTemporal();
     const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
 
-    // Actualizar la contraseña en la base de datos
     await UsuariosData.updatePasswordByCorreo(correo, hashedPassword);
 
-    // Crear el mensaje de correo
     const mensaje = `
       <h1>Recuperación de Contraseña</h1>
       <p>Hola ${usuario.nombre},</p>
@@ -175,17 +185,15 @@ export const UsuariosService = {
       <p>El equipo de Tu App</p>
     `;
 
-    // Enviar el correo
     try {
       await enviarCorreo(correo, 'Recuperación de Contraseña', mensaje);
     } catch (error) {
       console.error('Error al enviar el correo:', error);
-      throw new Error('No se pudo enviar el correo. Por favor, inténtalo de nuevo más tarde.');
+      throw new Error('No se pudo enviar el correo. Inténtalo nuevamente más tarde.');
     }
     return 'Se ha enviado una contraseña temporal a tu correo electrónico.';
   },
 
-  // Genera una contraseña aleatoria temporal
   generarPasswordTemporal() {
     const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     return Array.from({ length: 8 }, () =>
@@ -193,26 +201,21 @@ export const UsuariosService = {
     ).join('');
   },
 
-  // Cambiar contraseña (unificado)
   async cambiarPassword(correo, contrasenaActual, nuevaContrasena) {
     const usuario = await UsuariosData.getUsuarioByCorreo(correo);
     if (!usuario) {
       throw new Error('No existe un usuario registrado con ese correo.');
     }
 
-    // Validar la contraseña actual (puede ser la temporal o la actual)
     const esContrasenaValida = await bcrypt.compare(contrasenaActual, usuario.password);
     if (!esContrasenaValida) {
       throw new Error('La contraseña actual no es válida.');
     }
 
-    // Encriptar la nueva contraseña
     const hashedNuevaContrasena = await bcrypt.hash(nuevaContrasena, 10);
 
-    // Actualizar la nueva contraseña en la base de datos
     await UsuariosData.updatePasswordByCorreo(correo, hashedNuevaContrasena);
 
     return { mensaje: 'La contraseña se actualizó correctamente.' };
   },
-  
 };

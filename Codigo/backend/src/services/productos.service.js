@@ -107,21 +107,25 @@ export const ProductosService = {
   // Crear un nuevo producto con auditoría
   async createProducto(data, usuarioId) {
     try {
+      if (!usuarioId) {
+        throw new Error("El usuario que realiza la acción no está autenticado.");
+      }
+  
       console.log("Datos recibidos:", data);
-
+  
       if (!data || !data.nombre || !data.descripcion) {
         throw new Error("El nombre y la descripción son obligatorios");
       }
-
+  
       data.precio = parseFloat(data.precio);
       data.stock = parseInt(data.stock, 10);
       data.categoriaId = parseInt(data.categoriaId, 10);
       data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
       data.ivaPorcentaje = data.ivaPorcentaje ? parseFloat(data.ivaPorcentaje) : 0;
-
+  
       const precioConIVA = data.precio + (data.precio * (data.ivaPorcentaje / 100));
       data.precio = parseFloat(precioConIVA.toFixed(2));
-
+  
       let imageUrl;
       if (data.imagenLocalPath) {
         imageUrl = await subirImagenCloudinary(data.imagenLocalPath, "productos");
@@ -134,95 +138,129 @@ export const ProductosService = {
         }
       }
       data.imagen = imageUrl;
-
+  
       const nuevoProducto = await ProductosData.createProducto(data);
-
+  
       await auditoriaService.registrarEvento(
         usuarioId,
         "productos",
         "CREAR",
         nuevoProducto
       );
-
+  
       return nuevoProducto;
     } catch (error) {
       throw new Error(`Error al crear producto: ${error.message}`);
     }
   },     
 
-  // Actualizar un producto por ID
-  async updateProducto(id, data) {
+  // Actualizar Producto
+  async updateProducto(id, data, usuarioId) {
     try {
         validarId(id);
         if (!data || Object.keys(data).length === 0) {
-            throw new Error('Los datos para actualizar el producto no pueden estar vacíos');
+            throw new Error("Los datos para actualizar el producto no pueden estar vacíos");
+        }
+        if (!usuarioId) {
+            throw new Error("El usuario que realiza la acción no está autenticado.");
         }
 
         // Obtener producto actual
         const productoActual = await ProductosData.getProductoById(id);
         if (!productoActual) {
-            throw new Error('Producto no encontrado');
+            throw new Error("Producto no encontrado");
         }
 
-        let precioFinal = parseFloat(productoActual.precio); // Mantiene el precio actual si no se cambia
+        console.log("Producto actual obtenido:", productoActual);
+
+        let precioBase = productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA anterior
         let ivaFinal = productoActual.ivaPorcentaje; // Mantiene el IVA actual si no se cambia
 
-        // Si se actualiza solo el precio, recalcularlo con el IVA actual
-        if (data.precio !== undefined && data.ivaPorcentaje === undefined) {
-            precioFinal = parseFloat(data.precio) * (1 + (ivaFinal / 100));
-        }
+        console.log(`Precio almacenado: ${productoActual.precio}, IVA actual: ${productoActual.ivaPorcentaje}%`);
+        console.log(`Precio base calculado quitando IVA actual: ${precioBase}`);
 
-        // Si se actualiza el IVA, recalcular el precio con el nuevo IVA
+        // Si se actualiza el IVA, recalcular el precio base con el nuevo IVA
         if (data.ivaPorcentaje !== undefined) {
             ivaFinal = parseFloat(data.ivaPorcentaje);
-            const precioBase = data.precio !== undefined ? parseFloat(data.precio) : productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA anterior
-            precioFinal = precioBase * (1 + (ivaFinal / 100)); // Aplicar nuevo IVA
+            precioBase = productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA anterior correctamente
+
+            console.log(`Nuevo IVA recibido: ${ivaFinal}%`);
+            console.log(`Precio base recalculado después de quitar el IVA anterior: ${precioBase}`);
         }
 
-        precioFinal = parseFloat(precioFinal.toFixed(2));
+        // Si se actualiza el precio, usarlo como nuevo precio base
+        if (data.precio !== undefined) {
+            precioBase = parseFloat(data.precio); // Utilizar el nuevo precio ingresado como base
+            console.log(`Nuevo precio base recibido del usuario: ${precioBase}`);
+        }
+
+        // Aplicar el IVA al precio base actualizado
+        const precioFinal = parseFloat((precioBase * (1 + (ivaFinal / 100))).toFixed(2));
+        console.log(`Precio final calculado con el nuevo IVA aplicado: ${precioFinal}`);
 
         // Construir objeto de actualización
         const dataActualizada = {
             ...data,
-            precio: precioFinal,
+            precio: precioFinal, // Se almacena el precio final con IVA aplicado
             ivaPorcentaje: ivaFinal
         };
 
+        console.log("Datos a actualizar en la base de datos:", dataActualizada);
+
         // Guardar cambios en la base de datos
-        return await ProductosData.updateProducto(id, dataActualizada);
+        const productoActualizado = await ProductosData.updateProducto(id, dataActualizada);
+
+        console.log("Producto actualizado correctamente:", productoActualizado);
+
+        // Registrar Auditoría
+        await auditoriaService.registrarEvento(
+            usuarioId,
+            "productos",
+            "ACTUALIZAR",
+            { id, cambios: dataActualizada }
+        );
+
+        console.log("Auditoría registrada correctamente");
+
+        return productoActualizado;
     } catch (error) {
+        console.error("Error al actualizar el producto:", error.message);
         throw new Error(`Error al actualizar el producto: ${error.message}`);
     }
-  },
+},
 
   // Eliminar un producto con auditoría
   async deleteProducto(id, usuarioId) {
     try {
       validarId(id);
+      if (!usuarioId) {
+        throw new Error("El usuario que realiza la acción no está autenticado.");
+      }
+  
       const productoEliminado = await ProductosData.getProductoById(id);
       if (!productoEliminado) {
         throw new Error("Producto no encontrado");
       }
-
+  
       const pedidosRelacionados = await pedidosData.getPedidosByProductoId(id);
       if (pedidosRelacionados.length > 0) {
         throw new Error(`No se puede eliminar el producto. Está en ${pedidosRelacionados.length} pedido(s).`);
       }
-
+  
       const carritosRelacionados = await carritoData.getCarritosByProductoId(id);
       if (carritosRelacionados.length > 0) {
         throw new Error(`No se puede eliminar el producto. Está en ${carritosRelacionados.length} carrito(s).`);
       }
-
+  
       await ProductosData.deleteProducto(id);
-
+  
       await auditoriaService.registrarEvento(
         usuarioId,
         "productos",
         "ELIMINAR",
         productoEliminado
       );
-
+  
       return { message: "Producto eliminado exitosamente" };
     } catch (error) {
       throw new Error(`Error al eliminar el producto: ${error.message}`);

@@ -62,7 +62,7 @@ router.post(
   handleValidation,
   async (req, res) => {
     try {
-      const usuarioId = req.usuario?.id; // Corrección: Extraer usuario autenticado correctamente
+      const usuarioId = req.usuario?.id;
       if (!usuarioId) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Usuario no autenticado." });
       }
@@ -79,27 +79,36 @@ router.post(
   }
 );
 
-
 // Actualizar una categoría con Auditoría
-router.put("/:id", verificarToken, verificarRol(["Administrador"]), validarCategoriaParaActualizar, handleValidation, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const usuarioId = req.usuario?.id; // ✅ Extrae correctamente el usuario autenticado
-    if (isNaN(id)) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "El ID debe ser un número válido." });
+router.put(
+  "/:id",
+  verificarToken,
+  verificarRol(["Administrador"]),
+  validarCategoriaParaActualizar,
+  handleValidation,
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const usuarioId = req.usuario?.id;
+
+      if (isNaN(id)) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "El ID debe ser un número válido." });
+      }
+      if (!usuarioId) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Usuario no autenticado." });
+      }
+
+      const categoriaActualizada = await CategoriaService.updateCategoria(id, req.body, usuarioId);
+
+      res.status(HTTP_STATUS.OK).json({
+        message: "Categoría actualizada correctamente.",
+        categoria: categoriaActualizada,
+      });
+    } catch (error) {
+      handleError(res, error, HTTP_STATUS.BAD_REQUEST);
     }
-
-    const categoriaActualizada = await CategoriaService.updateCategoria(id, req.body, usuarioId);
-
-    res.status(HTTP_STATUS.OK).json({
-      message: "Categoría actualizada correctamente.",
-      categoria: categoriaActualizada,
-    });
-  } catch (error) {
-    handleError(res, error, HTTP_STATUS.BAD_REQUEST);
   }
-});
-
+);
 
 // Eliminar una categoría con Auditoría
 router.delete(
@@ -109,9 +118,13 @@ router.delete(
   async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const usuarioId = req.usuario?.id; // ✅ Extraer usuario autenticado correctamente
+      const usuarioId = req.usuario?.id;
+
       if (isNaN(id)) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "El ID debe ser un número válido." });
+      }
+      if (!usuarioId) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Usuario no autenticado." });
       }
 
       await CategoriaService.deleteCategoria(id, usuarioId);
@@ -122,6 +135,5 @@ router.delete(
     }
   }
 );
-
 
 export default router;
