@@ -17,9 +17,10 @@ model productos {
   id                 Int                @id @default(autoincrement())
   nombre             String
   descripcion        String
-  marca              String?            // Nueva columna para la marca
-  especificaciones   String?            // Nueva columna para especificaciones
-  precio             Decimal            @default(0.0)
+  marca              String?
+  especificaciones   String?
+  precioBase         Decimal            @default(0.0)  // 💡 Nuevo campo: Precio sin IVA
+  precio             Decimal            @default(0.0)  // 💡 Sigue siendo el precio con IVA
   stock              Int
   garantia           String?
   imagen             String
@@ -27,14 +28,14 @@ model productos {
   promocionId        Int?
   ivaPorcentaje      Decimal?
 
-
   categoria          categorias         @relation(fields: [categoriaId], references: [id])
   promocion          promociones?       @relation(fields: [promocionId], references: [id])
 
   carritoProductos   carrito_productos[]
   pedidoProductos    pedido_productos[]
-  devoluciones     devolucion_productos[]
+  devoluciones       devolucion_productos[]
 }
+
 
 model devolucion_productos {
   id              Int      @id @default(autoincrement())

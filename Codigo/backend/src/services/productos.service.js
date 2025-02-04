@@ -104,55 +104,112 @@ export const ProductosService = {
     );
   },
 
+  calcularPrecioConIVA(precioBase, ivaPorcentaje) {
+    const iva = precioBase * (ivaPorcentaje / 100);
+    return parseFloat((precioBase + iva).toFixed(2));
+  },
+
+  calcularPrecioBase(precioConIVA, ivaPorcentaje) {
+    return parseFloat((precioConIVA / (1 + (ivaPorcentaje / 100))).toFixed(2));
+  },
+
+
   // Crear un nuevo producto con auditoría
   async createProducto(data, usuarioId) {
     try {
-      if (!usuarioId) {
-        throw new Error("El usuario que realiza la acción no está autenticado.");
-      }
-  
-      console.log("Datos recibidos:", data);
-  
-      if (!data || !data.nombre || !data.descripcion) {
-        throw new Error("El nombre y la descripción son obligatorios");
-      }
-  
-      data.precio = parseFloat(data.precio);
-      data.stock = parseInt(data.stock, 10);
-      data.categoriaId = parseInt(data.categoriaId, 10);
-      data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
-      data.ivaPorcentaje = data.ivaPorcentaje ? parseFloat(data.ivaPorcentaje) : 0;
-  
-      const precioConIVA = data.precio + (data.precio * (data.ivaPorcentaje / 100));
-      data.precio = parseFloat(precioConIVA.toFixed(2));
-  
-      let imageUrl;
-      if (data.imagenLocalPath) {
-        imageUrl = await subirImagenCloudinary(data.imagenLocalPath, "productos");
-      } else {
-        const productoML = await buscarProductosMercadoLibre(data.nombre);
-        if (productoML) {
-          imageUrl = productoML.imagen;
-        } else {
-          throw new Error("No se encontró una imagen adecuada para el producto");
+        if (!usuarioId) {
+            throw new Error("El usuario que realiza la acción no está autenticado.");
         }
-      }
-      data.imagen = imageUrl;
-  
-      const nuevoProducto = await ProductosData.createProducto(data);
-  
-      await auditoriaService.registrarEvento(
-        usuarioId,
-        "productos",
-        "CREAR",
-        nuevoProducto
-      );
-  
-      return nuevoProducto;
+
+        console.log("📥 Datos recibidos:", data);
+
+        if (!data || !data.nombre || !data.descripcion) {
+            throw new Error("El nombre y la descripción son obligatorios");
+        }
+
+        data.precioBase = parseFloat(data.precioBase);
+        data.stock = parseInt(data.stock, 10);
+        data.categoriaId = parseInt(data.categoriaId, 10);
+        data.promocionId = data.promocionId ? parseInt(data.promocionId, 10) : null;
+        data.ivaPorcentaje = data.ivaPorcentaje ? parseFloat(data.ivaPorcentaje) : 0;
+
+        // ✅ Calcular el precio final con IVA
+        const precioConIVA = data.precioBase * (1 + data.ivaPorcentaje / 100);
+        data.precio = parseFloat(precioConIVA.toFixed(2));
+
+        // ✅ Declarar imageUrl correctamente ANTES de su uso
+        let imageUrl = "";
+
+        // 🔹 Verificar si se envió una imagen local
+        if (data.imagenLocalPath) {
+            console.log("📤 Subiendo imagen a Cloudinary...");
+            try {
+                imageUrl = await subirImagenCloudinary(data.imagenLocalPath, "productos");
+                console.log("✅ Imagen subida correctamente:", imageUrl);
+            } catch (error) {
+                console.error("❌ Error al subir imagen a Cloudinary:", error);
+                throw new Error("Error al subir imagen. Intenta nuevamente.");
+            }
+        }
+
+        // 🔹 Si no hay imagen subida, intentar obtener de MercadoLibre
+        if (!imageUrl) {
+            console.log("🔎 Buscando imagen en MercadoLibre...");
+            const productoML = await buscarProductosMercadoLibre(data.nombre);
+            if (productoML) {
+                imageUrl = productoML.imagen;
+                console.log("✅ Imagen obtenida de MercadoLibre:", imageUrl);
+            } else {
+                console.warn("⚠️ No se encontró imagen en MercadoLibre.");
+            }
+        }
+
+        // 🔹 Si sigue sin haber imagen, asignar una predeterminada
+        if (!imageUrl) {
+            imageUrl = "https://res.cloudinary.com/demo/image/upload/default-product.png"; // Imagen predeterminada
+            console.log("📌 Se asignó una imagen predeterminada:", imageUrl);
+        }
+
+        // ✅ Asegurar que data.imagen tenga un valor antes de guardar
+        data.imagen = imageUrl;
+
+        console.log("📤 Datos a guardar en la base de datos:", {
+            ...data,
+            imagen: imageUrl,
+        });
+
+        // ✅ Evita errores con Prisma asegurando que todos los valores están bien formateados
+        const nuevoProducto = await ProductosData.createProducto({
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            precioBase: data.precioBase,
+            precio: data.precio,
+            stock: data.stock,
+            categoriaId: data.categoriaId,
+            promocionId: data.promocionId,
+            especificaciones: data.especificaciones,
+            marca: data.marca,
+            garantia: data.garantia,
+            ivaPorcentaje: data.ivaPorcentaje,
+            imagen: data.imagen,  // 🔹 Se usa el `imageUrl` correctamente definido
+        });
+
+        // 🔹 Registrar evento de auditoría
+        await auditoriaService.registrarEvento(
+            usuarioId,
+            "productos",
+            "CREAR",
+            nuevoProducto
+        );
+
+        console.log("✅ Producto creado correctamente:", nuevoProducto);
+
+        return nuevoProducto;
     } catch (error) {
-      throw new Error(`Error al crear producto: ${error.message}`);
+        console.error("❌ Error al crear producto:", error.message);
+        throw new Error(`Error al crear producto: ${error.message}`);
     }
-  },     
+  },   
 
   // Actualizar Producto
   async updateProducto(id, data, usuarioId) {
@@ -165,54 +222,34 @@ export const ProductosService = {
             throw new Error("El usuario que realiza la acción no está autenticado.");
         }
 
-        // Obtener producto actual
         const productoActual = await ProductosData.getProductoById(id);
         if (!productoActual) {
             throw new Error("Producto no encontrado");
         }
 
-        console.log("Producto actual obtenido:", productoActual);
+        // ✅ Obtener valores actuales o nuevos
+        let precioBase = data.precioBase !== undefined
+            ? parseFloat(data.precioBase) // Nuevo precio base
+            : parseFloat(productoActual.precioBase); // Precio base actual
 
-        let precioBase = productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA anterior
-        let ivaFinal = productoActual.ivaPorcentaje; // Mantiene el IVA actual si no se cambia
+        let ivaPorcentaje = data.ivaPorcentaje !== undefined
+            ? parseFloat(data.ivaPorcentaje)
+            : parseFloat(productoActual.ivaPorcentaje);
 
-        console.log(`Precio almacenado: ${productoActual.precio}, IVA actual: ${productoActual.ivaPorcentaje}%`);
-        console.log(`Precio base calculado quitando IVA actual: ${precioBase}`);
+        // ✅ Calcular el precio con IVA
+        let precioConIVA = parseFloat((precioBase * (1 + ivaPorcentaje / 100)).toFixed(2));
 
-        // Si se actualiza el IVA, recalcular el precio base con el nuevo IVA
-        if (data.ivaPorcentaje !== undefined) {
-            ivaFinal = parseFloat(data.ivaPorcentaje);
-            precioBase = productoActual.precio / (1 + (productoActual.ivaPorcentaje / 100)); // Quitar IVA anterior correctamente
+        console.log(`📌 Actualizando producto: Precio Base: ${precioBase}, IVA: ${ivaPorcentaje}%, Precio Final (con IVA): ${precioConIVA}`);
 
-            console.log(`Nuevo IVA recibido: ${ivaFinal}%`);
-            console.log(`Precio base recalculado después de quitar el IVA anterior: ${precioBase}`);
-        }
-
-        // Si se actualiza el precio, usarlo como nuevo precio base
-        if (data.precio !== undefined) {
-            precioBase = parseFloat(data.precio); // Utilizar el nuevo precio ingresado como base
-            console.log(`Nuevo precio base recibido del usuario: ${precioBase}`);
-        }
-
-        // Aplicar el IVA al precio base actualizado
-        const precioFinal = parseFloat((precioBase * (1 + (ivaFinal / 100))).toFixed(2));
-        console.log(`Precio final calculado con el nuevo IVA aplicado: ${precioFinal}`);
-
-        // Construir objeto de actualización
         const dataActualizada = {
             ...data,
-            precio: precioFinal, // Se almacena el precio final con IVA aplicado
-            ivaPorcentaje: ivaFinal
+            precioBase,
+            precio: precioConIVA, // Guardamos el precio con IVA
+            ivaPorcentaje
         };
 
-        console.log("Datos a actualizar en la base de datos:", dataActualizada);
-
-        // Guardar cambios en la base de datos
         const productoActualizado = await ProductosData.updateProducto(id, dataActualizada);
 
-        console.log("Producto actualizado correctamente:", productoActualizado);
-
-        // Registrar Auditoría
         await auditoriaService.registrarEvento(
             usuarioId,
             "productos",
@@ -220,14 +257,13 @@ export const ProductosService = {
             { id, cambios: dataActualizada }
         );
 
-        console.log("Auditoría registrada correctamente");
-
         return productoActualizado;
     } catch (error) {
-        console.error("Error al actualizar el producto:", error.message);
+        console.error("❌ Error al actualizar el producto:", error.message);
         throw new Error(`Error al actualizar el producto: ${error.message}`);
     }
-},
+  },
+  
 
   // Eliminar un producto con auditoría
   async deleteProducto(id, usuarioId) {

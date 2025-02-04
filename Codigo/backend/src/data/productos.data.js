@@ -64,7 +64,7 @@ export const ProductosData = {
       !data ||
       !data.nombre ||
       !data.descripcion ||
-      isNaN(data.precio) || // Verificar que precio sea numérico
+      isNaN(data.precioBase) || // Verificar que precioBase sea numérico
       isNaN(data.stock) ||  // Verificar que stock sea numérico
       !data.categoriaId ||  // Verificar que exista categoría
       !data.especificaciones ||
@@ -81,11 +81,12 @@ export const ProductosData = {
       data: {
         nombre: data.nombre,
         descripcion: data.descripcion,
-        precio: data.precio,
+        precioBase: parseFloat(data.precioBase),
+        precio: parseFloat((data.precioBase * (1 + data.ivaPorcentaje / 100)).toFixed(2)), // Calcula el precio con IVA
         stock: data.stock,
-        imagen: data.imagen,
-        categoriaId: data.categoriaId, // Aquí conecta con una sola categoría
-        promocionId: data.promocionId || null, // Promoción es opcional
+        imagen: data.imagen, // Ahora la imagen es una URL
+        categoriaId: data.categoriaId,
+        promocionId: data.promocionId || null,
         especificaciones: data.especificaciones,
         marca: data.marca,
         garantia: data.garantia,
