@@ -283,7 +283,7 @@ const GestionProductosPage = () => {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-2 mb-4">
         {/* Filtro por categoría */}
         <select
           className="border p-2 rounded text-gray-700"
@@ -325,8 +325,6 @@ const GestionProductosPage = () => {
             </option>
           ))}
         </select>
-      </div>
-      <div className="flex gap-4 mb-4">
         <select
           className="border p-2 rounded text-gray-700"
           value={sortOrderPrecio}

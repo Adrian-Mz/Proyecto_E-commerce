@@ -18,6 +18,9 @@ const GestionPedidosPage = () => {
   const [nuevoEstadoId, setNuevoEstadoId] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedEstado, setSelectedEstado] = useState(""); // Filtro por estado
+
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
@@ -98,12 +101,22 @@ const GestionPedidosPage = () => {
     }
   };
 
-  const paginatedData = pedidos.slice(
+  const filteredData = pedidos
+  .filter((pedido) =>
+    pedido.usuario?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pedido.usuario?.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pedido.usuario?.correo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pedido.direccionEnvio.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  .filter((pedido) => !selectedEstado || pedido.estadoId.toString() === selectedEstado);
+
+  const paginatedData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const totalPages = Math.ceil(pedidos.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
 
   if (isLoading) {
     return <div className="text-center">Cargando datos...</div>;
@@ -113,23 +126,49 @@ const GestionPedidosPage = () => {
     <div className="p-6 bg-gray-100">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Gestión de Pedidos</h1>
-        <div className="flex items-center space-x-2">
-          <button
-            className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-            onClick={() => handlePageChange("prev")}
-            disabled={currentPage === 1}
+         {/* Barra de búsqueda */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar por usuario, correo o dirección..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border p-2 rounded pl-10 w-64 text-gray-700"
+            />
+          </div>
+
+          {/* Filtro por Estado */}
+          <select
+            className="border p-2 rounded text-gray-700"
+            value={selectedEstado}
+            onChange={(e) => setSelectedEstado(e.target.value)}
           >
-            &lt;
-          </button>
-          <span className="text-gray-700">{`Página ${currentPage} de ${totalPages}`}</span>
-          <button
-            className="px-4 py-2 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-            onClick={() => handlePageChange("next")}
-            disabled={currentPage === totalPages}
-          >
-            &gt;
-          </button>
-        </div>
+            <option value="">Todos los estados</option>
+            {estados.map((estado) => (
+              <option key={estado.id} value={estado.id}>
+                {estado.nombre}
+              </option>
+            ))}
+          </select>
+
+          {/* Paginación */}
+          <div className="flex items-center space-x-2">
+            <button
+              className="px-1 py-1 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              onClick={() => handlePageChange("prev")}
+              disabled={currentPage === 1}
+            >
+              &lt;
+            </button>
+            <span className="text-gray-700">{`${currentPage} de ${totalPages || 1}`}</span>
+            <button
+              className="px-1 py-1 mx-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              onClick={() => handlePageChange("next")}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              &gt;
+            </button>
+          </div>
       </div>
       <TableComponent
         columns={[
