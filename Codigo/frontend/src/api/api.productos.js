@@ -33,8 +33,11 @@ export const ProductosService = {
 
   updateProducto: async (id, productoData) => {
     try {
-      const response = await api.put(`/productos/${id}`, productoData);
-      return response.data;
+      const response = await api.put(`/productos/${id}`, productoData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, // Asegurar autenticación si aplica
+      });
+  
+      return response.data.producto; // Devuelve solo el producto actualizado
     } catch (error) {
       console.error(`Error al actualizar producto con ID ${id}:`, error.response?.data || error.message);
       throw error;
