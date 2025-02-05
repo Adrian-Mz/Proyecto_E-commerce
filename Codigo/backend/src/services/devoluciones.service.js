@@ -5,6 +5,10 @@ import { enviarCorreo } from '../utils/emailService.js';
 
 export const devolucionesService = {
 
+    async obtenerTodasLasDevoluciones() {
+        return await devolucionesData.getAllDevoluciones();
+    },
+
     async obtenerDevolucionPorId(devolucionId) {
         return await devolucionesData.getDevolucionById(devolucionId);
     },
