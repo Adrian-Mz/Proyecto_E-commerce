@@ -53,7 +53,7 @@ const UsuarioDevolucionesPage = () => {
   const obtenerEstadoProducto = (pedidoId, productoId) => {
     const devolucion = devolucionesUsuario.find((d) => d.pedidoId === pedidoId);
     if (!devolucion) return null;
-
+  
     const productoDevuelto = devolucion.productos.find((p) => p.productoId === productoId);
     return productoDevuelto ? productoDevuelto.estado?.nombre : "Sin devolución";
   };
@@ -64,20 +64,20 @@ const UsuarioDevolucionesPage = () => {
   };
 
   const renderizarProductos = (pedido) => {
-    const estadoDevolucion = obtenerEstadoDevolucion(pedido.id);
-    const devolucionCompletada = estadoDevolucion === "Devolución Completada"; // 🔹 Bloqueo de todos los productos si está completada
-
+    const estadoDevolucion = obtenerEstadoDevolucion(pedido.id); // Se usa la función aquí
+    const devolucionCompletada = estadoDevolucion === "Devolución Completada"; // Bloqueo a nivel de pedido
+  
     return (
       <ul>
         {pedido.productos.map((producto) => {
           const estadoProducto = obtenerEstadoProducto(pedido.id, producto.productoId);
-          const enProceso = estadoProducto !== "Sin devolución" && estadoProducto !== "Producto Rechazado";
-
+          const productoBloqueado = devolucionCompletada || estadoProducto === "Devolución Completada"; // Bloquea si el pedido o el producto está completado
+  
           return (
             <li
               key={producto.productoId}
               className={`flex flex-col border p-2 rounded-lg shadow-sm mb-2 ${
-                enProceso || devolucionCompletada ? "opacity-50 bg-gray-200" : ""
+                productoBloqueado ? "opacity-50 bg-gray-200" : ""
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -92,25 +92,25 @@ const UsuarioDevolucionesPage = () => {
                   <p className="text-xs text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
                 </div>
               </div>
-
-              {/* 🔹 Mostrar estado de la devolución del producto */}
+  
+              {/* Estado del Producto */}
               {estadoProducto !== "Sin devolución" && (
                 <div className="mt-2 p-2 text-blue-700 bg-blue-100 border border-blue-400 rounded">
                   <strong>Estado del Producto:</strong> {estadoProducto}
                 </div>
               )}
-
-              {/* 🔹 Mostrar estado general de la devolución */}
+  
+              {/* Estado de la Devolución del Pedido */}
               {estadoDevolucion !== "Sin devolución" && (
                 <div className="mt-2 p-2 text-green-700 bg-green-100 border border-green-400 rounded">
                   <strong>Estado de la Devolución:</strong> {estadoDevolucion}
                 </div>
               )}
-
-              {/* 🔹 Selector de motivo de devolución (deshabilitado si ya está en proceso o devolución completada) */}
+  
+              {/* Selector de motivo de devolución (bloqueado si el pedido o el producto está en "Devolución Completada") */}
               <select
                 className="mt-2 p-2 border rounded"
-                disabled={enProceso || devolucionCompletada}
+                disabled={productoBloqueado}
                 onChange={(e) => {
                   const selectedMotivo = e.target.value;
                   setProductosDevueltos((prev) => {
@@ -146,6 +146,8 @@ const UsuarioDevolucionesPage = () => {
       </ul>
     );
   };
+  
+  
   
   const handleDevolucion = async (pedidoId) => {
     try {

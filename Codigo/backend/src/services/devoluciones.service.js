@@ -54,7 +54,7 @@ export const devolucionesService = {
             }
         }
 
-        // ✅ **Asegurar que la devolución se registre con estado 5 (Devolución Pendiente)**
+        // Asegurar que la devolución se registre con estado 5 (Devolución Pendiente)**
         const devolucion = await devolucionesData.createDevolucion({
             pedidoId,
             motivo: "Devolución de productos específica",
@@ -180,7 +180,7 @@ export const devolucionesService = {
     
         // Si se marca como "Completada", enviar confirmación final
         if (nuevoEstadoId === 8) {
-            console.log(`✅ La devolución ${devolucionId} ha sido completada.`);
+            console.log(`La devolución ${devolucionId} ha sido completada.`);
         }
     
         // Enviar correo de notificación al usuario
