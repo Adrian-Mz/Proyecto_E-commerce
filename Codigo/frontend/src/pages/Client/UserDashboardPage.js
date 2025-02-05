@@ -1,9 +1,10 @@
 import React from "react";
 import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaSignOutAlt, FaShoppingCart, FaKey  } from "react-icons/fa";
+import { FaUserCircle, FaSignOutAlt, FaShoppingCart, FaKey, FaRegThumbsDown  } from "react-icons/fa";
 import UserProfilePage from "./UsuarioPage"; // Página de Perfil
 import UserSettingsPage from "./UserSettingsPage"; // Página de Configuración de Usuario
 import UsuarioPedidosPage from "./UsuarioPedidosPage";
+import UsuarioDevolucionesPage from "./UsuarioDevolucionesPage";
 
 const UserDashboardPage = ({ changeUser }) => {
   const navigate = useNavigate();
@@ -60,6 +61,18 @@ const UserDashboardPage = ({ changeUser }) => {
             <FaShoppingCart className="inline-block mr-2" />
             Mis Pedidos
           </NavLink>
+
+          <NavLink
+            to="/dashboard/returns"
+            className={({ isActive }) =>
+              `block py-3 px-6 hover:bg-gray-200 hover:shadow-md transition rounded-lg no-underline ${
+                isActive ? "bg-gray-100 font-bold shadow-md" : "text-gray-900"
+              }`
+            }
+          >
+            <FaRegThumbsDown className="inline-block mr-2" />
+            Devoluciones
+          </NavLink>
           <button
             onClick={handleLogout}
             className="block w-full text-left py-3 px-6 text-red-500 hover:bg-gray-100 hover:shadow-md transition rounded-lg"
@@ -75,13 +88,15 @@ const UserDashboardPage = ({ changeUser }) => {
         <div className="bg-gray-900 text-gray-100 p-6 rounded-md shadow-md mb-6">
           <h1 className="text-2xl font-bold">Bienvenido, {storedUser?.nombre || "Usuario"}!</h1>
           <p className="text-gray-300 mt-2">
-            Aquí puedes gestionar tu perfil, configuración de cuenta y ver tus pedidos.
+            Aquí puedes actualizar tu perfil, configuración de cuenta, ver tus pedidos y gestionar tus devoluciones.
           </p>
         </div>
         <Routes>
+          <Route index element={<UserProfilePage />} />
           <Route path="profile" element={<UserProfilePage />} />
-          <Route path="settings/*" element={<UserSettingsPage />} />
+          <Route path="settings" element={<UserSettingsPage />} />
           <Route path="orders" element={<UsuarioPedidosPage />} />
+          <Route path="returns" element={<UsuarioDevolucionesPage />} />
         </Routes>
       </main>
     </div>
