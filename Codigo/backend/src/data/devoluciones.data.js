@@ -5,17 +5,17 @@ const prisma = new PrismaClient();
 export const devolucionesData = {
   
   // Registrar una nueva devolución
-  async createDevolucion({ pedidoId, motivo = null, estadoId }) {
+  async createDevolucion({ pedidoId, motivo, estadoId }) {
     return await prisma.devoluciones.create({
-        data: {
-            pedidoId,
-            motivo: motivo || "Devolución parcial de productos",
-            estadoId,
-            fechaDevolucion: new Date(),
-        },
+      data: {
+        pedidoId,
+        motivo,
+        estadoId,
+        fechaDevolucion: new Date(),
+      },
     });
   },
-  
+
   // Obtener todas las devoluciones
   async getAllDevoluciones() {
     return await prisma.devoluciones.findMany({
@@ -49,14 +49,6 @@ export const devolucionesData = {
     });
   },
 
-  // Actualizar el estado de una devolución
-  async updateDevolucion(devolucionId, updateData) {
-    return await prisma.devoluciones.update({
-      where: { id: devolucionId },
-      data: updateData,
-    });
-  },
-
   // Obtener devoluciones por pedido ID
   async getDevolucionesByPedidoId(pedidoId) {
     return await prisma.devoluciones.findMany({
@@ -73,21 +65,10 @@ export const devolucionesData = {
     });
   },
 
-  // Obtener los productos de una devolución específica
+  // Obtener productos de una devolución específica
   async getProductosByDevolucionId(devolucionId) {
     return await prisma.devolucion_productos.findMany({
-        where: { devolucionId },
-        include: {
-          producto: true,
-          estado: true,
-        },
-    });
-  },
-
-  // Agregar un producto a una devolución
-  async agregarProductoADevolucion(data) {
-    return await prisma.devolucion_productos.create({
-      data,
+      where: { devolucionId },
       include: {
         producto: true,
         estado: true,
@@ -111,6 +92,41 @@ export const devolucionesData = {
     });
   },
 
+  // ✅ NUEVO: Verificar si un producto de un pedido ya fue devuelto
+  async getProductoDevolucionByPedido(pedidoId, productoId) {
+    return await prisma.devolucion_productos.findFirst({
+      where: {
+        productoId,
+        devolucion: {
+          pedidoId, // Busca dentro de la devolución que pertenece al pedido
+        },
+      },
+      include: {
+        devolucion: true,
+        estado: true,
+      },
+    });
+  },
+
+  // Agregar un producto a una devolución
+  async agregarProductoADevolucion(data) {
+    return await prisma.devolucion_productos.create({
+      data,
+      include: {
+        producto: true,
+        estado: true,
+      },
+    });
+  },
+
+  // Actualizar el estado de una devolución
+  async updateDevolucion(devolucionId, updateData) {
+    return await prisma.devoluciones.update({
+      where: { id: devolucionId },
+      data: updateData,
+    });
+  },
+
   // Actualizar el estado de un producto dentro de una devolución
   async updateEstadoProductoDevolucion(devolucionId, productoId, nuevoEstadoId) {
     return await prisma.devolucion_productos.update({
@@ -123,4 +139,15 @@ export const devolucionesData = {
       data: { estadoId: nuevoEstadoId },
     });
   },
+
+  // Contar productos pendientes dentro de una devolución
+  async countProductosPendientesDevolucion(devolucionId) {
+    return await prisma.devolucion_productos.count({
+        where: {
+            devolucionId,
+            estadoId: 9, // Estado "Producto Pendiente"
+        },
+    });
+  }
+
 };

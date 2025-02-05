@@ -32,6 +32,10 @@ export const pedidosData = {
           orderBy: { fechaCambio: 'asc' },
         },
       },
+
+      orderBy: {
+        fechaPedido: 'desc' // Ordena por fecha de creación, de más reciente a más antiguo
+      }
     });
   },
 
@@ -57,6 +61,9 @@ export const pedidosData = {
           orderBy: { fechaCambio: 'asc' },
         },
       },
+      orderBy: {
+        fechaPedido: 'desc' // Ordena por fecha de creación, de más reciente a más antiguo
+      }
     });
   },
 

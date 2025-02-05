@@ -50,7 +50,7 @@ router.post('/:pedidoId', async (req, res) => {
 
 router.put('/:devolucionId/producto/:productoId/estado', verificarToken, verificarRol(['Administrador']), async (req, res) => {
   const { devolucionId, productoId } = req.params;
-  console.log("🔹 Cuerpo recibido en la solicitud:", req.body); // 🛠 Depuración
+  console.log("Cuerpo recibido en la solicitud:", req.body); // 
 
   let nuevoEstadoId = req.body.nuevoEstadoId;
 
@@ -60,7 +60,7 @@ router.put('/:devolucionId/producto/:productoId/estado', verificarToken, verific
     }
 
     nuevoEstadoId = parseInt(nuevoEstadoId, 10);
-    console.log("🔹 Después de convertir:", nuevoEstadoId);
+    console.log(" Después de convertir:", nuevoEstadoId);
 
     if (isNaN(nuevoEstadoId) || !Number.isInteger(nuevoEstadoId)) {
       return res.status(400).json({ error: "El estado debe ser un número válido." });
@@ -79,36 +79,30 @@ router.put('/:devolucionId/producto/:productoId/estado', verificarToken, verific
 });
 
 // Ruta para actualizar el estado de una devolución (solo Administradores)
-router.put(
-  '/:devolucionId',
-  verificarToken, // Verifica si el usuario está autenticado
-  verificarRol(['Administrador']), // Permite solo al rol de Administrador
-  async (req, res) => {
-    const { devolucionId } = req.params;
-    const { estado } = req.body;
+router.put('/:devolucionId', verificarToken, verificarRol(['Administrador']), async (req, res) => {
+  const { devolucionId } = req.params;
+  const { estado } = req.body;
 
-    try {
-      // Asegúrate de que el estado sea un número válido
-      if (!Number.isInteger(parseInt(estado, 10))) {
-        return res.status(400).json({ error: 'El estado debe ser un número válido.' });
-      }
-
-      // Llama al servicio para actualizar el estado de la devolución
-      const devolucionActualizada = await devolucionesService.actualizarEstadoDevolucion(
-        parseInt(devolucionId, 10),
-        parseInt(estado, 10),
-        req.usuario.correo // Extrae el correo del token
-      );
-
-      res.status(200).json({
-        mensaje: 'Estado de la devolución actualizado correctamente.',
-        devolucion: devolucionActualizada,
-      });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+  try {
+    if (!Number.isInteger(parseInt(estado, 10))) {
+      return res.status(400).json({ error: 'El estado debe ser un número válido.' });
     }
+
+    const devolucionActualizada = await devolucionesService.actualizarEstadoDevolucion(
+      parseInt(devolucionId, 10),
+      parseInt(estado, 10),
+      req.usuario.correo
+    );
+
+    res.status(200).json({
+      mensaje: 'Estado de la devolución actualizado correctamente.',
+      devolucion: devolucionActualizada,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
-);
+});
+
 
 
 export default router;
