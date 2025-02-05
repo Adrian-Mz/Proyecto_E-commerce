@@ -5,6 +5,7 @@ import GestionProductosPage from "./GestionProductosPage";
 import GestionUsuariosPage from "./GestionUsuariosPage";
 import GestionCategoriasPage from "./GestionCategoriasPage";
 import GestionPromocionesPage from "./GestionPromocionesPage";
+import GestionDevolucionesPage from "./GestionDevolucionesPage";
 import NotFoundPage from "../../components/UI/NotFoundPage";
 
 const AdminRoutes = () => {
@@ -15,6 +16,7 @@ const AdminRoutes = () => {
         <Route path="usuarios" element={<GestionUsuariosPage />} />
         <Route path="categorias" element={<GestionCategoriasPage />} />
         <Route path="promociones" element={<GestionPromocionesPage />} />
+        <Route path="devoluciones" element={<GestionDevolucionesPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
