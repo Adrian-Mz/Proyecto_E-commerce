@@ -32,12 +32,16 @@ export const devolucionesData = {
     });
   },
 
-  // Obtener una devolución por ID
+  // Obtener una devolución por ID con datos del usuario
   async getDevolucionById(devolucionId) {
     return await prisma.devoluciones.findUnique({
       where: { id: devolucionId },
       include: {
-        pedido: true,
+        pedido: {
+          include: {
+            usuario: true,  // Incluye los datos del usuario que hizo el pedido
+          },
+        },
         estado: true,
         productos: {
           include: {
