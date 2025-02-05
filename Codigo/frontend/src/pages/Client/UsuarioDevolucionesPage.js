@@ -6,18 +6,9 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaChevronDown, FaUndoAlt } from "react-icons/fa";
 
-const MOTIVOS_DEVOLUCION = [
-    "Producto defectuoso",
-    "Recibí un artículo incorrecto",
-    "Cambio de opinión",
-    "Producto dañado en el transporte",
-    "Producto con características extrañas",
-    "Motivo desconocido",
-];
-
 const UsuarioDevolucionesPage = () => {
   const [pedidosEntregados, setPedidosEntregados] = useState([]);
-  const [productosEnProcesoDevolucion, setProductosEnProcesoDevolucion] = useState({});
+  const [devolucionesUsuario, setDevolucionesUsuario] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [productosDevueltos, setProductosDevueltos] = useState([]);
   const [visiblePedidos, setVisiblePedidos] = useState({});
@@ -31,33 +22,23 @@ const UsuarioDevolucionesPage = () => {
           toast.error("No se encontró el usuario.");
           return;
         }
-  
+
         const response = await PedidosAPI.getPedidos();
         console.log("Respuesta de API pedidos:", response);
-  
+
         const pedidos = Array.isArray(response.pedidos) ? response.pedidos : [];
         if (!Array.isArray(pedidos)) {
           console.error("Error: La respuesta de pedidos no es un array.");
           return;
         }
-  
-        const pedidosFiltrados = pedidos.filter(p => p.estadoId === 4 && p.usuarioId === usuario.id);
+
+        const pedidosFiltrados = pedidos.filter((p) => p.estadoId === 4 && p.usuarioId === usuario.id);
         setPedidosEntregados(pedidosFiltrados);
-  
-        // Obtener devoluciones activas
+
+        // Obtener devoluciones activas del usuario
         const devoluciones = await DevolucionesService.obtenerTodasLasDevoluciones();
-        const productosEnDevolucion = {};
-  
-        devoluciones.forEach((devolucion) => {
-          devolucion.productos.forEach((producto) => {
-            if (!productosEnDevolucion[devolucion.pedidoId]) {
-              productosEnDevolucion[devolucion.pedidoId] = new Map();
-            }
-            productosEnDevolucion[devolucion.pedidoId].set(producto.productoId, producto.estadoId);
-          });
-        });
-  
-        setProductosEnProcesoDevolucion(productosEnDevolucion);
+        const devolucionesUsuario = devoluciones.filter((d) => pedidosFiltrados.some((p) => p.id === d.pedidoId));
+        setDevolucionesUsuario(devolucionesUsuario);
       } catch (error) {
         console.error("Error al cargar los pedidos entregados:", error);
         toast.error("Error al cargar los pedidos.");
@@ -65,71 +46,107 @@ const UsuarioDevolucionesPage = () => {
         setIsLoading(false);
       }
     };
-  
+
     fetchPedidosEntregados();
   }, []);
-  
-    const renderizarProductos = (pedido) => (
-        <ul>
-            {pedido.productos.map((producto) => {
-                const enProceso = productosEnProcesoDevolucion[pedido.id]?.has(producto.productoId);
 
-                return (
-                    <li key={producto.productoId} 
-                        className={`flex flex-col border p-2 rounded-lg shadow-sm mb-2 ${enProceso ? "opacity-50" : ""}`}>
-                        
-                        <div className="flex items-center space-x-2">
-                            <img
-                                src={producto.producto?.imagen || "/placeholder.png"}
-                                alt={producto.producto?.nombre || "Producto"}
-                                className="w-14 h-14 object-cover rounded"
-                            />
-                            <div>
-                                <h5 className="font-bold text-sm">{producto.producto?.nombre}</h5>
-                                <p className="text-xs text-gray-500">{producto.producto?.marca}</p>
-                                <p className="text-xs text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
-                            </div>
-                        </div>
+  const obtenerEstadoProducto = (pedidoId, productoId) => {
+    const devolucion = devolucionesUsuario.find((d) => d.pedidoId === pedidoId);
+    if (!devolucion) return null;
 
-                        {/* 🔹 Mostrar mensaje si está en proceso de devolución */}
-                        {enProceso && (
-                            <div className="mt-2 p-2 text-red-600 bg-red-100 border border-red-400 rounded">
-                                <strong>⚠ Con proceso de devolución</strong>
-                            </div>
-                        )}
+    const productoDevuelto = devolucion.productos.find((p) => p.productoId === productoId);
+    return productoDevuelto ? productoDevuelto.estado?.nombre : "Sin devolución";
+  };
 
-                        {/* 🔹 Selector de motivo de devolución */}
-                        <select
-                            className="mt-2 p-2 border rounded"
-                            disabled={enProceso}
-                            onChange={(e) => {
-                                const selectedMotivo = e.target.value;
-                                setProductosDevueltos((prev) => {
-                                    const newProductos = prev.filter(p => p.productoId !== producto.productoId);
-                                    if (selectedMotivo) {
-                                        newProductos.push({
-                                            productoId: producto.productoId,
-                                            cantidad: producto.cantidad,
-                                            motivo: selectedMotivo
-                                        });
-                                    }
-                                    return newProductos;
-                                });
-                            }}
-                        >
-                            <option value="">Seleccione un motivo</option>
-                            {MOTIVOS_DEVOLUCION.map((motivo) => (
-                                <option key={motivo} value={motivo}>
-                                    {motivo}
-                                </option>
-                            ))}
-                        </select>
-                    </li>
-                );
-            })}
-        </ul>
+  const obtenerEstadoDevolucion = (pedidoId) => {
+    const devolucion = devolucionesUsuario.find((d) => d.pedidoId === pedidoId);
+    return devolucion ? devolucion.estado?.nombre : "Sin devolución";
+  };
+
+  const renderizarProductos = (pedido) => {
+    const estadoDevolucion = obtenerEstadoDevolucion(pedido.id);
+    const devolucionCompletada = estadoDevolucion === "Devolución Completada"; // 🔹 Bloqueo de todos los productos si está completada
+
+    return (
+      <ul>
+        {pedido.productos.map((producto) => {
+          const estadoProducto = obtenerEstadoProducto(pedido.id, producto.productoId);
+          const enProceso = estadoProducto !== "Sin devolución" && estadoProducto !== "Producto Rechazado";
+
+          return (
+            <li
+              key={producto.productoId}
+              className={`flex flex-col border p-2 rounded-lg shadow-sm mb-2 ${
+                enProceso || devolucionCompletada ? "opacity-50 bg-gray-200" : ""
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <img
+                  src={producto.producto?.imagen || "/placeholder.png"}
+                  alt={producto.producto?.nombre || "Producto"}
+                  className="w-14 h-14 object-cover rounded"
+                />
+                <div>
+                  <h5 className="font-bold text-sm">{producto.producto?.nombre}</h5>
+                  <p className="text-xs text-gray-500">{producto.producto?.marca}</p>
+                  <p className="text-xs text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
+                </div>
+              </div>
+
+              {/* 🔹 Mostrar estado de la devolución del producto */}
+              {estadoProducto !== "Sin devolución" && (
+                <div className="mt-2 p-2 text-blue-700 bg-blue-100 border border-blue-400 rounded">
+                  <strong>Estado del Producto:</strong> {estadoProducto}
+                </div>
+              )}
+
+              {/* 🔹 Mostrar estado general de la devolución */}
+              {estadoDevolucion !== "Sin devolución" && (
+                <div className="mt-2 p-2 text-green-700 bg-green-100 border border-green-400 rounded">
+                  <strong>Estado de la Devolución:</strong> {estadoDevolucion}
+                </div>
+              )}
+
+              {/* 🔹 Selector de motivo de devolución (deshabilitado si ya está en proceso o devolución completada) */}
+              <select
+                className="mt-2 p-2 border rounded"
+                disabled={enProceso || devolucionCompletada}
+                onChange={(e) => {
+                  const selectedMotivo = e.target.value;
+                  setProductosDevueltos((prev) => {
+                    const newProductos = prev.filter((p) => p.productoId !== producto.productoId);
+                    if (selectedMotivo) {
+                      newProductos.push({
+                        productoId: producto.productoId,
+                        cantidad: producto.cantidad,
+                        motivo: selectedMotivo,
+                      });
+                    }
+                    return newProductos;
+                  });
+                }}
+              >
+                <option value="">Seleccione un motivo</option>
+                {[
+                  "Producto defectuoso",
+                  "Recibí un artículo incorrecto",
+                  "Cambio de opinión",
+                  "Producto dañado en el transporte",
+                  "Producto con características extrañas",
+                  "Motivo desconocido",
+                ].map((motivo) => (
+                  <option key={motivo} value={motivo}>
+                    {motivo}
+                  </option>
+                ))}
+              </select>
+            </li>
+          );
+        })}
+      </ul>
     );
-
+  };
+  
   const handleDevolucion = async (pedidoId) => {
     try {
         if (productosDevueltos.length === 0) {
