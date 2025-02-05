@@ -17,20 +17,37 @@ export const devolucionesData = {
   },
 
   // Obtener todas las devoluciones
-  async getAllDevoluciones() {
-    return await prisma.devoluciones.findMany({
-      include: {
-        pedido: true,
-        estado: true,
-        productos: {
-          include: {
-            producto: true,
-            estado: true,
-          },
-        },
+  // Obtener todas las devoluciones con usuario (nombre, apellido, correo) y productos (nombre, precio)
+async getAllDevoluciones() {
+  return await prisma.devoluciones.findMany({
+    include: {
+      pedido: {
+        select: {
+          usuario: {
+            select: {
+              nombre: true,
+              apellido: true,
+              correo: true
+            }
+          }
+        }
       },
-    });
-  },
+      estado: true,  // Estado de la devolución
+      productos: {
+        include: {
+          producto: {
+            select: {
+              nombre: true,
+              precio: true
+            }
+          },
+          estado: true // Estado del producto en la devolución
+        }
+      }
+    }
+  });
+},
+
 
   // Obtener una devolución por ID con datos del usuario
   async getDevolucionById(devolucionId) {
