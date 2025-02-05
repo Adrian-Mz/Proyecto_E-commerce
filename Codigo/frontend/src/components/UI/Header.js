@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaUserCircle, FaShoppingCart } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import CartSidebar from "./CartSidebar";
 import SearchBar from "./SearchBar";
 import { useCart } from "../../context/CartContext";
+import NotificacionesComponent from "./NotificacionesComponent";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,6 +13,7 @@ const Header = () => {
   const { changeUser } = useCart();
   const [usuario, setUsuario] = useState(null);
   const navigate = useNavigate();
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("usuario");
@@ -42,7 +44,7 @@ const Header = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("usuario");
-    changeUser(null)
+    changeUser(null);
     setUsuario(null);
     setIsMenuOpen(false); // Cierra el menú
     navigate("/login");
@@ -56,6 +58,23 @@ const Header = () => {
       navigate("/dashboard/configuracion");
     }
   };
+
+  // Manejar el cierre del menú cuando se haga clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
 
   return (
     <header className="w-full bg-gray-900 text-gray-100 shadow-sm z-50 relative">
@@ -77,44 +96,22 @@ const Header = () => {
         {/* Navegación */}
         <div className="flex-1 flex items-center justify-center space-x-8">
           <nav className="flex space-x-6">
-            <a
-              href="/home"
-              className="text-gray-100 hover:text-blue-400 no-underline"
-            >
-              Inicio
-            </a>
-            <a
-              href="/productos"
-              className="text-gray-100 hover:text-blue-400 no-underline"
-            >
-              Productos
-            </a>
-            <a
-              href="/contacto"
-              className="text-gray-100 hover:text-blue-400 no-underline"
-            >
-              Contacto
-            </a>
-            <a
-              href="/nosotros"
-              className="text-gray-100 hover:text-blue-400 no-underline"
-            >
-              Nosotros
-            </a>
+            <a href="/home" className="text-gray-100 hover:text-blue-400 no-underline">Inicio</a>
+            <a href="/productos" className="text-gray-100 hover:text-blue-400 no-underline">Productos</a>
+            <a href="/contacto" className="text-gray-100 hover:text-blue-400 no-underline">Contacto</a>
+            <a href="/nosotros" className="text-gray-100 hover:text-blue-400 no-underline">Nosotros</a>
           </nav>
         </div>
 
         {/* Botones de login/registro y carrito */}
         <div className="flex items-center space-x-6">
           <SearchBar />
-          {/* Botones de login/registro */}
+          
+          {/* Botón de usuario */}
           {usuario ? (
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button onClick={toggleMenu} className="focus:outline-none">
-                <FaUserCircle
-                  size={24}
-                  className="text-gray-200 hover:text-blue-400"
-                />
+                <FaUserCircle size={24} className="text-gray-200 hover:text-blue-400" />
               </button>
               {isMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
@@ -137,15 +134,14 @@ const Header = () => {
               )}
             </div>
           ) : (
-            <a
-              href="/login"
-              className="text-gray-100 hover:text-blue-400 no-underline"
-            >
-              Login
-            </a>
+            <a href="/login" className="text-gray-100 hover:text-blue-400 no-underline">Login</a>
           )}
 
-          <button onClick={toggleCart} className="hover:text-blue-300">
+          {/* Botón de notificaciones */}
+          <NotificacionesComponent />
+
+          {/* Botón del carrito */}
+          <button onClick={toggleCart} className="hover:text-blue-300 mb-2">
             <FaShoppingCart size={24} />
           </button>
         </div>
