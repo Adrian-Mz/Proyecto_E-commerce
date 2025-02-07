@@ -16,7 +16,6 @@ export const devolucionesData = {
     });
   },
 
-  // Obtener todas las devoluciones
   // Obtener todas las devoluciones con usuario (nombre, apellido, correo) y productos (nombre, precio)
 async getAllDevoluciones() {
   return await prisma.devoluciones.findMany({
