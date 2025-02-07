@@ -11,7 +11,7 @@ const UsuarioPage = () => {
     correo: "",
     direccion: "",
     telefono: "",
-    pais: "",
+    ciudad: "",
   });
 
   const fetchUsuario = async () => {
@@ -29,7 +29,7 @@ const UsuarioPage = () => {
         correo: usuarioData.correo,
         direccion: usuarioData.direccion,
         telefono: usuarioData.telefono,
-        pais: usuarioData.pais,
+        ciudad: usuarioData.ciudad,
       });
 
       // Actualizar la información en localStorage
@@ -143,8 +143,8 @@ const UsuarioPage = () => {
             <label className="block mb-1 text-gray-700">País:</label>
             <input
               type="text"
-              name="pais"
-              value={formData.pais}
+              name="ciudad"
+              value={formData.ciudad}
               onChange={handleInputChange}
               disabled={!isEditing}
               className={`w-full p-2 rounded ${

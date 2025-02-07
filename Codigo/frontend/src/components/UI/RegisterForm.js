@@ -16,7 +16,7 @@ const RegisterForm = () => {
     password: "",
     direccion: "",
     telefono: "",
-    pais: "",
+    ciudad: "",
     fechaNacimiento: "",
   });
 
@@ -248,14 +248,14 @@ const RegisterForm = () => {
 
         <div>
           <label
-            htmlFor="pais"
+            htmlFor="ciudad"
             className="block text-sm font-medium text-gray-100"
           >
             Ciudad
           </label>
           <select
-            id="pais"
-            value={formData.pais}
+            id="ciudad"
+            value={formData.ciudad}
             onChange={handleChange}
             className="w-full mt-2 px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
@@ -267,8 +267,8 @@ const RegisterForm = () => {
               </option>
             ))}
           </select>
-          {validationErrors.pais && (
-            <p className="text-red-500 text-sm">{validationErrors.pais}</p>
+          {validationErrors.ciudad && (
+            <p className="text-red-500 text-sm">{validationErrors.ciudad}</p>
           )}
         </div>
 

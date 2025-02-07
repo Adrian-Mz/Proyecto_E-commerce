@@ -19,7 +19,7 @@ export const UsuariosService = {
   },
 
   async createUsuario(data, usuarioId) {
-    const { nombre, correo, apellido, password, direccion, telefono, pais, fechaNacimiento } = data;
+    const { nombre, correo, apellido, password, direccion, telefono, ciudad, fechaNacimiento } = data;
 
     if (!nombre || !correo || !password) {
       throw new Error('Todos los campos obligatorios deben ser proporcionados.');
@@ -44,7 +44,7 @@ export const UsuariosService = {
       password: hashedPassword,
       direccion,
       telefono,
-      pais,
+      ciudad,
       fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
       rolId: rolUsuario.id,
     };

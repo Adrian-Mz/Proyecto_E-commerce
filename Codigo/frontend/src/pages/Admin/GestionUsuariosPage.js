@@ -138,7 +138,7 @@ const GestionUsuariosPage = () => {
           { key: "apellido", label: "Apellido" },
           { key: "correo", label: "Correo Electrónico" },
           { key: "telefono", label: "Teléfono" },
-          { key: "pais", label: "País" },
+          { key: "ciudad", label: "Ciudad" },
           { key: "rol", label: "Rol" },
           { key: "acciones", label: "Acciones" },
         ]}

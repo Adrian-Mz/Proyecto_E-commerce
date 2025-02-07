@@ -76,7 +76,7 @@ export const validarActualizacionPerfil = [
     .isLength({ min: 5 }).withMessage('La dirección debe tener al menos 5 caracteres.'),
 
   // Valida que el país sea opcional pero, si se envía, tenga al menos 3 caracteres
-  body('pais')
+  body('ciudad')
     .optional()
     .isLength({ min: 3 }).withMessage('El país debe tener al menos 3 caracteres.')
 ];

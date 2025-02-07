@@ -126,7 +126,7 @@ model usuarios {
   password        String
   direccion       String
   telefono        String
-  pais            String
+  ciudad          String
   fechaNacimiento DateTime?
   fechaRegistro   DateTime  @default(now())
   rolId           Int       // Relación con roles
