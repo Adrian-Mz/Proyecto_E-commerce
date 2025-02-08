@@ -373,21 +373,26 @@ const renderCategoriaInputs = (categoria, setCategoria) => (
 
     <div>
     <label>IVA (%):</label>
-      <input
-        type="number"
-        step="0.01"
-        min="0"
-        max="100"
-        value={categoria?.ivaPorcentaje || ""}
-        onChange={(e) => {
-          const value = e.target.value ? parseFloat(e.target.value).toFixed(2) : "";
-          setCategoria((prev) => ({
-            ...prev,
-            ivaPorcentaje: value, // 🔹 Envía siempre como número con dos decimales
-          }));
-        }}
-        className="border p-2 rounded w-full"
-      />
+    <input
+      type="number"
+      step="1"  // 🔹 Solo números enteros
+      min="0"
+      max="100"
+      value={categoria?.ivaPorcentaje || ""}
+      onChange={(e) => {
+        let value = parseInt(e.target.value) || 0;
+        
+        // 🔹 Asegurar que el IVA esté entre 0 y 100
+        if (value < 0) value = 0;
+        if (value > 100) value = 100;
+
+        setCategoria((prev) => ({
+          ...prev,
+          ivaPorcentaje: value,
+        }));
+      }}
+      className="border p-2 rounded w-full"
+    />
     </div>
   </div>
 );
