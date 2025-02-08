@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import TableComponent from "../../components/UI/TableComponent";
 import ModalComponent from "../../components/UI/ModalComponent";
 import { CategoriasService } from "../../api/api.categorias";
-import { FaEdit, FaSearch } from "react-icons/fa";
+import { FaEdit, FaSearch, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -14,6 +14,8 @@ const GestionCategoriasPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNames, setSelectedNames] = useState([]); // Guardará los nombres seleccionados
   const [showDropdown, setShowDropdown] = useState(false); // Controla la visibilidad del dropdown
+  const [categoriaAEliminar, setCategoriaAEliminar] = useState(null);
+  
   const [filters ] = useState({
     nombre: "",
     descripcion: "",
@@ -22,41 +24,50 @@ const GestionCategoriasPage = () => {
   const [newCategoria, setNewCategoria] = useState({
     nombre: "",
     descripcion: "",
+    ivaPorcentaje: 15.0,
   });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategoria, setSelectedCategoria] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const fetchCategorias = async () => {
+    try {
+      const categoriasResponse = await CategoriasService.getCategorias();
+      setData(categoriasResponse || []);
+    } catch (error) {
+      console.error("Error al cargar categorías:", error);
+      toast.error("Error al cargar las categorías.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Llamar a fetchCategorias en el montaje del componente
   useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const categoriasResponse = await CategoriasService.getCategorias();
-        setData(categoriasResponse || []);
-      } catch (error) {
-        console.error("Error al cargar categorías:", error);
-        toast.error("Error al cargar las categorías.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchCategorias();
   }, []);
-
+  
+  
   const clearNewCategoria = () => {
     setNewCategoria({
       nombre: "",
       descripcion: "",
+      ivaPorcentaje: "",
     });
   };
 
   const handleAddCategoria = async () => {
     try {
-      const createdCategoria = await CategoriasService.createCategoria(newCategoria);
+      const ivaValue = newCategoria.ivaPorcentaje ? parseFloat(newCategoria.ivaPorcentaje).toFixed(2) : "15.00"; // 🔹 Envía con dos decimales como string
   
-      // Actualizar el estado local con la nueva categoría
-      setData((prevData) => [...prevData, createdCategoria]);
+      await CategoriasService.createCategoria({
+        ...newCategoria,
+        ivaPorcentaje: ivaValue, // 🔹 Se envía como decimal válido
+      });
+  
+      await fetchCategorias(); // 🔹 Recarga la lista después de añadir
   
       clearNewCategoria();
       setIsAddModalOpen(false);
@@ -66,21 +77,18 @@ const GestionCategoriasPage = () => {
       toast.error("Error al añadir categoría.");
     }
   };
+  
+  
 
   const handleEditCategoria = async () => {
     try {
       if (selectedCategoria) {
-        const updatedCategoria = await CategoriasService.updateCategoria(
-          selectedCategoria.id,
-          selectedCategoria
-        );
+        await CategoriasService.updateCategoria(selectedCategoria.id, {
+          ...selectedCategoria,
+          ivaPorcentaje: parseFloat(selectedCategoria.ivaPorcentaje) || 0, // Asegura el envío correcto del IVA
+        });
   
-        // Actualizar el estado local con la categoría editada
-        setData((prevData) =>
-          prevData.map((item) =>
-            item.id === updatedCategoria.id ? updatedCategoria : item
-          )
-        );
+        await fetchCategorias(); // 🔹 Recarga la lista después de editar
   
         setSelectedCategoria(null);
         setIsEditModalOpen(false);
@@ -91,6 +99,32 @@ const GestionCategoriasPage = () => {
       toast.error("Error al editar categoría.");
     }
   };
+  
+
+  const handleDeleteCategoria = async () => {
+    if (!categoriaAEliminar) return;
+  
+    try {
+      const response = await CategoriasService.deleteCategoria(categoriaAEliminar.id);
+  
+      if (response.error) {
+        toast.error(response.error); // 🔹 Muestra el error del backend si existe
+        setIsDeleteModalOpen(false);
+        return;
+      }
+  
+      await fetchCategorias(); // 🔹 Recarga la lista después de eliminar
+      toast.success("Categoría eliminada correctamente.");
+    } catch (error) {
+      console.error("Error al eliminar categoría:", error.response?.data || error.message);
+  
+      // 🔹 Si el backend devuelve un error, lo mostramos
+      toast.error(error.response?.data?.error || "Error al eliminar la categoría.");
+    } finally {
+      setIsDeleteModalOpen(false); // 🔹 Cierra el modal después del intento
+    }
+  };
+    
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -223,6 +257,7 @@ const GestionCategoriasPage = () => {
         columns={[
           { key: "nombre", label: "Nombre" },
           { key: "descripcion", label: "Descripción" },
+          { key: "ivaPorcentaje", label: "IVA (%)" },
           { key: "acciones", label: "Acciones" },
         ]}
         data={paginatedData.map((categoria) => ({
@@ -238,6 +273,16 @@ const GestionCategoriasPage = () => {
                 className="text-blue-500 hover:text-blue-700"
               >
                 <FaEdit size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  setCategoriaAEliminar(categoria);
+                  setIsDeleteModalOpen(true);
+                }}
+                className="text-red-500 hover:text-red-700"
+              >
+                <FaTrash size={16} />
               </button>
             </div>
           ),
@@ -263,6 +308,45 @@ const GestionCategoriasPage = () => {
       >
         {renderCategoriaInputs(selectedCategoria, setSelectedCategoria)}
       </ModalComponent>
+
+      <ModalComponent
+        title={`Eliminar Categoría`}
+        visible={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onSave={handleDeleteCategoria}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label>Nombre:</label>
+            <input
+              type="text"
+              value={categoriaAEliminar?.nombre || ""}
+              disabled
+              className="border p-2 rounded w-full bg-gray-200"
+            />
+          </div>
+          <div>
+            <label>Descripción:</label>
+            <textarea
+              value={categoriaAEliminar?.descripcion || ""}
+              disabled
+              className="border p-2 rounded w-full bg-gray-200"
+            />
+          </div>
+          <div>
+            <label>IVA (%):</label>
+            <input
+              type="number"
+              value={categoriaAEliminar?.ivaPorcentaje || ""}
+              disabled
+              className="border p-2 rounded w-full bg-gray-200"
+            />
+          </div>
+        </div>
+        <p className="text-sm text-gray-700 mt-4">
+          ¿Estás seguro de que quieres eliminar esta categoría? Esta acción no se puede deshacer.
+        </p>
+      </ModalComponent>
   </div>
   );
 };
@@ -283,6 +367,25 @@ const renderCategoriaInputs = (categoria, setCategoria) => (
       <textarea
         value={categoria?.descripcion || ""}
         onChange={(e) => setCategoria((prev) => ({ ...prev, descripcion: e.target.value }))}
+        className="border p-2 rounded w-full"
+      />
+    </div>
+
+    <div>
+    <label>IVA (%):</label>
+      <input
+        type="number"
+        step="0.01"
+        min="0"
+        max="100"
+        value={categoria?.ivaPorcentaje || ""}
+        onChange={(e) => {
+          const value = e.target.value ? parseFloat(e.target.value).toFixed(2) : "";
+          setCategoria((prev) => ({
+            ...prev,
+            ivaPorcentaje: value, // 🔹 Envía siempre como número con dos decimales
+          }));
+        }}
         className="border p-2 rounded w-full"
       />
     </div>
