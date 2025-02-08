@@ -98,7 +98,7 @@ const Header = () => {
           <nav className="flex space-x-6">
             <a href="/home" className="text-gray-100 hover:text-blue-400 no-underline">Inicio</a>
             <a href="/productos" className="text-gray-100 hover:text-blue-400 no-underline">Productos</a>
-            <a href="/contacto" className="text-gray-100 hover:text-blue-400 no-underline">Contacto</a>
+            <a href="/herramientas" className="text-gray-100 hover:text-blue-400 no-underline">Herramientas</a>
             <a href="/nosotros" className="text-gray-100 hover:text-blue-400 no-underline">Nosotros</a>
           </nav>
         </div>
@@ -122,7 +122,7 @@ const Header = () => {
                     onClick={handleConfig}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Configuración
+                    Perfil
                   </button>
                   <button
                     onClick={handleLogout}

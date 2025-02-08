@@ -11,6 +11,7 @@ import UserDashboardPage from "./pages/Client/UserDashboardPage";
 import ProductoDetailPage from "./pages/App/ProductoDetailPage";
 import CartPage from "./pages/App/CartPage";
 import AdminPage from "./pages/Admin/AdminPage";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ProtectedRoute from "./components/UI/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -34,6 +35,10 @@ function App() {
             <Route
               path="/admin/*"
               element={<ProtectedRoute role="Administrador" Component={AdminPage} />}
+            />
+            <Route
+              path="/herramientas"
+              element={<ProtectedRoute role="Administrador" Component={AdminDashboard} />}
             />
             <Route path="/productos/:id" element={<ProductoDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
