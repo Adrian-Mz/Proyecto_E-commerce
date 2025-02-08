@@ -29,7 +29,7 @@ const LoginPage = () => {
           {/* Logo */}
           <div className="flex justify-center">
             <img
-              src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
+              src="https://tailwindui.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
               alt="Logo Empresa"
               className="h-10"
             />
