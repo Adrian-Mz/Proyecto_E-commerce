@@ -25,7 +25,6 @@ export const ProductosService = {
         orderDirection: validOrderDirection,
       });
 
-      // Productos con promocines activas
       // Calcular el precio con promoción para cada producto
       const productosConPromocion = productos.map((producto) => {
         let precioConPromocion = producto.precio;
@@ -63,36 +62,49 @@ export const ProductosService = {
   // Obtener un producto por ID
   async getProductoById(id) {
     try {
-      validarId(id);
-      const producto = await ProductosData.getProductoById(id);
-      if (!producto) {
-        throw new Error('Producto no encontrado');
-      }
+        validarId(id);
+        const producto = await ProductosData.getProductoById(id);
+        if (!producto) {
+            throw new Error('Producto no encontrado');
+        }
 
-      // Inicializar variables para el precio con promoción
-      let precioConPromocion = parseFloat(producto.precio);
-      let mensajePromocion = "Sin promoción activa para este producto.";
+        // 🔹 Asegurar que precioBase y ivaPorcentaje sean números válidos
+        let precioBase = parseFloat(producto.precioBase) || 0;
+        let ivaPorcentaje = parseFloat(producto.ivaPorcentaje) || 0;
 
-      // Validar si la promoción está activa
-      if (
-        producto.promocion &&
-        this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
-      ) {
-        const descuento = parseFloat(producto.promocion.descuento) / 100;
-        precioConPromocion = precioConPromocion - precioConPromocion * descuento;
-        mensajePromocion = `Promoción activa: ${producto.promocion.nombre} (${producto.promocion.descuento}% de descuento).`;
-      } else if (producto.promocion) {
-        mensajePromocion = "La promoción de este producto ha terminado.";
-      }
+        // 🔹 Obtener el IVA actual de la categoría si es necesario
+        const ivaCategoria = await ProductosData.getIvaPorCategoria(producto.categoriaId);
+        if (ivaCategoria !== null) {
+            ivaPorcentaje = parseFloat(ivaCategoria);
+        }
 
-      // Retornar el producto con detalles de promoción
-      return {
-        ...producto,
-        precioConPromocion: precioConPromocion.toFixed(2),
-        mensajePromocion,
-      };
+        // 🔹 Asegurar que el IVA del producto esté sincronizado con su categoría
+        if (producto.ivaPorcentaje !== ivaPorcentaje) {
+            await ProductosData.actualizarIvaEnProductosPorCategoria(producto.categoriaId, ivaPorcentaje);
+            producto.ivaPorcentaje = ivaPorcentaje;
+            producto.precio = this.calcularPrecioConIVA(precioBase, ivaPorcentaje);
+        }
+
+        // 🔹 Calcular el precio con promoción
+        let precioConPromocion = parseFloat(producto.precio);
+        let mensajePromocion = "Sin promoción activa para este producto.";
+
+        if (
+            producto.promocion &&
+            this.esPromocionActiva(producto.promocion.fechaInicio, producto.promocion.fechaFin)
+        ) {
+            const descuento = parseFloat(producto.promocion.descuento) / 100;
+            precioConPromocion = precioConPromocion - precioConPromocion * descuento;
+            mensajePromocion = `Promoción activa: ${producto.promocion.nombre} (${producto.promocion.descuento}% de descuento).`;
+        }
+
+        return {
+            ...producto,
+            precioConPromocion: precioConPromocion.toFixed(2),
+            mensajePromocion,
+        };
     } catch (error) {
-      throw new Error(`Error al obtener el producto: ${error.message}`);
+        throw new Error(`Error al obtener el producto: ${error.message}`);
     }
   },
 
@@ -186,7 +198,7 @@ export const ProductosService = {
             precio: data.precio,
             stock: data.stock,
             categoriaId: data.categoriaId,
-            promocionId: data.promocionId,
+            promocionId: data.promocionId ? parseInt(data.promocionId, 10) : 6,
             especificaciones: data.especificaciones,
             marca: data.marca,
             garantia: data.garantia,
@@ -227,27 +239,38 @@ export const ProductosService = {
             throw new Error("Producto no encontrado");
         }
 
-        // ✅ Obtener valores actuales o nuevos
-        let precioBase = data.precioBase !== undefined
-            ? parseFloat(data.precioBase) // Nuevo precio base
-            : parseFloat(productoActual.precioBase); // Precio base actual
-
-        let ivaPorcentaje = data.ivaPorcentaje !== undefined
+        // 🔹 Verificar si se está enviando `ivaPorcentaje`, si no, usar el actual
+        let ivaPorcentaje = data.ivaPorcentaje !== undefined && data.ivaPorcentaje !== null
             ? parseFloat(data.ivaPorcentaje)
             : parseFloat(productoActual.ivaPorcentaje);
 
-        // ✅ Calcular el precio con IVA
+        // 🔹 Asegurar que `ivaPorcentaje` es un número válido
+        if (isNaN(ivaPorcentaje) || ivaPorcentaje < 0) {
+            throw new Error("El IVA debe ser un número válido y positivo.");
+        }
+
+        let precioBase = data.precioBase !== undefined && data.precioBase !== null
+            ? parseFloat(data.precioBase)
+            : parseFloat(productoActual.precioBase);
+
         let precioConIVA = parseFloat((precioBase * (1 + ivaPorcentaje / 100)).toFixed(2));
 
-        console.log(`📌 Actualizando producto: Precio Base: ${precioBase}, IVA: ${ivaPorcentaje}%, Precio Final (con IVA): ${precioConIVA}`);
+        // 🔹 Permitir `promocionId` como `null` si no se envía
+        let promocionId = data.promocionId !== undefined && data.promocionId !== null
+            ? parseInt(data.promocionId, 10)
+            : null; // 🔥 Ahora permite null
+
+        console.log(`📌 Actualizando producto ID ${id}: Precio Base: ${precioBase}, IVA: ${ivaPorcentaje}%, Precio Final: ${precioConIVA}, Promoción: ${promocionId}`);
 
         const dataActualizada = {
             ...data,
             precioBase,
-            precio: precioConIVA, // Guardamos el precio con IVA
-            ivaPorcentaje
+            precio: precioConIVA,
+            ivaPorcentaje,
+            promocionId
         };
 
+        // 🔹 🔥 Asegurar que Prisma actualiza correctamente
         const productoActualizado = await ProductosData.updateProducto(id, dataActualizada);
 
         await auditoriaService.registrarEvento(
@@ -263,7 +286,7 @@ export const ProductosService = {
         throw new Error(`Error al actualizar el producto: ${error.message}`);
     }
   },
-  
+
 
   // Eliminar un producto con auditoría
   async deleteProducto(id, usuarioId) {

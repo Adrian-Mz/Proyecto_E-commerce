@@ -33,16 +33,25 @@ export const ProductosService = {
 
   updateProducto: async (id, productoData) => {
     try {
-      const response = await api.put(`/productos/${id}`, productoData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, // Asegurar autenticación si aplica
-      });
-  
-      return response.data.producto; // Devuelve solo el producto actualizado
+        const response = await api.put(`/productos/${id}`, productoData, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, // Asegurar autenticación si aplica
+        });
+
+        return response.data.producto; // Devuelve solo el producto actualizado
     } catch (error) {
-      console.error(`Error al actualizar producto con ID ${id}:`, error.response?.data || error.message);
-      throw error;
+        console.error(`❌ Error al actualizar producto con ID ${id}:`, error.response?.data || error.message);
+
+        // Si el backend envía una lista de errores, mostrarla en detalle
+        if (error.response?.data?.errors) {
+            console.error("📌 Detalles del error:", JSON.stringify(error.response.data.errors, null, 2));
+        } else {
+            console.error("📌 Respuesta del servidor:", error.response?.data);
+        }
+
+        throw error;
     }
-  },
+},
+
 
   deleteProducto: async (id) => {
     try {

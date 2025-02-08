@@ -12,6 +12,7 @@ export const CategoriaService = {
         id: categoria.id,
         nombre: categoria.nombre,
         descripcion: categoria.descripcion,
+        ivaPorcentaje: categoria.categoria_iva ? categoria.categoria_iva.ivaPorcentaje: "", // 🔹 IVA por defecto si no está definido
         promocionesActivas: categoria.promociones
           .filter((relacion) =>
             this.esPromocionActiva(relacion.promocion.fechaInicio, relacion.promocion.fechaFin)
@@ -67,13 +68,13 @@ export const CategoriaService = {
 
       const nuevaCategoria = await CategoriaData.createCategoria(data);
 
-      // Registrar auditoría
+      // Registrar auditoría con IVA incluido
       await auditoriaService.registrarEvento(
         usuarioId,
         "categorias",
         "CREAR",
         nuevaCategoria,
-        `Nueva categoría creada: ${data.nombre}`
+        `Nueva categoría creada: ${data.nombre} con IVA ${data.ivaPorcentaje || 'N/A'}%`
       );
 
       return nuevaCategoria;
@@ -110,17 +111,33 @@ export const CategoriaService = {
         }
       });
 
+      // 🔹 Comparar el IVA si ha cambiado
+      if (
+        data.ivaPorcentaje !== undefined &&
+        (!categoriaActual.categoria_iva || data.ivaPorcentaje !== categoriaActual.categoria_iva.ivaPorcentaje)
+      ) {
+        cambios["ivaPorcentaje"] = {
+          antes: categoriaActual.categoria_iva ? categoriaActual.categoria_iva.ivaPorcentaje : "N/A",
+          despues: data.ivaPorcentaje,
+        };
+      }
+
       if (Object.keys(cambios).length === 0) {
         throw new Error("No se realizaron cambios en la categoría.");
       }
 
       const categoriaActualizada = await CategoriaData.updateCategoria(id, dataActualizada);
 
+      // 🔹 Si el IVA cambió, actualizarlo en todos los productos de la categoría
+      if (data.ivaPorcentaje !== undefined) {
+        await ProductosData.actualizarIvaEnProductosPorCategoria(id, data.ivaPorcentaje);
+      }
+
       // Sincronizar promociones y productos relacionados
       await promocionesData.sincronizarPromocionesPorCategoria(id);
       await ProductosData.updateProductosByCategoria(id, categoriaActualizada.promocionId);
 
-      // Registrar auditoría
+      // Registrar auditoría incluyendo el cambio de IVA si hubo
       await auditoriaService.registrarEvento(
         usuarioId,
         "categorias",
@@ -150,6 +167,9 @@ export const CategoriaService = {
         throw new Error("Categoría no encontrada.");
       }
 
+      // 🔹 Eliminar el IVA de la categoría antes de eliminarla
+      await CategoriaData.eliminarIvaPorCategoria(id);
+
       await CategoriaData.deleteCategoria(id);
 
       // Registrar auditoría solo si la eliminación fue exitosa
@@ -158,7 +178,7 @@ export const CategoriaService = {
         "categorias",
         "ELIMINAR",
         categoriaEliminada,
-        `Categoría eliminada: ${categoriaEliminada.nombre}`
+        `Categoría eliminada: ${categoriaEliminada.nombre} con IVA ${categoriaEliminada.categoria_iva ? categoriaEliminada.categoria_iva.ivaPorcentaje : 'N/A'}%`
       );
 
       return { message: "Categoría eliminada exitosamente" };

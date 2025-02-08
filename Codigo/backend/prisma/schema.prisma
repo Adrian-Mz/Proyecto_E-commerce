@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,214 +8,201 @@ datasource db {
 }
 
 model productos {
-  id                 Int                @id @default(autoincrement())
-  nombre             String
-  descripcion        String
-  marca              String?
-  especificaciones   String?
-  precioBase         Decimal            @default(0.0)  // 💡 Nuevo campo: Precio sin IVA
-  precio             Decimal            @default(0.0)  // 💡 Sigue siendo el precio con IVA
-  stock              Int
-  garantia           String?
-  imagen             String
-  categoriaId        Int
-  promocionId        Int?
-  ivaPorcentaje      Decimal?
-
-  categoria          categorias         @relation(fields: [categoriaId], references: [id])
-  promocion          promociones?       @relation(fields: [promocionId], references: [id])
-
-  carritoProductos   carrito_productos[]
-  pedidoProductos    pedido_productos[]
-  devoluciones       devolucion_productos[]
+  id               Int                    @id @default(autoincrement())
+  nombre           String
+  descripcion      String
+  marca            String?
+  especificaciones String?
+  precio           Decimal                @default(0.0)
+  stock            Int
+  garantia         String?
+  imagen           String
+  categoriaId      Int
+  promocionId      Int?
+  ivaPorcentaje    Decimal?
+  precioBase       Decimal                @default(0.0)
+  carritoProductos carrito_productos[]
+  devoluciones     devolucion_productos[]
+  pedidoProductos  pedido_productos[]
+  categoria        categorias             @relation(fields: [categoriaId], references: [id])
+  promocion        promociones?           @relation(fields: [promocionId], references: [id])
 }
 
+model categoria_iva {
+  id            Int        @id @default(autoincrement())
+  categoriaId   Int        @unique
+  ivaPorcentaje Decimal?   @default(15.0) @db.Decimal
+  categorias    categorias @relation(fields: [categoriaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
 
 model devolucion_productos {
-  id              Int      @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   devolucionId    Int
   productoId      Int
   cantidad        Int
   motivo          String
-  estadoId        Int @default(9) // Por defecto, los productos inician como "Pendiente"
-  fechaDevolucion DateTime @default(now())
-
+  estadoId        Int          @default(9)
+  fechaDevolucion DateTime     @default(now())
   devolucion      devoluciones @relation(fields: [devolucionId], references: [id])
-  producto        productos    @relation(fields: [productoId], references: [id])
   estado          estado       @relation(fields: [estadoId], references: [id])
+  producto        productos    @relation(fields: [productoId], references: [id])
 
   @@unique([devolucionId, productoId])
 }
 
 model metodo_pago {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   nombre      String
   descripcion String
-
+  pagos       pagos[]
   pedidos     pedidos[]
-  pagos       pagos[] // Relación con el modelo pagos
 }
 
 model pagos {
-  id              Int       @id @default(autoincrement())
-  pedidoId        Int
-  metodoPagoId    Int
-  numeroTarjeta   String?   // Almacenar solo los últimos 4 dígitos
-  nombreTitular   String
-  fechaExpiracion String
-  correoContacto  String
+  id               Int         @id @default(autoincrement())
+  pedidoId         Int
+  metodoPagoId     Int
+  numeroTarjeta    String?
+  nombreTitular    String
+  fechaExpiracion  String
+  correoContacto   String
   telefonoContacto String
-  monto           Decimal   @default(0.0)
-  fechaPago       DateTime  @default(now())
-
-  pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  metodoPago      metodo_pago @relation(fields: [metodoPagoId], references: [id])
+  monto            Decimal     @default(0.0)
+  fechaPago        DateTime    @default(now())
+  metodoPago       metodo_pago @relation(fields: [metodoPagoId], references: [id])
+  pedido           pedidos     @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 }
 
 model categorias {
-  id          Int      @id @default(autoincrement())
-  nombre      String
-  descripcion String
-
-  productos   productos[]
-  promociones categoria_promocion[] // Relación muchos a muchos
+  id            Int                   @id @default(autoincrement())
+  nombre        String
+  descripcion   String
+  categoria_iva categoria_iva?
+  promociones   categoria_promocion[]
+  productos     productos[]
 }
 
 model categoria_promocion {
-  id            Int          @id @default(autoincrement())
-  categoriaId   Int
-  promocionId   Int
+  id          Int         @id @default(autoincrement())
+  categoriaId Int
+  promocionId Int
+  categoria   categorias  @relation(fields: [categoriaId], references: [id])
+  promocion   promociones @relation(fields: [promocionId], references: [id])
 
-  categoria     categorias    @relation(fields: [categoriaId], references: [id])
-  promocion     promociones   @relation(fields: [promocionId], references: [id])
-
-  @@unique([categoriaId, promocionId]) // Asegura que no se dupliquen combinaciones
+  @@unique([categoriaId, promocionId])
 }
 
 model promociones {
-  id          Int      @id @default(autoincrement())
+  id          Int                   @id @default(autoincrement())
   nombre      String
   descripcion String
-  descuento   Decimal  @default(0.0)
+  descuento   Decimal               @default(0.0)
   fechaInicio DateTime?
   fechaFin    DateTime?
-
-  categorias  categoria_promocion[] // Relación muchos a muchos
+  categorias  categoria_promocion[]
   productos   productos[]
 }
 
 model roles {
-  id       Int       @id @default(autoincrement())
-  nombre   String    @unique
+  id       Int        @id @default(autoincrement())
+  nombre   String     @unique
   usuarios usuarios[]
 
   @@map("roles")
 }
 
 model usuarios {
-  id              Int       @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   nombre          String
   apellido        String
-  correo          String    @unique
+  correo          String           @unique
   password        String
   direccion       String
   telefono        String
   ciudad          String
   fechaNacimiento DateTime?
-  fechaRegistro   DateTime  @default(now())
-  rolId           Int       // Relación con roles
-
-  rol             roles     @relation(fields: [rolId], references: [id])
-  pedidos         pedidos[]
+  fechaRegistro   DateTime         @default(now())
+  rolId           Int
+  auditoria       auditoria[]
   carrito         carrito[]
-  auditoria       auditoria[] //Relación Inversa con auditoría
   notificaciones  notificaciones[]
+  pedidos         pedidos[]
+  rol             roles            @relation(fields: [rolId], references: [id])
 
   @@map("usuarios")
 }
 
 model notificaciones {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   usuarioId     Int
   mensaje       String
   tipo          String
-  leido         Boolean   @default(false)
-  fechaCreacion DateTime  @default(now())
-
-  usuario       usuarios  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  leido         Boolean  @default(false)
+  fechaCreacion DateTime @default(now())
+  usuario       usuarios @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 }
 
-
 model auditoria {
-  id             Int      @id @default(autoincrement())
-  usuarioId      Int?
-  tabla_afectada String
-  accion         String
-  registro       String
+  id                 Int       @id @default(autoincrement())
+  usuarioId          Int?
+  tabla_afectada     String
+  accion             String
+  registro           String
   descripcion_cambio String?
-  fecha_hora     DateTime @default(now())
-
-  usuario        usuarios? @relation(fields: [usuarioId], references: [id])
+  fecha_hora         DateTime  @default(now())
+  usuario            usuarios? @relation(fields: [usuarioId], references: [id])
 }
 
 model pedido_productos {
-  id              Int      @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   pedidoId        Int
   productoId      Int
   cantidad        Int
-  precio_unitario Decimal  @default(0.0)
-
+  precio_unitario Decimal   @default(0.0)
   pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   producto        productos @relation(fields: [productoId], references: [id])
 }
 
 model pedidos {
-  id                 Int      @id @default(autoincrement())
+  id                 Int                        @id @default(autoincrement())
   usuarioId          Int
   direccionEnvio     String
   metodoPagoId       Int
   metodoEnvioId      Int
   estadoId           Int
-  total              Decimal  @default(0.0)
-  fechaPedido        DateTime @default(now())
+  total              Decimal                    @default(0.0)
+  fechaPedido        DateTime                   @default(now())
   fechaActualizacion DateTime?
-
-  usuario            usuarios @relation(fields: [usuarioId], references: [id])
-  metodoPago         metodo_pago @relation(fields: [metodoPagoId], references: [id])
-  metodoEnvio        metodo_envio @relation(fields: [metodoEnvioId], references: [id])
-  estado             estado @relation(fields: [estadoId], references: [id])
   devoluciones       devoluciones[]
-  productos          pedido_productos[]
-  pagos              pagos[]
-
   historialEstados   historial_estado_pedidos[]
+  pagos              pagos[]
+  productos          pedido_productos[]
+  estado             estado                     @relation(fields: [estadoId], references: [id])
+  metodoEnvio        metodo_envio               @relation(fields: [metodoEnvioId], references: [id])
+  metodoPago         metodo_pago                @relation(fields: [metodoPagoId], references: [id])
+  usuario            usuarios                   @relation(fields: [usuarioId], references: [id])
 }
 
-
 model devoluciones {
-  id              Int      @id @default(autoincrement())
+  id              Int                    @id @default(autoincrement())
   pedidoId        Int
   motivo          String
   estadoId        Int
-  fechaDevolucion DateTime @default(now())
+  fechaDevolucion DateTime               @default(now())
   fechaResolucion DateTime?
-
-  pedido          pedidos   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  estado          estado    @relation(fields: [estadoId], references: [id])
-
   productos       devolucion_productos[]
+  estado          estado                 @relation(fields: [estadoId], references: [id])
+  pedido          pedidos                @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 }
 
 model estado {
-  id          Int      @id @default(autoincrement())
-  nombre      String
-  descripcion String
-
-  pedidos     pedidos[]
-  devoluciones devoluciones[]
+  id                   Int                        @id @default(autoincrement())
+  nombre               String
+  descripcion          String
   devolucion_productos devolucion_productos[]
-
-  historialEstados        historial_estado_pedidos[]
+  devoluciones         devoluciones[]
+  historialEstados     historial_estado_pedidos[]
+  pedidos              pedidos[]
 }
 
 model historial_estado_pedidos {
@@ -229,38 +210,34 @@ model historial_estado_pedidos {
   pedidoId    Int
   estadoId    Int
   fechaCambio DateTime @default(now())
-
-  pedido      pedidos  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   estado      estado   @relation(fields: [estadoId], references: [id])
+  pedido      pedidos  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 
-  @@unique([pedidoId, estadoId, fechaCambio]) // Evita registros duplicados
+  @@unique([pedidoId, estadoId, fechaCambio])
 }
 
 model carrito {
-  id          Int      @id @default(autoincrement())
-  usuarioId   Int
-
-  usuarios   usuarios @relation(fields: [usuarioId], references: [id])
-  productos   carrito_productos[]
+  id        Int                 @id @default(autoincrement())
+  usuarioId Int
+  usuarios  usuarios            @relation(fields: [usuarioId], references: [id])
+  productos carrito_productos[]
 }
 
 model carrito_productos {
-  id              Int      @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   carritoId       Int
   productoId      Int
   cantidad        Int
-  precio_unitario Decimal  @default(0.0)
-
-  carrito         carrito @relation(fields: [carritoId], references: [id])
+  precio_unitario Decimal   @default(0.0)
+  carrito         carrito   @relation(fields: [carritoId], references: [id])
   producto        productos @relation(fields: [productoId], references: [id])
 }
 
 model metodo_envio {
-  id              Int      @id @default(autoincrement())
-  nombre          String
-  descripcion     String
-  costo           Decimal  @default(0.0)
-  tiempoEstimado  String
-
-  pedidos         pedidos[]
+  id             Int       @id @default(autoincrement())
+  nombre         String
+  descripcion    String
+  costo          Decimal   @default(0.0)
+  tiempoEstimado String
+  pedidos        pedidos[]
 }

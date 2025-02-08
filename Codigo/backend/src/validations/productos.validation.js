@@ -64,8 +64,21 @@ export const validarProductoActualizar = [
   body('categoriaId')
     .optional()
     .isInt({ min: 1 }).withMessage('La categoría debe ser un ID válido.'),
-  body('promocionId')
-    .optional()
-    .isInt({ min: 1 }).withMessage('La promoción debe ser un ID válido.'),
+    body('promocionId')
+    .custom((value, { req }) => {
+        // 🔹 Si `promocionId` es `null` o no está presente, asignar automáticamente `6`
+        if (value === undefined || value === null) {
+            req.body.promocionId = 6;
+            return true;
+        }
+
+        // 🔹 Validar que sea un número entero mayor o igual a 1
+        const promoId = Number(value);
+        if (!Number.isInteger(promoId) || promoId < 1) {
+            throw new Error('La promoción debe ser un ID válido (entero mayor o igual a 1).');
+        }
+
+        return true;
+    }),
 ];
 

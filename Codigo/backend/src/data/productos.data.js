@@ -178,6 +178,34 @@ export const ProductosData = {
       where: { categoriaId },
       data: { promocionId },
     });
-  }
+  },
+
+  // 🔹 Actualizar el IVA en todos los productos de una categoría
+  async actualizarIvaEnProductosPorCategoria(categoriaId, nuevoIva) {
+    if (isNaN(categoriaId) || isNaN(nuevoIva)) {
+      throw new Error('IDs y valores de IVA deben ser numéricos.');
+    }
+
+    const ivaPorcentaje = parseFloat(nuevoIva.toFixed(2));
+
+    return await prisma.productos.updateMany({
+      where: { categoriaId },
+      data: {
+        ivaPorcentaje,
+        precio: {
+          multiply: (1 + ivaPorcentaje / 100), // Recalcula el precio con el nuevo IVA
+        },
+      },
+    });
+  },
+
+  async getIvaPorCategoria(categoriaId) {
+    const categoriaIva = await prisma.categoria_iva.findUnique({
+        where: { categoriaId },
+    });
+
+    return categoriaIva ? categoriaIva.ivaPorcentaje : null;
+  },
+
 
 };
