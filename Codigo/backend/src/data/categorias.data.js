@@ -15,6 +15,22 @@ export const CategoriaData = {
     });
   },
 
+  async getProductosByCategoria(categoriaId) {
+    if (typeof categoriaId !== 'number') {
+      throw new Error('El ID de la categoría debe ser un número válido.');
+    }
+  
+    try {
+      return await prisma.productos.findMany({
+        where: { categoriaId: categoriaId },
+        select: { id: true, nombre: true }, // 🔹 Seleccionamos solo los campos necesarios
+      });
+    } catch (error) {
+      throw new Error(`Error al obtener productos de la categoría: ${error.message}`);
+    }
+  },
+  
+
   // Obtener una categoría por ID con su IVA
   async getCategoriaById(id) {
     if (typeof id !== 'number') {
@@ -98,15 +114,34 @@ export const CategoriaData = {
     });
   },
 
+  async eliminarIvaPorCategoria(categoriaId) {
+    if (typeof categoriaId !== 'number') {
+      throw new Error('El ID de la categoría debe ser un número');
+    }
+  
+    try {
+      await prisma.categoria_iva.deleteMany({
+        where: { categoriaId: categoriaId },
+      });
+    } catch (error) {
+      throw new Error(`Error al eliminar el IVA de la categoría: ${error.message}`);
+    }
+  },
+ 
+
   // Eliminar una categoría (incluyendo su IVA)
   async deleteCategoria(id) {
     if (typeof id !== 'number') {
       throw new Error('El ID debe ser un número');
     }
-
+  
     return await prisma.$transaction(async (prisma) => {
-      await prisma.categoria_iva.deleteMany({ where: { categoriaId: id } }); // 🔹 Borrar su IVA antes
+      // 🔹 Eliminar el IVA antes de la categoría
+      await this.eliminarIvaPorCategoria(id);
+  
+      // 🔹 Ahora eliminar la categoría
       return await prisma.categorias.delete({ where: { id } });
     });
   },
+  
 };

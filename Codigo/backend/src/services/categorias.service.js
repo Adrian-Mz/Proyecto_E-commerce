@@ -161,18 +161,27 @@ export const CategoriaService = {
       if (!usuarioId) {
         throw new Error("El usuarioId es obligatorio para registrar auditoría.");
       }
-
+  
       const categoriaEliminada = await CategoriaData.getCategoriaById(id);
       if (!categoriaEliminada) {
         throw new Error("Categoría no encontrada.");
       }
-
+  
+      // 🔹 Verificar si la categoría tiene productos antes de intentar eliminar
+      const productosAsociados = await CategoriaData.getProductosByCategoria(id);
+      if (productosAsociados.length > 0) {
+        throw new Error(
+          "No puedes eliminar esta categoría porque tiene productos asociados. Elimina o reasigna los productos antes de continuar."
+        );
+      }
+  
       // 🔹 Eliminar el IVA de la categoría antes de eliminarla
       await CategoriaData.eliminarIvaPorCategoria(id);
-
+  
+      // 🔹 Eliminar la categoría
       await CategoriaData.deleteCategoria(id);
-
-      // Registrar auditoría solo si la eliminación fue exitosa
+  
+      // Registrar auditoría
       await auditoriaService.registrarEvento(
         usuarioId,
         "categorias",
@@ -180,10 +189,16 @@ export const CategoriaService = {
         categoriaEliminada,
         `Categoría eliminada: ${categoriaEliminada.nombre} con IVA ${categoriaEliminada.categoria_iva ? categoriaEliminada.categoria_iva.ivaPorcentaje : 'N/A'}%`
       );
-
+  
       return { message: "Categoría eliminada exitosamente" };
     } catch (error) {
+      if (error.message.includes("Foreign key constraint")) {
+        throw new Error(
+          "No puedes eliminar esta categoría porque tiene productos asociados. Elimina o reasigna los productos antes de continuar."
+        );
+      }
       throw new Error(`Error al eliminar la categoría: ${error.message}`);
     }
-  }
+  } 
+  
 };

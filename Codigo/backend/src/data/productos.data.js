@@ -185,19 +185,30 @@ export const ProductosData = {
     if (isNaN(categoriaId) || isNaN(nuevoIva)) {
       throw new Error('IDs y valores de IVA deben ser numéricos.');
     }
-
+  
     const ivaPorcentaje = parseFloat(nuevoIva.toFixed(2));
-
-    return await prisma.productos.updateMany({
+  
+    // 🔹 Obtener productos asegurando que solo usamos precioBase para el cálculo
+    const productos = await prisma.productos.findMany({
       where: { categoriaId },
-      data: {
-        ivaPorcentaje,
-        precio: {
-          multiply: (1 + ivaPorcentaje / 100), // Recalcula el precio con el nuevo IVA
-        },
-      },
+      select: { id: true, precioBase: true }, // 🔹 Solo obtenemos precioBase
     });
-  },
+  
+    // 🔹 Actualizar productos con el nuevo IVA y recalcular su precio
+    await Promise.all(
+      productos.map((producto) =>
+        prisma.productos.update({
+          where: { id: producto.id },
+          data: {
+            ivaPorcentaje,
+            precio: parseFloat((producto.precioBase * (1 + ivaPorcentaje / 100)).toFixed(2)), // 🔹 Calcula precio usando precioBase
+          },
+        })
+      )
+    );
+  
+    return { message: "IVA actualizado correctamente en productos de la categoría." };
+  },  
 
   async getIvaPorCategoria(categoriaId) {
     const categoriaIva = await prisma.categoria_iva.findUnique({
