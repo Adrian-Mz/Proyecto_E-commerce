@@ -20,7 +20,7 @@ export const ventasService = {
     return { totalPedidos: resultado };
   },
 
-  // 🔹 Ventas agrupadas por método de pago
+  // 🔹 Ventas agrupadas por método de pago con detalles
   async ventasPorMetodoPago() {
     const resultado = await prisma.pedidos.groupBy({
       by: ['metodoPagoId'],
@@ -28,13 +28,17 @@ export const ventasService = {
       orderBy: { _count: { metodoPagoId: 'desc' } },
     });
 
+    // Obtener detalles de los métodos de pago
+    const metodosPago = await prisma.metodo_pago.findMany();
+
     return resultado.map(m => ({
       metodoPagoId: m.metodoPagoId,
+      metodoPago: metodosPago.find(mp => mp.id === m.metodoPagoId)?.nombre || 'Desconocido',
       cantidad: m._count.metodoPagoId,
     }));
   },
 
-  // 🔹 Ventas agrupadas por método de envío
+  // 🔹 Ventas agrupadas por método de envío con detalles
   async ventasPorMetodoEnvio() {
     const resultado = await prisma.pedidos.groupBy({
       by: ['metodoEnvioId'],
@@ -42,18 +46,31 @@ export const ventasService = {
       orderBy: { _count: { metodoEnvioId: 'desc' } },
     });
 
+    // Obtener detalles de los métodos de envío
+    const metodosEnvio = await prisma.metodo_envio.findMany();
+
     return resultado.map(m => ({
       metodoEnvioId: m.metodoEnvioId,
+      metodoEnvio: metodosEnvio.find(me => me.id === m.metodoEnvioId)?.nombre || 'Desconocido',
       cantidad: m._count.metodoEnvioId,
     }));
   },
 
-  // 🔹 Ingresos agrupados por fecha (por día, mes o año)
+  // 🔹 Ingresos agrupados por fecha con detalles de pedidos
   async ingresosPorFecha(agrupacion = 'month') {
     const resultado = await prisma.pedidos.findMany({
       select: {
+        id: true,
         fechaPedido: true,
         total: true,
+        usuario: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            correo: true,
+          },
+        },
       },
       where: { estadoId: 4 },
       orderBy: { fechaPedido: 'asc' },
@@ -73,13 +90,23 @@ export const ventasService = {
       }
 
       if (!acc[claveFecha]) {
-        acc[claveFecha] = 0;
+        acc[claveFecha] = { total: 0, pedidos: [] };
       }
-      acc[claveFecha] += Number(pedido.total);
+      acc[claveFecha].total += Number(pedido.total);
+      acc[claveFecha].pedidos.push({
+        pedidoId: pedido.id,
+        usuario: `${pedido.usuario.nombre} ${pedido.usuario.apellido}`,
+        correo: pedido.usuario.correo,
+        total: pedido.total,
+      });
 
       return acc;
     }, {});
 
-    return Object.entries(ingresosAgrupados).map(([fecha, total]) => ({ fecha, total }));
+    return Object.entries(ingresosAgrupados).map(([fecha, data]) => ({
+      fecha,
+      total: data.total,
+      pedidos: data.pedidos,
+    }));
   },
 };
