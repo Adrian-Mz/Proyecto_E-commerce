@@ -4,27 +4,49 @@ import { format } from 'date-fns';
 const prisma = new PrismaClient();
 
 export const ventasService = {
-  // 🔹 Total de ventas (solo pedidos completados)
-  async totalVentas() {
+  // 🔹 Total de ventas con opción de filtrar por fecha y estado
+  async totalVentas({ fechaInicio = null, fechaFin = null, estadoId = 4 } = {}) {
+    const where = {
+      estadoId,
+      ...(fechaInicio && fechaFin && {
+        fechaPedido: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const resultado = await prisma.pedidos.aggregate({
       _sum: { total: true },
-      where: { estadoId: 4 }, // Solo pedidos en estado "Entregado"
+      where,
     });
 
     return { totalVentas: resultado._sum.total || 0 };
   },
 
-  // 🔹 Cantidad total de pedidos
-  async cantidadPedidos() {
-    const resultado = await prisma.pedidos.count();
+  // 🔹 Cantidad total de pedidos con filtros dinámicos
+  async cantidadPedidos({ fechaInicio = null, fechaFin = null, estadoId = null } = {}) {
+    const where = {
+      ...(estadoId && { estadoId }),
+      ...(fechaInicio && fechaFin && {
+        fechaPedido: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
+    const resultado = await prisma.pedidos.count({ where });
     return { totalPedidos: resultado };
   },
 
-  // 🔹 Ventas agrupadas por método de pago con detalles
-  async ventasPorMetodoPago() {
+  // 🔹 Ventas por método de pago con filtros de fecha y estado
+  async ventasPorMetodoPago({ fechaInicio = null, fechaFin = null, estadoId = 4 } = {}) {
+    const where = {
+      estadoId,
+      ...(fechaInicio && fechaFin && {
+        fechaPedido: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const resultado = await prisma.pedidos.groupBy({
       by: ['metodoPagoId'],
       _count: { metodoPagoId: true },
+      where,
       orderBy: { _count: { metodoPagoId: 'desc' } },
     });
 
@@ -38,11 +60,19 @@ export const ventasService = {
     }));
   },
 
-  // 🔹 Ventas agrupadas por método de envío con detalles
-  async ventasPorMetodoEnvio() {
+  // 🔹 Ventas por método de envío con filtros de fecha y estado
+  async ventasPorMetodoEnvio({ fechaInicio = null, fechaFin = null, estadoId = 4 } = {}) {
+    const where = {
+      estadoId,
+      ...(fechaInicio && fechaFin && {
+        fechaPedido: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const resultado = await prisma.pedidos.groupBy({
       by: ['metodoEnvioId'],
       _count: { metodoEnvioId: true },
+      where,
       orderBy: { _count: { metodoEnvioId: 'desc' } },
     });
 
@@ -56,8 +86,15 @@ export const ventasService = {
     }));
   },
 
-  // 🔹 Ingresos agrupados por fecha con detalles de pedidos
-  async ingresosPorFecha(agrupacion = 'month') {
+  // 🔹 Ingresos agrupados por fecha con detalles de pedidos y filtros dinámicos
+  async ingresosPorFecha({ agrupacion = 'month', fechaInicio = null, fechaFin = null, estadoId = 4 } = {}) {
+    const where = {
+      estadoId,
+      ...(fechaInicio && fechaFin && {
+        fechaPedido: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const resultado = await prisma.pedidos.findMany({
       select: {
         id: true,
@@ -72,7 +109,7 @@ export const ventasService = {
           },
         },
       },
-      where: { estadoId: 4 },
+      where,
       orderBy: { fechaPedido: 'asc' },
     });
 

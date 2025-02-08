@@ -4,10 +4,17 @@ import { format, getYear } from 'date-fns';
 const prisma = new PrismaClient();
 
 export const pagosService = {
-  // 🔹 Ingresos Totales
-  async ingresosTotales() {
+  // 🔹 Ingresos Totales con filtro de fechas
+  async ingresosTotales({ fechaInicio = null, fechaFin = null } = {}) {
+    const where = {
+      ...(fechaInicio && fechaFin && {
+        fechaPago: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const result = await prisma.pagos.aggregate({
       _sum: { monto: true },
+      where,
     });
 
     return {
@@ -15,11 +22,18 @@ export const pagosService = {
     };
   },
 
-  // 🔹 Pagos por Método (Mostrando el nombre del método y cantidad)
-  async pagosPorMetodo() {
+  // 🔹 Pagos por Método con filtro de fechas
+  async pagosPorMetodo({ fechaInicio = null, fechaFin = null } = {}) {
+    const where = {
+      ...(fechaInicio && fechaFin && {
+        fechaPago: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const pagos = await prisma.pagos.groupBy({
       by: ['metodoPagoId'],
       _count: { metodoPagoId: true },
+      where,
     });
 
     // Obtener los nombres de los métodos de pago
@@ -37,20 +51,27 @@ export const pagosService = {
     });
   },
 
-  // 🔹 Comparación de Ingresos Anuales
-  async comparacionIngresosAnuales() {
+  // 🔹 Comparación de Ingresos Anuales con filtro de fechas
+  async comparacionIngresosAnuales({ fechaInicio = null, fechaFin = null } = {}) {
+    const where = {
+      ...(fechaInicio && fechaFin && {
+        fechaPago: { gte: new Date(fechaInicio), lte: new Date(fechaFin) },
+      }),
+    };
+
     const pagos = await prisma.pagos.findMany({
       select: {
         fechaPago: true,
         monto: true,
       },
+      where,
     });
 
     if (pagos.length === 0) {
       return { mensaje: "No hay datos suficientes para comparación anual." };
     }
 
-    // Agrupar por año
+    // Agrupar ingresos por año
     const ingresosPorAnio = pagos.reduce((acc, pago) => {
       const year = getYear(new Date(pago.fechaPago));
       if (!acc[year]) acc[year] = 0;
@@ -58,9 +79,11 @@ export const pagosService = {
       return acc;
     }, {});
 
-    return Object.keys(ingresosPorAnio).map(year => ({
-      año: year,
-      ingresos: ingresosPorAnio[year].toFixed(2),
-    }));
+    return Object.keys(ingresosPorAnio)
+      .sort((a, b) => a - b) // Ordenar por año ascendente
+      .map(year => ({
+        año: year,
+        ingresos: ingresosPorAnio[year].toFixed(2),
+      }));
   },
 };

@@ -236,7 +236,6 @@ model historial_estado_pedidos {
   @@unique([pedidoId, estadoId, fechaCambio]) // Evita registros duplicados
 }
 
-
 model carrito {
   id          Int      @id @default(autoincrement())
   usuarioId   Int
