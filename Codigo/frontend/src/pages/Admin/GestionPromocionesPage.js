@@ -45,7 +45,7 @@ const GestionPromocionesPage = () => {
 
       // Marcar las categorías asociadas con promociones activas
       const categoriasConPromocionActiva = promocionesResponse.flatMap((promocion) =>
-        promocion.categorias.map((categoria) => categoria.id)
+        (promocion.categorias || []).map((categoria) => categoria.id) // 🔥 Evita error si `categorias` es undefined
       );
 
       // Añadimos un flag `activa` para identificar estas categorías
