@@ -214,7 +214,7 @@ export const ProductosService = {
             nuevoProducto
         );
 
-        console.log("✅ Producto creado correctamente:", nuevoProducto);
+        console.log("✅ Producto creado correctamente:");
 
         return nuevoProducto;
     } catch (error) {

@@ -4,170 +4,83 @@ const prisma = new PrismaClient();
 
 export const devolucionesData = {
   
-  // Registrar una nueva devolución
-  async createDevolucion({ pedidoId, motivo, estadoId }) {
+  // Registrar una nueva devolución para un producto específico
+  async createDevolucion({ pedidoId, productoId, cantidad, motivo }) {
     return await prisma.devoluciones.create({
       data: {
         pedidoId,
+        productoId,
+        cantidad,
         motivo,
-        estadoId,
+        estadoId: 5, // Estado "Devolución Pendiente"
         fechaDevolucion: new Date(),
+        montoReembolsado: 0,
       },
     });
   },
 
-  // Obtener todas las devoluciones con usuario (nombre, apellido, correo) y productos (nombre, precio)
-async getAllDevoluciones() {
-  return await prisma.devoluciones.findMany({
-    include: {
-      pedido: {
-        select: {
-          usuario: {
-            select: {
-              nombre: true,
-              apellido: true,
-              correo: true
+  // Obtener todas las devoluciones con detalles del pedido y producto
+  async getAllDevoluciones() {
+    return await prisma.devoluciones.findMany({
+      include: {
+        pedido: {
+          select: {
+            usuario: {
+              select: { nombre: true, apellido: true, correo: true }
             }
           }
+        },
+        estado: true,
+        producto: {
+          select: { nombre: true, precio: true }
         }
       },
-      estado: true,  // Estado de la devolución
-      productos: {
-        include: {
-          producto: {
-            select: {
-              nombre: true,
-              precio: true
-            }
-          },
-          estado: true // Estado del producto en la devolución
-        }
-      }
-    }
-  });
-},
+      orderBy: { fechaDevolucion: 'desc' }
+    });
+  },
 
-
-  // Obtener una devolución por ID con datos del usuario
+  // Obtener una devolución específica
   async getDevolucionById(devolucionId) {
     return await prisma.devoluciones.findUnique({
       where: { id: devolucionId },
       include: {
-        pedido: {
-          include: {
-            usuario: true,  // Incluye los datos del usuario que hizo el pedido
-          },
-        },
+        pedido: { include: { usuario: true } },
         estado: true,
-        productos: {
-          include: {
-            producto: true,
-            estado: true,
-          },
-        },
+        producto: true
       },
     });
   },
 
-  // Obtener devoluciones por pedido ID
+  // Obtener devoluciones de un pedido
   async getDevolucionesByPedidoId(pedidoId) {
     return await prisma.devoluciones.findMany({
       where: { pedidoId },
       include: {
         estado: true,
-        productos: {
-          include: {
-            producto: true,
-            estado: true,
-          },
-        },
+        producto: true
       },
     });
   },
 
-  // Obtener productos de una devolución específica
-  async getProductosByDevolucionId(devolucionId) {
-    return await prisma.devolucion_productos.findMany({
-      where: { devolucionId },
-      include: {
-        producto: true,
-        estado: true,
-      },
-    });
-  },
-
-  // Obtener un producto específico dentro de una devolución
-  async getProductoDevolucion(devolucionId, productoId) {
-    return await prisma.devolucion_productos.findUnique({
+  // Obtener devoluciones de un producto dentro de un pedido
+  async getDevolucionByProducto(pedidoId, productoId) {
+    return await prisma.devoluciones.findFirst({
       where: {
-        devolucionId_productoId: {
-          devolucionId,
-          productoId,
-        },
-      },
-      include: {
-        producto: true,
-        estado: true,
-      },
-    });
-  },
-
-  // ✅ NUEVO: Verificar si un producto de un pedido ya fue devuelto
-  async getProductoDevolucionByPedido(pedidoId, productoId) {
-    return await prisma.devolucion_productos.findFirst({
-      where: {
+        pedidoId,
         productoId,
-        devolucion: {
-          pedidoId, // Busca dentro de la devolución que pertenece al pedido
-        },
       },
       include: {
-        devolucion: true,
         estado: true,
+        producto: true
       },
     });
   },
 
-  // Agregar un producto a una devolución
-  async agregarProductoADevolucion(data) {
-    return await prisma.devolucion_productos.create({
-      data,
-      include: {
-        producto: true,
-        estado: true,
-      },
-    });
-  },
-
-  // Actualizar el estado de una devolución
+  // Actualizar una devolución (por ejemplo, cambiar estado o monto)
   async updateDevolucion(devolucionId, updateData) {
     return await prisma.devoluciones.update({
       where: { id: devolucionId },
       data: updateData,
     });
-  },
-
-  // Actualizar el estado de un producto dentro de una devolución
-  async updateEstadoProductoDevolucion(devolucionId, productoId, nuevoEstadoId) {
-    return await prisma.devolucion_productos.update({
-      where: {
-        devolucionId_productoId: {
-          devolucionId,
-          productoId,
-        },
-      },
-      data: { estadoId: nuevoEstadoId },
-    });
-  },
-
-  // Contar productos pendientes dentro de una devolución
-  async countProductosPendientesDevolucion(devolucionId) {
-    return await prisma.devolucion_productos.count({
-        where: {
-            devolucionId,
-            estadoId: 9, // Estado "Producto Pendiente"
-        },
-    });
   }
-
 };

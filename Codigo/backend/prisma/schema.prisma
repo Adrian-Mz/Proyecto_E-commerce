@@ -22,8 +22,9 @@ model productos {
   ivaPorcentaje    Decimal?
   precioBase       Decimal                @default(0.0)
   carritoProductos carrito_productos[]
-  devoluciones     devolucion_productos[]
+
   pedidoProductos  pedido_productos[]
+  devoluciones     devoluciones[]
   categoria        categorias             @relation(fields: [categoriaId], references: [id])
   promocion        promociones?           @relation(fields: [promocionId], references: [id])
 }
@@ -33,21 +34,6 @@ model categoria_iva {
   categoriaId   Int        @unique
   ivaPorcentaje Decimal?   @default(15.0) @db.Decimal
   categorias    categorias @relation(fields: [categoriaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model devolucion_productos {
-  id              Int          @id @default(autoincrement())
-  devolucionId    Int
-  productoId      Int
-  cantidad        Int
-  motivo          String
-  estadoId        Int          @default(9)
-  fechaDevolucion DateTime     @default(now())
-  devolucion      devoluciones @relation(fields: [devolucionId], references: [id])
-  estado          estado       @relation(fields: [estadoId], references: [id])
-  producto        productos    @relation(fields: [productoId], references: [id])
-
-  @@unique([devolucionId, productoId])
 }
 
 model metodo_pago {
@@ -186,20 +172,24 @@ model pedidos {
 model devoluciones {
   id              Int                    @id @default(autoincrement())
   pedidoId        Int
+  productoId      Int?                    // Hacerlo opcional primero
+  cantidad        Int?                    // Hacerlo opcional primero
   motivo          String
   estadoId        Int
   fechaDevolucion DateTime               @default(now())
   fechaResolucion DateTime?
-  productos       devolucion_productos[]
+  montoReembolsado Decimal?              @default(0.0)
+
   estado          estado                 @relation(fields: [estadoId], references: [id])
   pedido          pedidos                @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto        productos?              @relation(fields: [productoId], references: [id])  // Hacer opcional primero
 }
 
 model estado {
   id                   Int                        @id @default(autoincrement())
   nombre               String
   descripcion          String
-  devolucion_productos devolucion_productos[]
+  
   devoluciones         devoluciones[]
   historialEstados     historial_estado_pedidos[]
   pedidos              pedidos[]
