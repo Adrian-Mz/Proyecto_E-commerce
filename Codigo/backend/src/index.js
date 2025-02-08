@@ -16,6 +16,7 @@ import devolucionesPedidos from './routes/devoluciones.routes.js';
 import promocionesRoutes from './routes/promociones.routes.js';
 import rolesRoutes from './routes/roles.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
+import reportesRoutes from './routes/reportes.routes.js';
 
 const app = express();
 const server = createServer(app);
@@ -29,12 +30,12 @@ const connectedClients = new Map(); // 🔹 Almacenar clientes conectados
 
 // Gestión de conexiones WebSocket
 io.on("connection", (socket) => {
-  console.log("Cliente conectado:", socket.id);
+  //console.log("Cliente conectado:", socket.id);
 
   // Registrar conexión de usuario
   socket.on("registrarUsuario", (usuarioId) => {
     connectedClients.set(usuarioId, socket);
-    console.log(`Usuario ${usuarioId} registrado en WebSockets`);
+    //console.log(`Usuario ${usuarioId} registrado en WebSockets`);
   });
 
   // Manejar desconexión de usuario
@@ -73,6 +74,7 @@ app.use('/api/devoluciones', devolucionesPedidos);
 app.use('/api/promociones', promocionesRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/reportes',reportesRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
