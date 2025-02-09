@@ -1,68 +1,47 @@
 import { ReportesAPI } from "../../api/api.reportes";
-import { CategoriasService } from "../../api/api.categorias";
 
-export const getDashboardMetrics = async (filtros) => {
+export const getDashboardMetrics = async () => {
   try {
-    const { agrupacion, categoriaId } = filtros;
-    const params = {
-      agrupacion,
-      fechaInicio: "2024-01-01", // Puedes reemplazarlo con un rango dinámico
-      fechaFin: "2025-12-31",
-      categoriaId: categoriaId !== "Todas" ? categoriaId : null,
-    };
+    const reporte = await ReportesAPI.getGeneral(); // 🔹 Asegúrate de que esta función existe en api.reportes.js
 
-    // 📌 Obtener datos desde la API con filtros aplicados
-    const [
-      resumen,
-      pedidosCancelados,
-      motivosDevoluciones,
-      comparacionIngresos,
-      productosMasVendidos,
-      ventasPorMetodoPago,
-      ventasPorMetodoEnvio,
-      ingresosTotales,
-      clientesConMasCompras,
-      categorias,
-    ] = await Promise.all([
-      ReportesAPI.getResumen(),
-      ReportesAPI.getPedidosCancelados(params),
-      ReportesAPI.getMotivosDevoluciones(params),
-      ReportesAPI.getIngresosPorFecha(params),
-      ReportesAPI.getProductosMasVendidos(params),
-      ReportesAPI.getVentasPorMetodoPago(params),
-      ReportesAPI.getVentasPorMetodoEnvio(params),
-      ReportesAPI.getIngresosTotales(params),
-      ReportesAPI.getClientesConMasCompras(params),
-      CategoriasService.getCategorias(),
-    ]);
+    if (!reporte) throw new Error("No se obtuvieron datos del reporte");
 
-    console.log("📊 Datos obtenidos del backend:", {
-      resumen,
-      pedidosCancelados,
-      motivosDevoluciones,
-      comparacionIngresos,
-      productosMasVendidos,
-      ventasPorMetodoPago,
-      ventasPorMetodoEnvio,
-      ingresosTotales,
-      clientesConMasCompras,
-      categorias,
-    });
+    console.log("📊 Datos obtenidos del backend:", reporte);
 
     return {
-      totalVentas: resumen?.resumen?.totalVentas || "0",
-      totalPedidos: resumen?.resumen?.totalPedidos || 0,
-      productosMasVendidos: productosMasVendidos || [],
-      totalClientes: resumen?.resumen?.totalClientes?.totalClientes || "0",
-      ingresosTotales: ingresosTotales?.totalIngresos || "0",
-      totalDevoluciones: resumen?.resumen?.devolucionesTotales || 0,
-      pedidosCancelados: pedidosCancelados || 0,
-      motivosDevoluciones: motivosDevoluciones || [],
-      comparacionIngresos: comparacionIngresos || [],
-      ventasPorMetodoPago: ventasPorMetodoPago || [],
-      ventasPorMetodoEnvio: ventasPorMetodoEnvio || [],
-      clientesConMasCompras: clientesConMasCompras || [],
-      categorias: categorias || [],
+      totalVentas: parseFloat(reporte.ingresos?.brutos) || 0,
+      totalPedidos: reporte.conteos?.totalPedidos || 0,
+      totalClientes: reporte.conteos?.totalUsuarios || 0,
+      ingresosTotales: parseFloat(reporte.ingresos?.netos) || 0,
+      totalDevoluciones: reporte.conteos?.totalDevoluciones || 0,
+
+      productosMasVendidos: reporte.productosVendidos || [],
+      devoluciones: reporte.devoluciones || [],
+      ventas: reporte.ventas || [],
+      usuarios: reporte.usuarios || [],
+
+      // 📊 Datos para nuevos gráficos
+      ingresosPorFecha: reporte.ventas.map(v => ({
+        fecha: new Date(v.fechaPedido).toLocaleDateString("es-ES"),
+        total: parseFloat(v.total),
+      })),
+
+      ventasPorMarca: reporte.productosVendidos.reduce((acc, p) => {
+        acc[p.marca] = (acc[p.marca] || 0) + p.cantidadVendida;
+        return acc;
+      }, {}),
+
+      comparacionIngresos: [
+        { tipo: "Brutos", valor: parseFloat(reporte.ingresos?.brutos || 0) },
+        { tipo: "Netos", valor: parseFloat(reporte.ingresos?.netos || 0) },
+        { tipo: "Descuentos", valor: parseFloat(reporte.ingresos?.descuentos || 0) },
+        { tipo: "Devoluciones", valor: parseFloat(reporte.ingresos?.devoluciones || 0) }
+      ],
+
+      pedidosVsDevoluciones: [
+        { tipo: "Pedidos", cantidad: reporte.conteos?.totalPedidos || 0 },
+        { tipo: "Devoluciones", cantidad: reporte.conteos?.totalDevoluciones || 0 }
+      ],
     };
   } catch (error) {
     console.error("❌ Error obteniendo métricas del Dashboard:", error);

@@ -4,185 +4,117 @@ import DashboardCard from "../../elements/DashboardCard";
 import DashboardChart from "../../elements/DashboardChart";
 
 const AdminDashboard = () => {
-  const [data, setData] = useState({
-    totalVentas: "0",
-    totalPedidos: 0,
-    productosMasVendidos: [],
-    totalClientes: 0,
-    ingresosTotales: "0",
-    totalDevoluciones: 0,
-    motivosDevoluciones: [],
-    comparacionIngresos: [],
-    ventasPorMetodoPago: [],
-    ventasPorMetodoEnvio: [],
-    clientesConMasCompras: [],
-    categorias: [],
-  });
-
-  const [filtroFecha, setFiltroFecha] = useState("month");
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
+  const [data, setData] = useState(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
-      const filtros = { agrupacion: filtroFecha, categoriaId: categoriaSeleccionada };
-      const metrics = await getDashboardMetrics(filtros);
+      const metrics = await getDashboardMetrics();
       if (metrics) {
         setData(metrics);
       }
     };
-
     fetchMetrics();
-  }, [filtroFecha, categoriaSeleccionada]);
+  }, []);
 
+  if (!data) {
+    return <div className="text-center text-gray-700 text-lg">Cargando datos del Dashboard...</div>;
+  }
 
   return (
     <div className="p-6 bg-white min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">📊 Dashboard Administrativo</h1>
 
-      {/* 📌 Sección: Resumen General */}
+      {/* 📌 Resumen General */}
       <h2 className="text-2xl font-semibold mb-4 text-gray-800">📌 Resumen General</h2>
       <div className="grid grid-cols-5 gap-6">
-        <DashboardCard title="Total de Ventas" value={`$${data.totalVentas}`}color="bg-blue-500" />
+        <DashboardCard title="Total de Ventas" value={`$${data.totalVentas}`} color="bg-blue-500" />
         <DashboardCard title="Total de Ingresos" value={`$${data.ingresosTotales}`} color="bg-yellow-500" />
         <DashboardCard title="Total de Pedidos" value={`${data.totalPedidos}`} color="bg-green-500" />
-        <DashboardCard title="Total de Clientes" value={`${data.totalClientes || 0}`} color="bg-purple-500" />
-        <DashboardCard title="Total de Devoluciones" value={`${data.totalDevoluciones}`}color="bg-red-500" />
+        <DashboardCard title="Total de Clientes" value={`${data.totalClientes}`} color="bg-purple-500" />
+        <DashboardCard title="Total de Devoluciones" value={`${data.totalDevoluciones}`} color="bg-red-500" />
       </div>
 
-      {/* 📌 Sección: Resumen Específico */}
-      <h2 className="text-2xl font-semibold mt-10 mb-4 text-gray-800">📊 Resumen Específico</h2>
-
-      {/* 📌 Filtros */}
- {/* 📌 Filtros */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-2">
-          <label className="font-semibold text-gray-800">📅 Filtrar por:</label>
-          <select
-            className="p-2 border border-gray-300 rounded-md shadow-sm text-gray-800 bg-white"
-            value={filtroFecha}
-            onChange={(e) => setFiltroFecha(e.target.value)}
-          >
-            <option value="day">Día</option>
-            <option value="month">Mes</option>
-            <option value="year">Año</option>
-          </select>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <label className="font-semibold text-gray-800">📦 Categoría:</label>
-          <select
-            className="p-2 border border-gray-300 rounded-md shadow-sm text-gray-800 bg-white"
-            value={categoriaSeleccionada}
-            onChange={(e) => setCategoriaSeleccionada(e.target.value)}
-          >
-            <option value="Todas">Todas</option>
-            {data.categorias.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
+      {/* 📊 Sección de Gráficos */}
+      <h2 className="text-2xl font-semibold mt-10 mb-4 text-gray-800">📊 Análisis Visual</h2>
       <div className="grid grid-cols-3 gap-6">
-        {/* 📈 Ventas Mensuales */}
+        {/* 📈 Evolución de Ingresos por Fecha */}
         <DashboardChart
-          title="Ventas Mensuales"
+          title="Evolución de Ingresos por Fecha"
           type="line"
           data={{
-            labels: data.comparacionIngresos.map((d) => d.fecha),
+            labels: data.ingresosPorFecha.map(d => d.fecha),
             datasets: [
               {
-                label: "Ingresos Totales",
-                data: data.comparacionIngresos.map((d) => d.total),
+                label: "Ingresos",
+                data: data.ingresosPorFecha.map(d => d.total),
                 backgroundColor: "rgba(54, 162, 235, 0.6)",
                 borderColor: "rgba(54, 162, 235, 1)",
                 borderWidth: 2,
-              },
+              }
             ],
           }}
         />
 
-        {/* 🏆 Productos Más Vendidos */}
+        {/* 🏷 Cantidad de Productos Vendidos por Marca */}
         <DashboardChart
-          title="Productos Más Vendidos"
-          type="doughnut"
+          title="Cantidad de Productos Vendidos por Marca"
+          type="bar"
           data={{
-            labels: data.productosMasVendidos.map((p) => p.categoria),
+            labels: Object.keys(data.ventasPorMarca),
             datasets: [
               {
                 label: "Cantidad Vendida",
-                data: data.productosMasVendidos.map((p) => p.cantidadVendida),
+                data: Object.values(data.ventasPorMarca),
                 backgroundColor: "rgba(255, 99, 132, 0.6)",
                 borderColor: "rgba(255, 99, 132, 1)",
                 borderWidth: 2,
-              },
+              }
             ],
           }}
         />
 
-        {/* 🔄 Motivos de Devoluciones */}
+        {/* 💰 Comparación de Ingresos */}
         <DashboardChart
-          title="Motivos Más Comunes de Devoluciones"
+          title="Comparación de Ingresos"
+          type="bar"
+          data={{
+            labels: data.comparacionIngresos.map(c => c.tipo),
+            datasets: [
+              {
+                label: "Monto",
+                data: data.comparacionIngresos.map(c => c.valor),
+                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4CAF50"],
+              }
+            ],
+          }}
+        />
+
+        {/* 🔄 Relación Pedidos vs. Devoluciones */}
+        <DashboardChart
+          title="Pedidos vs. Devoluciones"
           type="pie"
           data={{
-            labels: data.motivosDevoluciones.map((m) => m.motivo),
+            labels: data.pedidosVsDevoluciones.map(d => d.tipo),
             datasets: [
               {
-                data: data.motivosDevoluciones.map((m) => m.cantidad),
-                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-              },
+                data: data.pedidosVsDevoluciones.map(d => d.cantidad),
+                backgroundColor: ["#4CAF50", "#FF5722"],
+              }
             ],
           }}
         />
 
-        {/* 💳 Ventas por Método de Pago */}
+        {/* 🏷 Distribución de Productos Vendidos por Marca */}
         <DashboardChart
-          title="Ventas por Método de Pago"
+          title="Distribución de Ventas por Marca"
           type="doughnut"
           data={{
-            labels: data.ventasPorMetodoPago.map((m) => m.metodoPago),
+            labels: Object.keys(data.ventasPorMarca),
             datasets: [
               {
-                label: "Cantidad de Ventas",
-                data: data.ventasPorMetodoPago.map((m) => m.cantidad),
-                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-              },
-            ],
-          }}
-        />
-
-        {/* 🚚 Ventas por Método de Envío */}
-        <DashboardChart
-          title="Ventas por Método de Envío"
-          type="bar"
-          data={{
-            labels: data.ventasPorMetodoEnvio.map((m) => m.metodoEnvio),
-            datasets: [
-              {
-                label: "Cantidad de Ventas",
-                data: data.ventasPorMetodoEnvio.map((m) => m.cantidad),
-                backgroundColor: "rgba(153, 102, 255, 0.6)",
-                borderColor: "rgba(153, 102, 255, 1)",
-                borderWidth: 2,
-              },
-            ],
-          }}
-        />
-
-        {/* 👥 Clientes con Más Compras */}
-        <DashboardChart
-          title="Clientes con Más Compras"
-          type="bar"
-          data={{
-            labels: data.clientesConMasCompras.map((c) => `${c.nombre} ${c.apellido}`),
-            datasets: [
-              {
-                label: "Cantidad de Compras",
-                data: data.clientesConMasCompras.map((c) => c.cantidadPedidos),
-                backgroundColor: "rgba(75, 192, 192, 0.6)",
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 2,
-              },
+                data: Object.values(data.ventasPorMarca),
+                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#9C27B0"],
+              }
             ],
           }}
         />
