@@ -23,46 +23,40 @@ export const DevolucionesService = {
     }
   },
 
-  // Registrar una devolución con productos específicos
-    registrarDevolucion: async (pedidoId, productosDevueltos) => {
-        try {
-            if (!Array.isArray(productosDevueltos)) {
-                throw new Error("El parámetro productosDevueltos debe ser un array.");
-            }
-
-            const response = await api.post(`/devoluciones/${pedidoId}`, {
-                productosDevueltos: productosDevueltos.map(p => ({
-                    productoId: p.productoId,
-                    cantidad: p.cantidad,
-                    motivo: p.motivo || "Motivo no especificado"
-                }))
-            });
-
-            return response.data;
-        } catch (error) {
-            console.error('Error al registrar devolución:', error.response?.data || error.message);
-            throw error;
-        }
-    },
-
-  // Actualizar el estado de una devolución (solo Administradores)
-  actualizarEstadoDevolucion: async (devolucionId, estado) => {
+  // Obtener productos elegibles para devolución de un usuario
+  obtenerProductosElegibles: async (usuarioId) => {
     try {
-      const response = await api.put(`/devoluciones/${devolucionId}`, { estado });
+      const response = await api.get(`/devoluciones/productos-elegibles/${usuarioId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error al actualizar la devolución con ID ${devolucionId}:`, error.response?.data || error.message);
+      console.error(`Error al obtener productos elegibles para usuario ${usuarioId}:`, error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Actualizar el estado de un producto dentro de una devolución (solo Administradores)
-  actualizarEstadoProductoDevuelto: async (devolucionId, productoId, nuevoEstadoId) => {
+  // Registrar una devolución (ahora por producto individualmente)
+  registrarDevolucion: async (pedidoId, productoId, cantidad, motivo) => {
     try {
-      const response = await api.put(`/devoluciones/${devolucionId}/producto/${productoId}/estado`, { nuevoEstadoId });
+        const response = await api.post(`/devoluciones`, {
+            pedidoId,
+            productoId,
+            cantidad,
+            motivo
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error al registrar devolución:', error.response?.data || error.message);
+        throw error;
+    }
+  },
+
+  // Actualizar el estado de una devolución (solo Administradores)
+  actualizarEstadoDevolucion: async (devolucionId, estadoId) => {
+    try {
+      const response = await api.put(`/devoluciones/${devolucionId}/estado`, { estadoId });
       return response.data;
     } catch (error) {
-      console.error(`Error al actualizar el estado del producto ${productoId} en la devolución ${devolucionId}:`, error.response?.data || error.message);
+      console.error(`Error al actualizar la devolución con ID ${devolucionId}:`, error.response?.data || error.message);
       throw error;
     }
   }

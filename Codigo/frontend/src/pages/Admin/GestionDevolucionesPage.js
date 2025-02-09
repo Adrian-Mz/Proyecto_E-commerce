@@ -14,7 +14,7 @@ const GestionDevolucionesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const [selectedProducto, setSelectedProducto] = useState(null);
+  const [selectedDevolucion, setSelectedDevolucion] = useState(null);
   const [nuevoEstadoId, setNuevoEstadoId] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -25,7 +25,7 @@ const GestionDevolucionesPage = () => {
     const fetchDevoluciones = async () => {
       try {
         const devolucionesResponse = await DevolucionesService.obtenerTodasLasDevoluciones();
-        setDevoluciones(devolucionesResponse);
+        setDevoluciones(devolucionesResponse || []);
       } catch (error) {
         console.error("Error al cargar devoluciones:", error);
         toast.error("Error al cargar las devoluciones.");
@@ -37,7 +37,7 @@ const GestionDevolucionesPage = () => {
     const fetchEstados = async () => {
       try {
         const estadosResponse = await EstadosAPI.getEstados();
-        const estadosFiltrados = estadosResponse.filter((estado) => [9, 10, 11].includes(estado.id));
+        const estadosFiltrados = estadosResponse.filter((estado) => estado.id >= 5 && estado.id <= 8);
         setEstados(estadosFiltrados);
       } catch (error) {
         console.error("Error al cargar estados:", error);
@@ -51,32 +51,33 @@ const GestionDevolucionesPage = () => {
 
   const handleEditEstado = async () => {
     try {
-      if (selectedProducto && nuevoEstadoId) {
-        await DevolucionesService.actualizarEstadoProductoDevuelto(
-          selectedProducto.devolucionId,
-          selectedProducto.productoId,
-          nuevoEstadoId
+        if (!selectedDevolucion || !nuevoEstadoId) {
+            toast.error("Debe seleccionarse un estado válido.");
+            return;
+        }
+
+        console.log(`Intentando cambiar devolución ${selectedDevolucion.id} de estado ${selectedDevolucion.estadoId} a ${nuevoEstadoId}`);
+
+        await DevolucionesService.actualizarEstadoDevolucion(selectedDevolucion.id, nuevoEstadoId);
+
+        setDevoluciones((prev) =>
+            prev.map((devolucion) =>
+                devolucion.id === selectedDevolucion.id 
+                    ? { ...devolucion, estadoId: nuevoEstadoId, estado: estados.find(e => e.id === nuevoEstadoId) } 
+                    : devolucion
+            )
         );
 
-        setDevoluciones((prevDevoluciones) =>
-          prevDevoluciones.map((devolucion) => ({
-            ...devolucion,
-            productos: devolucion.productos.map((producto) =>
-              producto.productoId === selectedProducto.productoId
-                ? { ...producto, estadoId: nuevoEstadoId }
-                : producto
-            ),
-          }))
-        );
-
-        setSelectedProducto(null);
-        setNuevoEstadoId(null);
         setIsEditModalOpen(false);
-        toast.success("Estado del producto actualizado correctamente.");
-      }
+        setSelectedDevolucion(null);
+        setNuevoEstadoId(null);
+        toast.success("Estado actualizado correctamente.");
     } catch (error) {
-      console.error("Error al actualizar el estado del producto:", error);
-      toast.error("Error al actualizar el estado.");
+        console.error("Error al actualizar el estado de la devolución:", error);
+
+        // Mostrar el mensaje exacto que viene del backend
+        const mensajeError = error.response?.data?.error || "Error al actualizar el estado.";
+        toast.error(mensajeError);
     }
   };
 
@@ -88,7 +89,7 @@ const GestionDevolucionesPage = () => {
     }
   };
 
-  const filteredData = devoluciones
+  const filteredData = (devoluciones || [])
     .filter(
       (devolucion) =>
         devolucion.pedido.usuario?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,39 +160,40 @@ const GestionDevolucionesPage = () => {
         columns={[
           { key: "usuario", label: "Usuario" },
           { key: "pedido", label: "Pedido" },
-          { key: "estadoDevolucion", label: "Estado de Devolución" },
-          { key: "estadoProducto", label: "Estado del Producto" },
-          { key: "productosDevueltos", label: "Productos Devueltos" },
+          { key: "producto", label: "Producto Devuelto" },
+          { key: "motivo", label: "Motivo" },
+          { key: "cantidadDevuelta", label: "Cantidad Devuelta" },
+          { key: "estadoDevolucion", label: "Estado" },
           { key: "acciones", label: "Acciones" },
         ]}
-        data={paginatedData.flatMap((devolucion) =>
-          devolucion.productos.map((producto) => ({
-            usuario: `${devolucion.pedido.usuario?.nombre || "N/A"} ${devolucion.pedido.usuario?.apellido || "N/A"}`,
-            pedido: devolucion.pedidoId,
-            estadoDevolucion: devolucion.estado?.nombre || "Desconocido",
-            estadoProducto: producto.estado?.nombre || "Pendiente",
-            productosDevueltos: producto.producto?.nombre,
-            acciones: (
-              <button
-                onClick={() => {
-                  setSelectedProducto(producto);
-                  setIsEditModalOpen(true);
-                }}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                <FaExchangeAlt size={20} />
-              </button>
-            ),
-          }))
-        )}
+        data={paginatedData.map((devolucion) => ({
+          usuario: `${devolucion.pedido?.usuario?.nombre || "N/A"} ${devolucion.pedido?.usuario?.apellido || ""}`,
+          pedido: devolucion.pedidoId,
+          estadoDevolucion: devolucion.estado?.nombre || "Desconocido",
+          cantidadDevuelta: devolucion.cantidad || "No especificada",
+          motivo: devolucion.motivo || "No especificado",
+          estado: estados.find(e => e.id === devolucion.estadoId)?.nombre || "Desconocido",
+          producto: devolucion.producto?.nombre || "Sin información",
+          acciones: (
+            <button
+              onClick={() => {
+                setSelectedDevolucion(devolucion);
+                setIsEditModalOpen(true);
+              }}
+              className="text-blue-500 hover:text-blue-700"
+            >
+              <FaExchangeAlt size={20} />
+            </button>
+          ),
+        }))}
       />
 
       <ModalComponent
-        title={`Cambiar Estado del Producto #${selectedProducto?.productoId}`}
+        title={`Cambiar Estado de la Devolución #${selectedDevolucion?.id}`}
         visible={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setSelectedProducto(null);
+          setSelectedDevolucion(null);
           setNuevoEstadoId(null);
         }}
         onSave={handleEditEstado}

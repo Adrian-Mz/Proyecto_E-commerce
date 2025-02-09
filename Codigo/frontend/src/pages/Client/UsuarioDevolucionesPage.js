@@ -10,9 +10,9 @@ const UsuarioDevolucionesPage = () => {
   const [pedidosEntregados, setPedidosEntregados] = useState([]);
   const [devolucionesUsuario, setDevolucionesUsuario] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [productosDevueltos, setProductosDevueltos] = useState([]);
   const [visiblePedidos, setVisiblePedidos] = useState({});
   const [showAlert, setShowAlert] = useState(true);
+  const [productosSeleccionados, setProductosSeleccionados] = useState([]);
 
   useEffect(() => {
     const fetchPedidosEntregados = async () => {
@@ -24,21 +24,15 @@ const UsuarioDevolucionesPage = () => {
         }
 
         const response = await PedidosAPI.getPedidos();
-        console.log("Respuesta de API pedidos:", response);
-
         const pedidos = Array.isArray(response.pedidos) ? response.pedidos : [];
-        if (!Array.isArray(pedidos)) {
-          console.error("Error: La respuesta de pedidos no es un array.");
-          return;
-        }
 
         const pedidosFiltrados = pedidos.filter((p) => p.estadoId === 4 && p.usuarioId === usuario.id);
         setPedidosEntregados(pedidosFiltrados);
 
         // Obtener devoluciones activas del usuario
         const devoluciones = await DevolucionesService.obtenerTodasLasDevoluciones();
-        const devolucionesUsuario = devoluciones.filter((d) => pedidosFiltrados.some((p) => p.id === d.pedidoId));
-        setDevolucionesUsuario(devolucionesUsuario);
+        const devolucionesFiltradas = devoluciones.filter((d) => pedidosFiltrados.some((p) => p.id === d.pedidoId));
+        setDevolucionesUsuario(devolucionesFiltradas);
       } catch (error) {
         console.error("Error al cargar los pedidos entregados:", error);
         toast.error("Error al cargar los pedidos.");
@@ -50,126 +44,133 @@ const UsuarioDevolucionesPage = () => {
     fetchPedidosEntregados();
   }, []);
 
-  const obtenerEstadoProducto = (pedidoId, productoId) => {
-    const devolucion = devolucionesUsuario.find((d) => d.pedidoId === pedidoId);
-    if (!devolucion) return null;
-  
-    const productoDevuelto = devolucion.productos.find((p) => p.productoId === productoId);
-    return productoDevuelto ? productoDevuelto.estado?.nombre : "Sin devolución";
+  const obtenerEstadoProducto = (productoId) => {
+    const devolucion = devolucionesUsuario.find((d) => d.productoId === productoId);
+    return devolucion
+      ? { estado: devolucion.estado?.nombre || "En proceso", motivo: devolucion.motivo || "Sin motivo registrado" }
+      : { estado: "Sin devolución", motivo: "" };
   };
-
-  const obtenerEstadoDevolucion = (pedidoId) => {
-    const devolucion = devolucionesUsuario.find((d) => d.pedidoId === pedidoId);
-    return devolucion ? devolucion.estado?.nombre : "Sin devolución";
-  };
-
-  const renderizarProductos = (pedido) => {
-    const estadoDevolucion = obtenerEstadoDevolucion(pedido.id); // Se usa la función aquí
-    const devolucionCompletada = estadoDevolucion === "Devolución Completada"; // Bloqueo a nivel de pedido
   
-    return (
-      <ul>
-        {pedido.productos.map((producto) => {
-          const estadoProducto = obtenerEstadoProducto(pedido.id, producto.productoId);
-          const productoBloqueado = devolucionCompletada || estadoProducto === "Devolución Completada"; // Bloquea si el pedido o el producto está completado
+  const renderizarProductos = (pedido) => (
+    <ul>
+      {pedido.productos.map((producto) => {
+        const { estado: estadoProducto, motivo: motivoDevolucion } = obtenerEstadoProducto(producto.productoId);
+        const estaSeleccionado = productosSeleccionados.some((p) => p.productoId === producto.productoId);
+        const estaEnDevolucion = estadoProducto !== "Sin devolución";
   
-          return (
-            <li
-              key={producto.productoId}
-              className={`flex flex-col border p-2 rounded-lg shadow-sm mb-2 ${
-                productoBloqueado ? "opacity-50 bg-gray-200" : ""
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <img
-                  src={producto.producto?.imagen || "/placeholder.png"}
-                  alt={producto.producto?.nombre || "Producto"}
-                  className="w-14 h-14 object-cover rounded"
-                />
-                <div>
-                  <h5 className="font-bold text-sm">{producto.producto?.nombre}</h5>
-                  <p className="text-xs text-gray-500">{producto.producto?.marca}</p>
-                  <p className="text-xs text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
-                </div>
-              </div>
-  
-              {/* Estado del Producto */}
-              {estadoProducto !== "Sin devolución" && (
-                <div className="mt-2 p-2 text-blue-700 bg-blue-100 border border-blue-400 rounded">
-                  <strong>Estado del Producto:</strong> {estadoProducto}
-                </div>
-              )}
-  
-              {/* Estado de la Devolución del Pedido */}
-              {estadoDevolucion !== "Sin devolución" && (
-                <div className="mt-2 p-2 text-green-700 bg-green-100 border border-green-400 rounded">
-                  <strong>Estado de la Devolución:</strong> {estadoDevolucion}
-                </div>
-              )}
-  
-              {/* Selector de motivo de devolución (bloqueado si el pedido o el producto está en "Devolución Completada") */}
-              <select
-                className="mt-2 p-2 border rounded"
-                disabled={productoBloqueado}
+        return (
+          <li key={producto.productoId} className={`border p-3 rounded-lg shadow-sm mb-2 ${estaEnDevolucion ? "bg-gray-200 opacity-70" : ""}`}>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={estaSeleccionado}
+                disabled={estaEnDevolucion}
                 onChange={(e) => {
-                  const selectedMotivo = e.target.value;
-                  setProductosDevueltos((prev) => {
-                    const newProductos = prev.filter((p) => p.productoId !== producto.productoId);
-                    if (selectedMotivo) {
-                      newProductos.push({
+                  if (e.target.checked) {
+                    setProductosSeleccionados((prev) => [
+                      ...prev,
+                      {
                         productoId: producto.productoId,
                         cantidad: producto.cantidad,
-                        motivo: selectedMotivo,
-                      });
-                    }
-                    return newProductos;
-                  });
+                        motivo: "",
+                      },
+                    ]);
+                  } else {
+                    setProductosSeleccionados((prev) => prev.filter((p) => p.productoId !== producto.productoId));
+                  }
                 }}
-              >
-                <option value="">Seleccione un motivo</option>
-                {[
-                  "Producto defectuoso",
-                  "Recibí un artículo incorrecto",
-                  "Cambio de opinión",
-                  "Producto dañado en el transporte",
-                  "Producto con características extrañas",
-                  "Motivo desconocido",
-                ].map((motivo) => (
-                  <option key={motivo} value={motivo}>
-                    {motivo}
-                  </option>
-                ))}
-              </select>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
+              />
+              <img
+                src={producto.producto?.imagen || "/placeholder.png"}
+                alt={producto.producto?.nombre || "Producto"}
+                className="w-16 h-16 object-cover rounded"
+              />
+              <div>
+                <h5 className="font-bold text-sm">{producto.producto?.nombre}</h5>
+                <p className="text-xs text-gray-500">{producto.producto?.marca}</p>
+                <p className="text-xs text-gray-500">{`Cantidad: ${producto.cantidad}`}</p>
+              </div>
+            </div>
   
+            {/* Estado del Producto */}
+            {estadoProducto !== "Sin devolución" && (
+              <div className="mt-2 p-2 text-blue-700 bg-blue-100 border border-blue-400 rounded">
+                <strong>Estado del Producto:</strong> {estadoProducto}
+              </div>
+            )}
   
+            {/* Motivo de devolución si está en proceso */}
+            {estaEnDevolucion && motivoDevolucion && (
+              <div className="mt-2 p-2 text-purple-700 bg-purple-100 border border-purple-400 rounded">
+                <strong>Motivo:</strong> {motivoDevolucion}
+              </div>
+            )}
   
-  const handleDevolucion = async (pedidoId) => {
+            {/* Selector de motivo */}
+            <select
+              className="mt-2 p-2 border rounded w-full"
+              disabled={!estaSeleccionado}
+              onChange={(e) => {
+                const selectedMotivo = e.target.value;
+                setProductosSeleccionados((prev) =>
+                  prev.map((p) => (p.productoId === producto.productoId ? { ...p, motivo: selectedMotivo } : p))
+                );
+              }}
+            >
+              <option value="">Seleccione un motivo</option>
+              {[
+                "Producto defectuoso",
+                "Recibí un artículo incorrecto",
+                "Cambio de opinión",
+                "Producto dañado en el transporte",
+                "Producto con características extrañas",
+                "Motivo desconocido",
+              ].map((motivo) => (
+                <option key={motivo} value={motivo}>
+                  {motivo}
+                </option>
+              ))}
+            </select>
+  
+            {/* Botón de devolución ajustado */}
+            <CButton
+              color="secondary"
+              className="rounded-3xl mt-2 w-48 d-flex justify-center align-items-center py-2 text-base"
+              disabled={!estaSeleccionado || !productosSeleccionados.find((p) => p.productoId === producto.productoId)?.motivo}
+              onClick={() => handleDevolucion(pedido.id, producto.productoId)}
+            >
+              <FaUndoAlt className="mr-2 text-base" />
+              Solicitar
+            </CButton>
+          </li>
+        );
+      })}
+    </ul>
+  );
+  
+  const handleDevolucion = async (pedidoId, productoId) => {
     try {
-        if (productosDevueltos.length === 0) {
-            toast.error("Debe seleccionar al menos un producto para devolver.");
-            return;
-        }
+      const producto = productosSeleccionados.find((p) => p.productoId === productoId);
 
-        // Verificar que cada producto tenga un motivo antes de enviarlo
-        const productosValidos = productosDevueltos.filter(p => p.motivo && p.motivo.trim() !== "");
+      if (!producto || !producto.motivo.trim()) {
+        toast.error("Debe seleccionar un motivo para la devolución.");
+        return;
+      }
 
-        if (productosValidos.length === 0) {
-            toast.error("Todos los productos deben tener un motivo de devolución.");
-            return;
-        }
+      await DevolucionesService.registrarDevolucion(pedidoId, producto.productoId, producto.cantidad, producto.motivo);
 
-        await DevolucionesService.registrarDevolucion(pedidoId, productosValidos);
-        toast.success("Solicitud de devolución registrada correctamente.");
-        setProductosDevueltos([]);
+      toast.success("Solicitud de devolución registrada correctamente.");
+
+      // Actualizar estado sin recargar la página
+      setDevolucionesUsuario((prev) => [
+        ...prev,
+        { pedidoId, productoId, estado: { nombre: "Devolución Pendiente" } },
+      ]);
+
+      setProductosSeleccionados((prev) => prev.filter((p) => p.productoId !== productoId));
     } catch (error) {
-        console.error("Error al registrar la devolución:", error);
-        toast.error("No se pudo registrar la devolución.");
+      console.error("Error al registrar la devolución:", error);
+      toast.error(error.response?.data?.error || "No se pudo registrar la devolución.");
     }
   };
 
@@ -217,20 +218,8 @@ const UsuarioDevolucionesPage = () => {
                 <FaChevronDown />
               </CButton>
             </div>
-
             <CCollapse visible={visiblePedidos[pedido.id]}>
-              <CCardBody className="mt-3">
-                <h3 className="font-semibold mt-3 mb-2">Selecciona los productos a devolver:</h3>
-                {renderizarProductos(pedido)}
-                <CButton 
-                    color="danger" 
-                    className="w-48 d-flex justify-center align-items-center py-2 text-slate-300" 
-                    onClick={() => handleDevolucion(pedido.id)}
-                >
-                  <FaUndoAlt className="me-2" />
-                  Solicitar Devolución
-                </CButton>
-              </CCardBody>
+              <CCardBody className="mt-3">{renderizarProductos(pedido)}</CCardBody>
             </CCollapse>
           </CCard>
         ))
