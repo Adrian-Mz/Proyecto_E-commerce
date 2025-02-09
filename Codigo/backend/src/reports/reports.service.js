@@ -1,50 +1,67 @@
-import { ReportsData } from "./reports.data.js";
+import { ReportsData } from './reports.data.js';
 
 export const ReportsService = {
-  async getReporteVentas(filters) {
-    const ventas = await ReportsData.getVentas(filters);
+  async getReporteCompleto() {
+    try {
+      const data = await ReportsData.getReporteCompleto();
 
-    return ventas.map((venta) => ({
-      pedidoId: venta.id,
-      usuario: `${venta.usuario.nombre} ${venta.usuario.apellido}`,
-      correo: venta.usuario.correo,
-      fechaPedido: venta.fechaPedido,
-      total: venta.total,
-      productos: venta.productos.map((p) => ({
-        nombre: p.producto.nombre,
-        marca: p.producto.marca,
-        precioBase: p.producto.precioBase,
-        iva: p.producto.ivaPorcentaje,
-      })),
-    }));
-  },
+      // 🔹 Formatear las ventas
+      const ventas = data.ventas.map((venta) => ({
+        pedidoId: venta.id,
+        usuario: `${venta.usuario.nombre} ${venta.usuario.apellido}`,
+        correo: venta.usuario.correo,
+        fechaPedido: venta.fechaPedido,
+        total: venta.total,
+        metodoPago: venta.metodoPago.nombre,
+        metodoEnvio: venta.metodoEnvio.nombre,
+        productos: venta.productos.map((p) => ({
+          nombre: p.producto.nombre,
+          marca: p.producto.marca,
+          precioBase: p.producto.precioBase,
+          iva: p.producto.ivaPorcentaje,
+        })),
+      }));
 
-  async getReporteProductosMasVendidos(filters) {
-    const productos = await ReportsData.getProductosMasVendidos(filters);
-    
-    return productos.map((p) => ({
-      producto: p.detalles?.nombre || "Desconocido",
-      marca: p.detalles?.marca || "Desconocida",
-      cantidadVendida: p.cantidadVendida,
-      totalRecaudado: (p.detalles?.precioBase || 0) * p.cantidadVendida, // 🔹 Se multiplica manualmente
-      precioBase: p.detalles?.precioBase || 0,
-      iva: p.detalles?.ivaPorcentaje || 0
-    }));
-  },
-  
-  async getReporteGeneral(filters) {
-    const [cantidadPedidos, devoluciones, usuarios, ingresosNetos] = await Promise.all([
-      ReportsData.getCantidadPedidos(filters),
-      ReportsData.getDevoluciones(filters),
-      ReportsData.getUsuariosRegistrados(filters),
-      ReportsData.getIngresosNetos(filters),
-    ]);
+      // 🔹 Formatear productos más vendidos
+      const productosVendidos = data.productosVendidos.map((p) => {
+        const detalles = data.productosDetalles.find((prod) => prod.id === p.productoId);
+        return {
+          productoId: p.productoId,
+          nombre: detalles?.nombre || "Desconocido",
+          marca: detalles?.marca || "Desconocida",
+          cantidadVendida: p._sum?.cantidad || 0,
+          totalRecaudado: (detalles?.precioBase || 0) * (p._sum?.cantidad || 0),
+        };
+      });
 
-    return {
-      cantidadPedidos,
-      devoluciones: devoluciones.length,
-      usuariosRegistrados: usuarios.length,
-      ingresosNetos,
-    };
+      // 🔹 Formatear devoluciones
+      const devoluciones = data.devoluciones.map((d) => ({
+        pedidoId: d.pedido.id,
+        productoNombre: d.producto.nombre,
+        cantidad: d.cantidad,
+        estado: d.estado.nombre,
+        montoReembolsado: d.montoReembolsado,
+      }));
+
+      // 🔹 Formatear usuarios registrados
+      const usuarios = data.usuarios.map((u) => ({
+        id: u.id,
+        nombre: u.nombre,
+        apellido: u.apellido,
+        correo: u.correo,
+        fechaRegistro: u.fechaRegistro,
+      }));
+
+      return {
+        ventas,
+        productosVendidos,
+        devoluciones,
+        usuarios,
+        ingresos: data.ingresos,
+        conteos: data.conteos, // 🔹 Agregamos los conteos de cada tabla
+      };
+    } catch (error) {
+      throw new Error("Error en la lógica de negocio: " + error.message);
+    }
   },
 };
