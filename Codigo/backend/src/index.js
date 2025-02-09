@@ -16,8 +16,8 @@ import devolucionesPedidos from './routes/devoluciones.routes.js';
 import promocionesRoutes from './routes/promociones.routes.js';
 import rolesRoutes from './routes/roles.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
-import reportesRoutes from './routes/reportes.routes.js';
 import ivaRoutes from './routes/iva.routes.js'
+import reportRoutes from './reports/reports.routes.js'
 
 const app = express();
 const server = createServer(app);
@@ -75,8 +75,8 @@ app.use('/api/devoluciones', devolucionesPedidos);
 app.use('/api/promociones', promocionesRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/api/analysis', analysisRoutes);
-app.use('/api/reportes',reportesRoutes);
 app.use('/api/iva', ivaRoutes);
+app.use('/api/reportes',reportRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
