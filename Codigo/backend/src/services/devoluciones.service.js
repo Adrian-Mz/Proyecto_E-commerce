@@ -1,6 +1,11 @@
+import { PrismaClient } from '@prisma/client';
 import { devolucionesData } from "../data/devoluciones.data.js";
 import { pedidosData } from "../data/pedidos.data.js";
 import { ProductosData } from "../data/productos.data.js";
+import { enviarCorreo } from "../utils/emailService.js";
+import { notificacionesService } from '../services/notificaciones.service.js';
+
+const prisma = new PrismaClient();
 
 export const devolucionesService = {
 
@@ -52,7 +57,7 @@ export const devolucionesService = {
         const productoPedido = pedido.productos.find(p => p.productoId === productoId);
         if (!productoPedido) throw new Error(`El producto con ID ${productoId} no pertenece a este pedido.`);
     
-        // 🔴 **Verificar si ya hay una devolución activa para este producto**
+        // **Verificar si ya hay una devolución activa para este producto**
         const devolucionExistente = await devolucionesData.getDevolucionByProducto(pedidoId, productoId);
         if (devolucionExistente) {
             throw new Error(`Este producto ya está en proceso de devolución.`);
@@ -84,6 +89,40 @@ export const devolucionesService = {
         // ✅ Si el motivo indica un error en el envío, aumentar el stock
         if (motivo.toLowerCase().includes("error") || motivo.toLowerCase().includes("envío incorrecto")) {
             await ProductosData.incremetarStock(productoId, cantidad);
+        }
+
+        // ** Enviar correo al usuario con instrucciones**
+        const asunto = "Instrucciones para tu devolución en TrendShop";
+        const contenido = `
+            <p>Hola,</p>
+            <p>Hemos recibido tu solicitud de devolución para el producto <strong>${productoPedido.nombre}</strong>.</p>
+            <p>Por favor, adjunta las siguientes evidencias y envíalas a nuestro equipo:</p>
+            <ul>
+                <li>Fotos del producto empaquetado.</li>
+                <li>Captura del pedido generado.</li>
+            </ul>
+            <p>Responderemos en un máximo de 48 horas.</p>
+            <p>Gracias por confiar en TrendShop.</p>
+        `;
+        await enviarCorreo(pedido.usuario.correo, asunto, contenido);
+
+        // ✅ Enviar notificación a los administradores
+        try {
+            const administradores = await prisma.usuarios.findMany({
+                where: { rol: { nombre: "Administrador" } },
+                select: { id: true },
+            });
+
+            for (const admin of administradores) {
+                console.log(`Enviando notificación al admin ID: ${admin.id}`);
+                await notificacionesService.crearNotificacion(
+                    admin.id,
+                    `Nueva devolución registrada para el pedido #${pedidoId}.`,
+                    "devolucion_nueva"
+                );
+            }
+        } catch (error) {
+            console.error("Error enviando notificaciones a administradores:", error);
         }
     
         return {
@@ -117,9 +156,59 @@ export const devolucionesService = {
             });
         }
 
-        return await devolucionesData.updateDevolucion(devolucionId, {
+        await devolucionesData.updateDevolucion(devolucionId, {
             estadoId: nuevoEstadoId,
             fechaResolucion: new Date(),
         });
+
+        // ** Enviar notificación de cambio de estado**
+        let asunto = "Actualización en tu devolución";
+        let contenido = "";
+
+        switch (nuevoEstadoId) {
+            case 6: // Aceptada
+                asunto = "Tu devolución ha sido aceptada";
+                contenido = `
+                    <p>Hola,</p>
+                    <p>Tu devolución del producto <strong>${devolucion.producto.nombre}</strong> ha sido aceptada.</p>
+                    <p>Pronto recibirás más detalles sobre el reembolso.</p>
+                    <p>Gracias por confiar en TrendShop.</p>
+                `;
+                break;
+            case 7: // Rechazada
+                asunto = "Tu devolución ha sido rechazada";
+                contenido = `
+                    <p>Hola,</p>
+                    <p>Lamentamos informarte que tu solicitud de devolución del producto <strong>${devolucion.producto.nombre}</strong> ha sido rechazada.</p>
+                    <p>Si tienes alguna duda, por favor contáctanos.</p>
+                `;
+                break;
+            case 8: // Completada
+                asunto = "Tu devolución ha sido completada";
+                contenido = `
+                    <p>Hola,</p>
+                    <p>Tu devolución ha sido procesada exitosamente y el reembolso se ha completado.</p>
+                    <p>Gracias por confiar en TrendShop.</p>
+                `;
+                break;
+        }
+
+        await enviarCorreo(devolucion.pedido.usuario.correo, asunto, contenido);
+
+        // Obtener el nombre del estado antes de enviarlo
+        const estado = await devolucionesData.getEstadoById(nuevoEstadoId);
+        const nombreEstado = estado ? estado.nombre : "Desconocido"; // Si no encuentra el estado, muestra "Desconocido"
+
+        // ✅ Enviar notificación al usuario con el nombre del estado
+        try {
+            console.log(`Enviando notificación al usuario ID: ${devolucion.pedido.usuarioId}`);
+            await notificacionesService.crearNotificacion(
+                devolucion.pedido.usuarioId, // ID del usuario que hizo la devolución
+                `El estado de tu devolución #${devolucionId} ha cambiado a "${nombreEstado}".`,
+                "devolucion_actualizada"
+            );
+        } catch (error) {
+            console.error("Error enviando notificación al usuario:", error);
+        }
     }
 };

@@ -82,5 +82,14 @@ export const devolucionesData = {
       where: { id: devolucionId },
       data: updateData,
     });
+  },
+
+  // Obtener el nombre del estado por su ID
+  async getEstadoById(estadoId) {
+    return await prisma.estado.findUnique({
+        where: { id: estadoId },
+        select: { nombre: true }
+    });
   }
+
 };
