@@ -1,17 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { NotificacionesAPI } from "../../api/api.notificaciones";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEnvelopeOpenText } from "react-icons/fa";
+import { SocketContext } from "../../context/SocketContext";
 
 const NotificacionesPage = () => {
   const [notificaciones, setNotificaciones] = useState([]);
+  const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { socket } = useContext(SocketContext);
 
   useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem("usuario");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser?.rol?.nombre) {
+          setUsuario(parsedUser);
+        } else {
+          console.warn("⚠ Usuario en localStorage no tiene un rol válido:", parsedUser);
+        }
+      }
+    } catch (error) {
+      console.error("Error al leer usuario del localStorage:", error);
+    }
+
     const fetchNotificaciones = async () => {
       try {
         const data = await NotificacionesAPI.getNotificaciones();
-        setNotificaciones(Array.isArray(data) ? data : []);
+        console.log("📩 Notificaciones recibidas:", data);
+        setNotificaciones(data);
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
       } finally {
@@ -20,7 +37,19 @@ const NotificacionesPage = () => {
     };
 
     fetchNotificaciones();
-  }, []);
+
+    if (socket) {
+      socket.on("nuevaNotificacion", (nuevaNotificacion) => {
+        setNotificaciones((prev) => [nuevaNotificacion, ...prev]);
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("nuevaNotificacion");
+      }
+    };
+  }, [socket]);
 
   const marcarComoLeida = async (id) => {
     try {
@@ -33,28 +62,41 @@ const NotificacionesPage = () => {
     }
   };
 
+  if (!usuario || !usuario.rol) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 bg-white text-gray-900 rounded-lg shadow-lg min-h-screen">
+        <h2 className="text-3xl font-bold mb-6 text-center">📩 Notificaciones</h2>
+        <p className="text-center text-gray-500">Cargando usuario...</p>
+      </div>
+    );
+  }
+
+  // Filtrar notificaciones solo del usuario actual
+  const notificacionesFiltradas = notificaciones.filter(
+    (noti) => noti.usuarioId === usuario.id
+  );
+
+  console.log("🔍 Notificaciones filtradas:", notificacionesFiltradas);
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white text-gray-900 rounded-lg shadow-lg min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center flex items-center justify-center">
-        <FaEnvelopeOpenText className="mr-2 text-gray-500" />
-        Notificaciones
-      </h2>
+      <h2 className="text-3xl font-bold mb-6 text-center">📩 Notificaciones</h2>
 
       {loading ? (
         <p className="text-center text-gray-500">Cargando notificaciones...</p>
-      ) : notificaciones.length === 0 ? (
+      ) : notificacionesFiltradas.length === 0 ? (
         <p className="text-center text-gray-500">No tienes notificaciones pendientes.</p>
       ) : (
         <div className="space-y-6">
           <AnimatePresence>
-            {notificaciones.map((noti) => (
+            {notificacionesFiltradas.map((noti) => (
               <motion.div
                 key={noti.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className={`p-5 bg-gray-100 rounded-md shadow-md border ${
-                  noti.leido ? "opacity-50 line-through" : "border-blue-500"
+                className={`p-5 mt-4 rounded-md shadow-md flex flex-col space-y-2 ${
+                  noti.leido ? "bg-gray-200 text-gray-500 line-through" : "bg-gray-100"
                 }`}
               >
                 <p className="text-lg font-medium">{noti.mensaje}</p>
