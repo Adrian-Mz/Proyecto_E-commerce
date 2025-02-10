@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CategoriasService } from "../../api/api.categorias";
-import { FaBox, FaCheckCircle, FaMicrochip, FaLaptop, FaDatabase, FaTv} from "react-icons/fa";
+import { FaBox, FaMicrochip, FaLaptop, FaDatabase, FaTv} from "react-icons/fa";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 40 },
@@ -10,8 +10,6 @@ const fadeIn = {
 
 // Asignación de íconos por categoría
 const categoryIcons = {
-  "Gabinetes - Cases": FaBox,
-  "Refrigeración - CPU": FaCheckCircle,
   "Procesadores": FaMicrochip,
   "Tarjetas Gráficas": FaLaptop,
   "Discos Duros": FaDatabase,

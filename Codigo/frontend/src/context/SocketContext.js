@@ -19,7 +19,8 @@ export const SocketProvider = ({ children }) => {
     const fetchNotificaciones = async () => {
       try {
         const data = await NotificacionesAPI.getNotificaciones();
-        setNotificaciones(Array.isArray(data) ? data : []);
+        const notificacionesUsuario = Array.isArray(data) ? data.filter((n) => n.userId === usuario.id) : [];
+        setNotificaciones(notificacionesUsuario);
       } catch (error) {
         console.error("Error al obtener notificaciones:", error);
       }
@@ -28,13 +29,15 @@ export const SocketProvider = ({ children }) => {
     fetchNotificaciones();
 
     newSocket.on("nuevaNotificacion", (nuevaNotificacion) => {
-      setNotificaciones((prev) => [nuevaNotificacion, ...prev]);
+      if (nuevaNotificacion.userId === usuario.id) {
+        setNotificaciones((prev) => [nuevaNotificacion, ...prev]);
+      }
     });
 
     return () => newSocket.disconnect();
   }, []);
 
-  // ✅ Función para marcar notificación como leída
+  // ✅ Función para marcar una notificación como leída
   const marcarComoLeida = async (id) => {
     try {
       await NotificacionesAPI.marcarComoLeida(id);
