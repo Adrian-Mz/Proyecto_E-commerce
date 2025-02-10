@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import UserReportPage from "./pages/Client/UserReportPage";
 import ProtectedRoute from "./components/UI/ProtectedRoute";
 import NotificacionesPage from "./pages/App/NotificacionesPage";
+import NotFoundPage from "./pages/App/NotFoundPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -52,13 +53,7 @@ function App() {
             <Route path="/carrito" element={<CartPage />} />
             {/* Ruta 404 para toda la aplicación */}
             <Route
-              path="*"
-              element={
-                <div className="text-center mt-20">
-                  <h1 className="text-3xl font-bold text-red-500">404</h1>
-                  <p className="text-lg text-gray-700">Página no disponible</p>
-                </div>
-              }
+              path="*" element={ <NotFoundPage />}
             />
           </Routes>
         </main>
