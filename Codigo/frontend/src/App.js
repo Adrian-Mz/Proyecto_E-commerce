@@ -12,6 +12,7 @@ import ProductoDetailPage from "./pages/App/ProductoDetailPage";
 import CartPage from "./pages/App/CartPage";
 import AdminPage from "./pages/Admin/AdminPage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import UserReportPage from "./pages/Client/UserReportPage";
 import ProtectedRoute from "./components/UI/ProtectedRoute";
 import NotificacionesPage from "./pages/App/NotificacionesPage";
 import { ToastContainer } from "react-toastify";
@@ -38,9 +39,14 @@ function App() {
               path="/admin/*"
               element={<ProtectedRoute role="Administrador" Component={AdminPage} />}
             />
+            {/* Rutas de Reportes según rol */}
             <Route
-              path="/herramientas"
+              path="/reportes/admin"
               element={<ProtectedRoute role="Administrador" Component={AdminDashboard} />}
+            />
+            <Route
+              path="/reportes/usuario"
+              element={<ProtectedRoute role="Usuario" Component={UserReportPage} />}
             />
             <Route path="/productos/:id" element={<ProductoDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />

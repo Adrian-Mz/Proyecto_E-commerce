@@ -18,35 +18,32 @@ const LoginForm = () => {
     e.preventDefault();
     setMessage("");
     setIsSubmitting(true);
-
+  
     if (!email.trim() || !password.trim()) {
       setMessage("Por favor, completa todos los campos.");
       setIsSubmitting(false);
       return;
     }
-
+  
     try {
       const response = await UsuariosAPI.loginUsuario({ correo: email, password });
-
-      // Guarda el token y el usuario en localStorage
+  
       localStorage.setItem("usuario", JSON.stringify(response));
-
-      // Decodifica el token para obtener el ID del usuario
+  
       const decodedToken = jwtDecode(response.token);
-
-      // Limpia el carrito actual y lo sincroniza con el usuario logueado
-      clearCart(); // Opcional: limpia el carrito visual antes de sincronizar
-      changeUser(decodedToken.id); // Establece el nuevo usuario para cargar su carrito
-
+  
+      clearCart();
+      changeUser(decodedToken.id);
+  
       setMessage("Inicio de sesión exitoso.");
-
-      // Redirige en función del rol
+  
       setTimeout(() => {
         if (decodedToken.rol === "Administrador") {
           navigate("/admin");
         } else {
           navigate("/home");
         }
+        window.location.reload(); // 🔄 Recargar la página para actualizar el estado global
       }, 1000);
     } catch (error) {
       setMessage("Credenciales incorrectas. Verifica tus datos.");

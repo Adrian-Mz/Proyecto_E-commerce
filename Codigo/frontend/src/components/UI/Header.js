@@ -34,24 +34,19 @@ const Header = () => {
     }
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen((prev) => !prev);
-  };
-
-  const toggleCart = () => {
-    setIsCartOpen((prev) => !prev);
-  };
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const toggleCart = () => setIsCartOpen((prev) => !prev);
 
   const handleLogout = () => {
     localStorage.removeItem("usuario");
     changeUser(null);
     setUsuario(null);
-    setIsMenuOpen(false); // Cierra el menú
+    setIsMenuOpen(false);
     navigate("/login");
   };
 
   const handleConfig = () => {
-    setIsMenuOpen(false); // Cierra el menú
+    setIsMenuOpen(false);
     if (usuario?.rol === "Administrador") {
       navigate("/admin");
     } else {
@@ -98,10 +93,17 @@ const Header = () => {
           <nav className="flex space-x-6">
             <a href="/home" className="text-gray-100 hover:text-blue-400 no-underline">Inicio</a>
             <a href="/productos" className="text-gray-100 hover:text-blue-400 no-underline">Productos</a>
-            <a href="/herramientas" className="text-gray-100 hover:text-blue-400 no-underline">Herramientas</a>
+            {usuario && (
+              <a
+                href={usuario.rol === "Administrador" ? "/reportes/admin" : "/reportes/usuario"}
+                className="text-gray-100 hover:text-blue-400 no-underline"
+              >
+                Reportes
+              </a>
+            )}
             <a href="/nosotros" className="text-gray-100 hover:text-blue-400 no-underline">Nosotros</a>
           </nav>
-        </div>
+</div>
 
         {/* Botones de login/registro y carrito */}
         <div className="flex items-center space-x-6">

@@ -1,20 +1,13 @@
 import React from "react";
-import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaSignOutAlt, FaShoppingCart, FaKey, FaRegThumbsDown  } from "react-icons/fa";
+import { Routes, Route, NavLink} from "react-router-dom";
+import { FaUserCircle, FaShoppingCart, FaKey, FaRegThumbsDown  } from "react-icons/fa";
 import UserProfilePage from "./UsuarioPage"; // Página de Perfil
 import UserSettingsPage from "./UserSettingsPage"; // Página de Configuración de Usuario
 import UsuarioPedidosPage from "./UsuarioPedidosPage";
 import UsuarioDevolucionesPage from "./UsuarioDevolucionesPage";
 
 const UserDashboardPage = ({ changeUser }) => {
-  const navigate = useNavigate();
   const storedUser = JSON.parse(localStorage.getItem("usuario"));
-
-  const handleLogout = () => {
-    localStorage.removeItem("usuario");
-    changeUser(null);
-    navigate("/login");
-  };
 
   return (
     <div className="flex min-h-screen bg-gray-100 text-gray-900">
@@ -73,13 +66,6 @@ const UserDashboardPage = ({ changeUser }) => {
             <FaRegThumbsDown className="inline-block mr-2" />
             Devoluciones
           </NavLink>
-          <button
-            onClick={handleLogout}
-            className="block w-full text-left py-3 px-6 text-red-500 hover:bg-gray-100 hover:shadow-md transition rounded-lg"
-          >
-            <FaSignOutAlt className="inline-block mr-2" />
-            Cerrar Sesión
-          </button>
         </nav>
       </aside>
 
