@@ -9,6 +9,7 @@ import LoginPage from "./pages/App/LoginPage";
 import RegisterPage from "./pages/App/RegisterPage";
 import UserDashboardPage from "./pages/Client/UserDashboardPage";
 import ProductoDetailPage from "./pages/App/ProductoDetailPage";
+import AboutPage from "./pages/App/AboutPage";
 import CartPage from "./pages/App/CartPage";
 import AdminPage from "./pages/Admin/AdminPage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -32,6 +33,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/notificaciones" element={<NotificacionesPage />} />
+            <Route path="/nosotros" element={<AboutPage />} />
+
             <Route
               path="/dashboard/*"
               element={<ProtectedRoute role="Usuario" Component={UserDashboardPage} />}
