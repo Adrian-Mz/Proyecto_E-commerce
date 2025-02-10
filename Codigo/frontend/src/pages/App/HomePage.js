@@ -1,26 +1,24 @@
 import React from "react";
 import DealsSection from "../../components/UI/dealsSection";
 import { CarouselWithCaptionsExample } from "../../components/UI/Carousel";
-import { CardGrid3Example } from "../../components/UI/CardGrid";
+import TopCategories from "../../components/UI/TopCategories"; // Asegurar que este componente esté importado correctamente
 
 const HomePage = () => {
   return (
-    <div className="bg-gray-900 text-gray-100">
+    <div className="bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-100 to-gray-900 text-gray-900">
       {/* Carousel Section */}
       <section className="relative">
         <CarouselWithCaptionsExample />
       </section>
 
-      {/* Deals Section */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-center mb-6">Categorías Populares</h2>
-        <DealsSection />
+      {/* Categorías Destacadas */}
+      <section className="container mx-auto px-4 py-2">
+        <TopCategories />
       </section>
 
-      {/* Category Cards */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-center mb-6">Descripción de Categorías</h2>
-        <CardGrid3Example />
+      {/* Categorías Populares */}
+      <section className="container mx-auto py-2">
+        <DealsSection />
       </section>
     </div>
   );
