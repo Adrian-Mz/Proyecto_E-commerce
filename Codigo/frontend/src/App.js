@@ -13,6 +13,7 @@ import CartPage from "./pages/App/CartPage";
 import AdminPage from "./pages/Admin/AdminPage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ProtectedRoute from "./components/UI/ProtectedRoute";
+import NotificacionesPage from "./pages/App/NotificacionesPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -28,6 +29,7 @@ function App() {
             <Route path="/productos" element={<ProductsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/notificaciones" element={<NotificacionesPage />} />
             <Route
               path="/dashboard/*"
               element={<ProtectedRoute role="Usuario" Component={UserDashboardPage} />}
