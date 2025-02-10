@@ -1,6 +1,7 @@
 import express from 'express';
 import { ReportsService } from './reports.service.js';
 
+
 const router = express.Router();
 
 // Ruta para obtener todos los datos completos
@@ -13,5 +14,6 @@ router.get('/general', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 export default router;
