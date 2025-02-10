@@ -16,20 +16,28 @@ const NotificacionesComponent = () => {
     const fetchNotificaciones = async () => {
       try {
         const data = await NotificacionesAPI.getNotificaciones();
-        setNotificaciones(data.slice(0, 5)); // 🔹 Limitar la cantidad a 5 notificaciones
+        const notificacionesNoLeidas = data.filter((noti) => !noti.leido); // 🔹 Solo traer las no leídas
+        setNotificaciones(notificacionesNoLeidas.slice(0, 5)); // 🔹 Limitar a 5 notificaciones
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
       }
     };
-
+  
     fetchNotificaciones();
-
+  
     if (socket) {
       socket.on("nuevaNotificacion", (nuevaNotificacion) => {
-        setNotificaciones((prev) => [nuevaNotificacion, ...prev].slice(0, 5));
+        setNotificaciones((prev) => {
+          // 🔹 Evita duplicados asegurándote de que no exista ya la notificación en la lista
+          const existe = prev.some((noti) => noti.id === nuevaNotificacion.id);
+          if (!existe) {
+            return [nuevaNotificacion, ...prev].slice(0, 5);
+          }
+          return prev;
+        });
       });
     }
-
+  
     return () => {
       if (socket) {
         socket.off("nuevaNotificacion");
@@ -40,11 +48,23 @@ const NotificacionesComponent = () => {
   const marcarComoLeida = async (id) => {
     try {
       await NotificacionesAPI.marcarComoLeida(id);
-      setNotificaciones((prev) => prev.filter((noti) => noti.id !== id));
+  
+      // 🔹 Marcar la notificación como eliminada para la animación
+      setNotificaciones((prev) =>
+        prev.map((noti) =>
+          noti.id === id ? { ...noti, eliminando: true } : noti
+        )
+      );
+  
+      // 🔹 Esperar la animación antes de removerla del estado
+      setTimeout(() => {
+        setNotificaciones((prev) => prev.filter((noti) => noti.id !== id));
+      }, 300); // Tiempo suficiente para la animación
     } catch (error) {
       console.error("Error al marcar notificación como leída:", error);
     }
   };
+  
 
   // 🔹 Cerrar el dropdown cuando el usuario haga clic fuera
   useEffect(() => {
@@ -99,7 +119,8 @@ const NotificacionesComponent = () => {
                     key={noti.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
+                    exit={{ opacity: 0, height: 0, y: -10 }} // 🔹 Se desvanece y reduce su tamaño
+                    transition={{ duration: 0.3 }} // 🔹 Duración de la animación
                     className="p-3 border-b border-gray-700 flex justify-between items-center text-gray-300 text-sm"
                   >
                     <span>{noti.mensaje}</span>
