@@ -38,7 +38,7 @@ export const ReportsData = {
       const devoluciones = await prisma.devoluciones.findMany({
         include: {
           pedido: { select: { id: true, fechaPedido: true } },
-          producto: { select: { nombre: true, precioBase: true } },
+          producto: { select: { nombre: true, precioBase: true, ivaPorcentaje: true } }, // Incluimos IVA
           estado: { select: { nombre: true } }
         },
       });
@@ -60,6 +60,17 @@ export const ReportsData = {
       // 🔹 Obtener total de devoluciones
       const devolucionesTotal = await prisma.devoluciones.aggregate({ _sum: { montoReembolsado: true } });
 
+      // 🔹 Calcular total de IVA a descontar
+      let totalIVA = 0;
+      ventas.forEach((venta) => {
+        venta.productos.forEach((p) => {
+          const precioBase = parseFloat(p.producto.precioBase) || 0;
+          const ivaPorcentaje = parseFloat(p.producto.ivaPorcentaje) || 0;
+          const cantidad = p.cantidad || 1;
+          totalIVA += (precioBase * (ivaPorcentaje / 100)) * cantidad;
+        });
+      });
+
       // 🔹 Conteo total de registros en cada tabla relevante
       const conteos = {
         totalPedidos: await prisma.pedidos.count(),
@@ -78,7 +89,11 @@ export const ReportsData = {
           brutos: ingresosBrutos._sum.total || 0,
           descuentos: descuentos._sum.precio_unitario || 0,
           devoluciones: devolucionesTotal._sum.montoReembolsado || 0,
-          netos: (ingresosBrutos._sum.total || 0) - (descuentos._sum.precio_unitario || 0) - (devolucionesTotal._sum.montoReembolsado || 0),
+          iva: totalIVA, // 🔹 Se agrega el IVA total calculado
+          netos: (ingresosBrutos._sum.total || 0) 
+                - (descuentos._sum.precio_unitario || 0) 
+                - (devolucionesTotal._sum.montoReembolsado || 0) 
+                - totalIVA, // 🔹 Se descuenta también el IVA
         },
         conteos, // 🔹 Agregamos conteos de tablas
       };
