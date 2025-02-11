@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getDashboardMetrics } from "./dashboardCalculation";
 import DashboardCard from "../../elements/DashboardCard";
 import DashboardChart from "../../elements/DashboardChart";
+import { ReportesAPI } from "../../api/api.reportes";
 
 const AdminDashboard = () => {
   const [data, setData] = useState(null);
@@ -23,6 +24,15 @@ const AdminDashboard = () => {
   return (
     <div className="p-6 bg-white min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">📊 Dashboard Administrativo</h1>
+
+      <div className="mb-4">
+        <button
+          onClick={ReportesAPI.descargarReporte}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
+        >
+          📥 Descargar Reporte General
+        </button>
+      </div>
 
       {/* 📌 Resumen General */}
       <h2 className="text-2xl font-semibold mb-4 text-gray-800">📌 Resumen General</h2>

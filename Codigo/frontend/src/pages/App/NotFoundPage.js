@@ -16,7 +16,7 @@ const NotFoundPage = () => {
           Lo sentimos, la página que buscas no está disponible.
         </p>
         <a
-          href="/"
+          href="/home"
           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-150 no-underline"
           title="Volver al inicio"
         >
