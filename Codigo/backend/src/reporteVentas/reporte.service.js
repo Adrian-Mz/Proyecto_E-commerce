@@ -1,30 +1,35 @@
 import { ReporteData } from './reporte.data.js';
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
+import stream from 'stream';
 
 export const ReporteService = {
-  async generarReporte(res) {
+  async generarReporte(req, res) {
     try {
       console.log("Iniciando la generación del reporte...");
 
-      // Obtener datos del reporte
       const data = await ReporteData.obtenerDatosReporte();
-      console.log("Datos obtenidos correctamente.");
+      console.log("Datos obtenidos correctamente.", data.ingresos);
 
-      // Configurar el directorio y archivo
-      const reportsDir = path.join(process.cwd(), "src", "rVentas");
-      if (!fs.existsSync(reportsDir)) {
-        fs.mkdirSync(reportsDir, { recursive: true });
-      }
+      // Asegurar valores numéricos para evitar errores con .toFixed()
+      const ingresos = {
+        brutos: data.ingresos.brutos || 0,
+        devoluciones: data.ingresos.devoluciones || 0,
+        descuentos: data.ingresos.descuentos || 0,
+        iva: data.ingresos.iva || 0,
+        netos: data.ingresos.netos || 0,
+      };
 
-      const fileName = `reporte_ventas_${Date.now()}.pdf`;
-      const filePath = path.join(reportsDir, fileName);
+      // **Crear un Stream en memoria**
       const doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 50 });
+      const pdfStream = new stream.PassThrough();
 
-      console.log("Creando el documento PDF...");
-      const stream = fs.createWriteStream(filePath);
-      doc.pipe(stream);
+      // **Configurar las cabeceras para la descarga**
+      res.setHeader('Content-Disposition', `attachment; filename=reporte_ventas_${Date.now()}.pdf`);
+      res.setHeader('Content-Type', 'application/pdf');
+      
+      // **Redirigir el PDF al stream de respuesta**
+      doc.pipe(pdfStream);
+      pdfStream.pipe(res);
 
       // **Encabezado del Reporte**
       doc.font('Helvetica-Bold').fontSize(18).text("Reporte de Ventas", { align: "center" });
@@ -36,11 +41,11 @@ export const ReporteService = {
       doc.font('Helvetica-Bold').fontSize(14).text("Resumen General", { underline: true });
       doc.moveDown();
       doc.font('Helvetica').fontSize(12);
-      doc.text(`Ingresos Brutos: $${data.ingresos.brutos.toFixed(2)}`);
-      doc.text(`Total de Devoluciones: $${data.ingresos.devoluciones.toFixed(2)}`);
-      doc.text(`Total Descuentos: $${data.ingresos.descuentos.toFixed(2)}`); // 🔹 Se agrega el total de descuentos
-      doc.text(`Total IVA: $${data.ingresos.iva.toFixed(2)}`);
-      doc.text(`Ingresos Netos: $${data.ingresos.neto.toFixed(2)}`);
+      doc.text(`Ingresos Brutos: $${ingresos.brutos.toFixed(2)}`);
+      doc.text(`Total de Devoluciones: $${ingresos.devoluciones.toFixed(2)}`);
+      doc.text(`Total de Descuentos: $${ingresos.descuentos.toFixed(2)}`);
+      doc.text(`IVA Descontado: $${ingresos.iva.toFixed(2)}`);
+      doc.text(`Ingresos Netos: $${ingresos.netos.toFixed(2)}`);
       doc.moveDown(2);
 
       // **Ventas Realizadas**
@@ -98,7 +103,7 @@ export const ReporteService = {
       doc.moveDown();
       y = doc.y;
 
-      const colWidthsDevoluciones = [80, 130, 250, 200, 80]; // Se aumentó el ancho de "Producto" y "Motivo"
+      const colWidthsDevoluciones = [80, 130, 250, 200, 80];
 
       doc.text("ID Devolución", 50, y);
       doc.text("Cliente", 150, y);
@@ -111,42 +116,29 @@ export const ReporteService = {
 
       console.log("Agregando las devoluciones al reporte...");
       data.devoluciones.forEach((dev) => {
-          const nombreProducto = dev.producto?.nombre || "Producto no disponible";
-          const motivo = dev.motivo || "Sin motivo";
+        const nombreProducto = dev.producto?.nombre || "Producto no disponible";
+        const motivo = dev.motivo || "Sin motivo";
 
-          // **Calculamos la altura del texto para que no se amontone**
-          const textHeight = doc.heightOfString(nombreProducto, { width: colWidthsDevoluciones[2] });
+        const textHeight = doc.heightOfString(nombreProducto, { width: colWidthsDevoluciones[2] });
 
-          // **Salto de Página Controlado**
-          if (y + textHeight + 10 > doc.page.height - 50) {
-              doc.addPage();
-              y = 50;
-          }
+        if (y + textHeight + 10 > doc.page.height - 50) {
+          doc.addPage();
+          y = 50;
+        }
 
-          doc.text(dev.id.toString(), 50, y);
-          doc.text(`${dev.pedido.usuario.nombre} ${dev.pedido.usuario.apellido}`, 150, y);
-          doc.text(nombreProducto, 280, y, { width: colWidthsDevoluciones[2] });
-          doc.text(motivo, 530, y, { width: colWidthsDevoluciones[3] });
-          doc.text(`$${dev.montoReembolsado.toFixed(2)}`, 730, y);
+        doc.text(dev.id.toString(), 50, y);
+        doc.text(`${dev.pedido.usuario.nombre} ${dev.pedido.usuario.apellido}`, 150, y);
+        doc.text(nombreProducto, 280, y, { width: colWidthsDevoluciones[2] });
+        doc.text(motivo, 530, y, { width: colWidthsDevoluciones[3] });
+        doc.text(`$${dev.montoReembolsado.toFixed(2)}`, 730, y);
 
-          y += textHeight + 10; // Se agregó más espacio entre filas
-          doc.moveTo(50, y).lineTo(780, y).stroke();
-          y += 5;
+        y += textHeight + 10;
+        doc.moveTo(50, y).lineTo(780, y).stroke();
+        y += 5;
       });
 
       doc.end();
       console.log("PDF generado correctamente.");
-
-      // Enviar el PDF al cliente
-      stream.on('finish', () => {
-        console.log("Enviando el PDF al cliente...");
-        res.download(filePath, fileName, (err) => {
-          if (err) {
-            console.error("Error al enviar el archivo:", err);
-            res.status(500).json({ error: "Error al enviar el reporte PDF." });
-          }
-        });
-      });
 
     } catch (error) {
       console.error("Error generando el reporte:", error);

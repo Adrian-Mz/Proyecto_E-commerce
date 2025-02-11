@@ -1,14 +1,10 @@
-import express from 'express';
+import { Router } from 'express';
 import { ReporteService } from './reporte.service.js';
 
-const router = express.Router();
+const router = Router();
 
-router.get('/generar', async (req, res) => {
-  try {
-    await ReporteService.generarReporte(res);
-  } catch (error) {
-    res.status(500).json({ error: "Error al generar el reporte." });
-  }
+router.get('/generar', (req, res) => {
+  ReporteService.generarReporte(req, res);
 });
 
 export default router;
