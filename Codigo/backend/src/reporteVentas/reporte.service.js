@@ -44,7 +44,7 @@ export const ReporteService = {
       doc.text(`Ingresos Brutos: $${ingresos.brutos.toFixed(2)}`);
       doc.text(`Total de Devoluciones: $${ingresos.devoluciones.toFixed(2)}`);
       doc.text(`Total de Descuentos: $${ingresos.descuentos.toFixed(2)}`);
-      doc.text(`IVA Descontado: $${ingresos.iva.toFixed(2)}`);
+      doc.text(`IVA Descontado (Pago al Estado): $${ingresos.iva.toFixed(2)}`);
       doc.text(`Ingresos Netos: $${ingresos.netos.toFixed(2)}`);
       doc.moveDown(2);
 
